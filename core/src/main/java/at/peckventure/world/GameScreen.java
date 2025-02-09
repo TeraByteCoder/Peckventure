@@ -1,6 +1,7 @@
 package at.peckventure.world;
 
 import at.peckventure.entities.Player;
+import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -44,7 +45,7 @@ public class GameScreen implements Screen {
         // Definiere einen Spawn-Punkt (z.B. x = 500) und bestimme die Terrain-Höhe
         float spawnX = 500;
         int terrainHeight = generator.getHeight((int) spawnX); // Höhe in Blockeinheiten
-        float spawnY = terrainHeight * 64 + 100; // 100 Pixel oberhalb des Terrains
+        float spawnY = terrainHeight * Block.BLOCK_SIZE + 400; // 100 Pixel oberhalb des Terrains
 
         player = new Player(world,spawnX, spawnY);
 

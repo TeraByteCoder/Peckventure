@@ -36,8 +36,8 @@ For example, `core:clean` removes `build` folder only from the `core` project.
 - save chunk/world
 - create world
 - join world
+- tilted blocks
 
 - settings
 - keybinds
-- playerrotation
 - esc menü

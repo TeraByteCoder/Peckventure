@@ -6,9 +6,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
-public class Block extends Actor {
-    public static final int BLOCK_SIZE = 64; // Blockgröße in Pixel
-    public static final float PPM = 64f;       // Pixels per Meter
+public abstract class Block extends Actor {
+    public static final int BLOCK_SIZE = 32; // Blockgröße in Pixel
 
     private World world;
     private Body body;
@@ -34,12 +33,12 @@ public class Block extends Actor {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.StaticBody;
         // Setze die Body-Position auf die Mitte des Blocks (in Meter)
-        bodyDef.position.set((x + getWidth() / 2) / PPM, (y + getHeight() / 2) / PPM);
+        bodyDef.position.set((x + getWidth() / 2) / BLOCK_SIZE, (y + getHeight() / 2) / BLOCK_SIZE);
         body = world.createBody(bodyDef);
 
         // Erstelle eine Box-Shape, die der Blockgröße entspricht (Halbmaße in Meter)
         PolygonShape shape = new PolygonShape();
-        shape.setAsBox(getWidth() / 2 / PPM, getHeight() / 2 / PPM);
+        shape.setAsBox(getWidth() / 2 / BLOCK_SIZE, getHeight() / 2 / BLOCK_SIZE);
 
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
