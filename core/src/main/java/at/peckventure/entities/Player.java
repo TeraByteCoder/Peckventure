@@ -92,9 +92,7 @@ public class Player extends Actor {
         // die Position so setzen, dass der Actor mittig zum Body liegt.
         Vector2 bodyPos = body.getPosition();
         setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
-
-
-
+        
     }
 
     public int getChunkX() {
