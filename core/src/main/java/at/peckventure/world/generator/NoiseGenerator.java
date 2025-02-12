@@ -1,126 +1,152 @@
 package at.peckventure.world.generator;
 
-/**
- * NoiseGenerator liefert 2D‑Noise-Werte mithilfe von OpenSimplex‑Noise.
- * Die API ähnelt dabei der von Godot FastNoiseLite.
- */
-public class NoiseGenerator {
+import java.util.Random;
 
-    // Eigenschaften, analog zu FastNoiseLite
-    private double frequency = 1.0;      // Basis-Frequenz (wird beim Abruf skaliert)
-    private int octaves = 1;             // Anzahl der Oktaven
-    private double persistence = 0.5;    // Abnahme der Amplitude pro Oktave
+public class NoiseGenerator
+{
 
-    // Intern wird OpenSimplexNoise genutzt – er liefert ein „schönes“ Noise ohne die häufigen Blockartefakte.
-    private OpenSimplexNoise noise;
+    // Permutationsarray zur Erzeugung deterministischer Gradienten
+    private int[] permutation;
 
     /**
-     * Standardkonstruktor: initialisiert mit dem aktuellen Zeitstempel als Seed.
+     * Konstruktor: Erzeugt das Permutationsarray basierend auf einem Seed.
+     * Dadurch ist der Noise reproduzierbar.
      */
-    public NoiseGenerator() {
-        this(System.currentTimeMillis());
+    public NoiseGenerator(long seed)
+    {
+        Random random = new Random(seed);
+        permutation = new int[256];
+        // Initialisiere das Array mit Werten 0..255
+        for (int i = 0; i < 256; i++)
+        {
+            permutation[i] = i;
+        }
+        // Mische das Array
+        for (int i = 255; i > 0; i--)
+        {
+            int j = random.nextInt(i + 1);
+            int temp = permutation[i];
+            permutation[i] = permutation[j];
+            permutation[j] = temp;
+        }
+        // Dupliziere das Array, um Überläufe zu vermeiden
+        int[] p = new int[512];
+        for (int i = 0; i < 512; i++)
+        {
+            p[i] = permutation[i % 256];
+        }
+        permutation = p;
+    }
+
+
+    /**
+     * Erzeugt 1D Perlin Noise an der Position x.
+     * Der Rückgabewert liegt ungefähr im Bereich -1 bis 1.
+     */
+    public double noise(double x)
+    {
+        // Bestimme den ganzzahligen Teil (Gitterpunkt)
+        int xi = (int) Math.floor(x) & 255;
+        // Bestimme den restlichen Anteil
+        double xf = x - Math.floor(x);
+        // Anwenden der Fade-Funktion für glatte Übergänge
+        double u = fade(xf);
+
+        // Hole zwei Pseudozufallswerte aus dem Permutationsarray
+        int a = permutation[xi];
+        int b = permutation[xi + 1];
+
+        // Berechne die Gradienten und interpoliere zwischen diesen
+        double grad1 = grad(a, xf);
+        double grad2 = grad(b, xf - 1);
+
+        return lerp(u, grad1, grad2);
     }
 
     /**
-     * Konstruktor mit festgelegtem Seed.
+     * Fade-Funktion (3. Ordnung), wie sie von Ken Perlin vorgeschlagen wurde.
+     * Sie sorgt für glatte Übergänge.
+     */
+    private double fade(double t)
+    {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+
+    /**
+     * Lineare Interpolation zwischen a und b.
+     */
+    private double lerp(double t, double a, double b)
+    {
+        return a + t * (b - a);
+    }
+
+    /**
+     * Gradient-Funktion für 1D: Liefert entweder den Wert x oder -x,
+     * abhängig vom Hash-Wert.
+     */
+    private double grad(int hash, double x)
+    {
+        return ((hash & 1) == 0 ? x : -x);
+    }
+
+    /**
+     * Erzeugt Noise mit mehreren Oktaven, um mehr Detail zu erreichen.
      *
-     * @param seed Seed-Wert für den Noise-Generator.
+     * @param x           Die Eingabekoordinate
+     * @param octaves     Anzahl der Oktaven (mehr Oktaven = mehr Details)
+     * @param persistence Bestimmt, wie stark die Amplitude bei jeder Oktave abnimmt (typischerweise 0.5)
+     * @return Der normalisierte Noise-Wert im Bereich ca. -1 bis 1.
      */
-    public NoiseGenerator(long seed) {
-        noise = new OpenSimplexNoise(seed);
-    }
-
-    // ----- Getter und Setter für die Eigenschaften -----
-
-    public void setFrequency(double frequency) {
-        this.frequency = frequency;
-    }
-
-    public double getFrequency() {
-        return frequency;
-    }
-
-    public void setOctaves(int octaves) {
-        this.octaves = octaves;
-    }
-
-    public int getOctaves() {
-        return octaves;
-    }
-
-    public void setPersistence(double persistence) {
-        this.persistence = persistence;
-    }
-
-    public double getPersistence() {
-        return persistence;
-    }
-
-    // ----- Öffentliche Methoden (ähnlich wie FastNoiseLite) -----
-
-    /**
-     * Liefert den 2D‑Noise-Wert an der Stelle (x, y) unter Berücksichtigung der Frequenz.
-     *
-     * @param x X‑Koordinate.
-     * @param y Y‑Koordinate.
-     * @return Noise-Wert im Bereich ca. [-1, 1].
-     */
-    public double getNoise2d(double x, double y) {
-        return noise.eval(x * frequency, y * frequency);
-    }
-
-    /**
-     * Liefert einen Fraktal‑(Oktaven‑)Noise-Wert an der Stelle (x, y).
-     * Dabei werden die Parameter octaves und persistence berücksichtigt.
-     *
-     * @param x X‑Koordinate.
-     * @param y Y‑Koordinate.
-     * @return Kombinierter Noise-Wert im Bereich ca. [-1, 1].
-     */
-    public double getNoise2dFractal(double x, double y) {
+    public double octaveNoise(double x, int octaves, double persistence)
+    {
         double total = 0;
-        double amp = 1;
-        double max = 0;
-        double freq = frequency;
-        for (int i = 0; i < octaves; i++) {
-            total += noise.eval(x * freq, y * freq) * amp;
-            max += amp;
-            amp *= persistence;
-            freq *= 2;
+        double frequency = 1;
+        double amplitude = 1;
+        double maxValue = 0; // Normierungsfaktor
+
+        for (int i = 0; i < octaves; i++)
+        {
+            total += noise(x * frequency) * amplitude;
+            maxValue += amplitude;
+            amplitude *= persistence;
+            frequency *= 2;
         }
-        return total / max;
+        return total / maxValue;
     }
 
     /**
-     * Beispielmethode zur Erzeugung einer Terrainhöhe.
-     * Um typische Artefakte entlang der Gitterachsen zu vermeiden, wird hier
-     * ein konstanter Y‑Offset genutzt.
-     *
-     * @param x X‑Koordinate (z. B. horizontale Position in der Welt).
-     * @return Terrainhöhe an der Stelle x als int.
+     * Beispiel: Terrain-Generierung in 1D.
+     * Hier wird für eine gegebene Breite eine Reihe von Höhenwerten berechnet.
      */
-    public int getTerrainHeight(double x) {
-        // Verwende als Y‑Wert einen festen Offset (z. B. 100), damit nicht exakt entlang einer Achse abgetastet wird.
-        double noiseValue = getNoise2dFractal(x, 100.0);
-        int baseHeight = 50;
-        int heightVariation = 10;
-        return baseHeight + (int) (noiseValue * heightVariation);
-    }
+    public static void main(String[] args)
+    {
+        // Parameter für die Terrain-Generierung
+        int width = 200;            // Anzahl der horizontalen Punkte
+        double scale = 0.05;        // Skalierungsfaktor, um die Frequenz anzupassen
+        int octaves = 5;            // Anzahl der Oktaven
+        double persistence = 0.5;   // Abnahme der Amplitude pro Oktave
 
-    // ----- Beispielmain‑Methode zum Testen -----
-    public static void main(String[] args) {
-        // Beispiel: Erzeuge eine Instanz und setze Parameter ähnlich zu Godot:
-        // In Godot: var noise = FastNoiseLite.new(); noise.frequency = 1.0 / 300.0;
-        NoiseGenerator ng = new NoiseGenerator(12345L);
-        ng.setFrequency(1.0 / 300.0);
-        ng.setOctaves(5);
-        ng.setPersistence(0.5);
+        // Erzeuge einen Noise-Generator mit einem Seed (hier aktuelle Zeit)
+        NoiseGenerator generator = new NoiseGenerator(System.currentTimeMillis());
+        double[] terrain = new double[width];
 
-        // Ausgabe: Terrainhöhe für verschiedene x-Werte
-        for (int i = 0; i < 100; i += 5) {
-            double x = i / 10.0;
-            int terrainHeight = ng.getTerrainHeight(x);
-            System.out.println("x = " + x + " -> Höhe = " + terrainHeight);
+        // Berechne für jeden x-Wert den Noise-Wert
+        for (int x = 0; x < width; x++)
+        {
+            // Mit octaveNoise erhältst du weichere, abwechslungsreiche Werte
+            double noiseValue = generator.octaveNoise(x * scale, octaves, persistence);
+
+            // Optional: Passe den Wertebereich an, z.B. auf eine gewünschte Höhe
+            // Hier belassen wir den Rohwert (ca. zwischen -1 und 1)
+            terrain[x] = noiseValue;
+        }
+
+        // Ausgabe der Terrainwerte (kannst du auch graphisch darstellen)
+        for (int x = 0; x < width; x++)
+        {
+            System.out.println("Terrain[" + x + "] = " + terrain[x]);
         }
     }
+
+
 }

@@ -34,27 +34,64 @@ public class Player extends Actor {
         // --- Body erstellen ---
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
-        // Bei Box2D entspricht die Position des Bodies dem Schwerpunkt.
-        // Deshalb setzen wir die Position so, dass der Body in der Mitte des Actors liegt.
-        bodyDef.position.set((x + getWidth() / 2) / Block.BLOCK_SIZE, (y + getHeight() / 2) / Block.BLOCK_SIZE);
+        // Positioniere den Body so, dass der Schwerpunkt in der Mitte liegt.
+        bodyDef.position.set((x + getWidth() / 2f) / Block.BLOCK_SIZE, (y + getHeight() / 2f) / Block.BLOCK_SIZE);
         body = world.createBody(bodyDef);
 
-        // Erstelle eine Box-Shape, die dem Actor entspricht (Halbmaße in Meter)
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(getWidth() / 2 / Block.BLOCK_SIZE, getHeight() / 2 / Block.BLOCK_SIZE);
+        /*
+         * Erstelle eine Capsule-Hitbox, die aus einem zentralen Rechteck und zwei Kreisen (oben & unten) besteht.
+         *
+         * Berechnungen:
+         * - Breite in Meter: getWidth() / Block.BLOCK_SIZE
+         * - Höhe in Meter: getHeight() / Block.BLOCK_SIZE
+         * - Radius der Capsule: halbe Breite (in Meter)
+         * - Höhe des Rechtecks: Gesamt-Höhe - 2 * Radius
+         */
+        float widthMeters = getWidth() / Block.BLOCK_SIZE;      // z.B. 64 / 32 = 2 m
+        float heightMeters = getHeight() / Block.BLOCK_SIZE;      // z.B. 64 / 32 = 2 m
+        float radius = widthMeters / 2f;                          // Radius = 1 m (bei 64x64)
+        float rectHeight = heightMeters - 2 * radius;             // Mittlerer Teil; kann 0 oder negativ werden, falls Höhe <= Breite
+        if (rectHeight < 0) {
+            rectHeight = 0;
+        }
 
         FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape;
         fixtureDef.density = 1f;
         fixtureDef.friction = 0.5f;
-        fixtureDef.restitution = 0f; // Keine Rückprallkraft
+        fixtureDef.restitution = 0f;
 
+        // Falls noch ein mittlerer Teil vorhanden ist, füge ein Rechteck hinzu.
+        if (rectHeight > 0) {
+            PolygonShape rectShape = new PolygonShape();
+            // Erstelle ein Rechteck, das zentriert ist: halbe Breite = radius, halbe Höhe = rectHeight/2.
+            rectShape.setAsBox(radius, rectHeight / 2f, new Vector2(0, 0), 0);
+            fixtureDef.shape = rectShape;
+            body.createFixture(fixtureDef);
+            rectShape.dispose();
+        }
+
+        // Erstelle den oberen Kreis.
+        CircleShape topCircle = new CircleShape();
+        topCircle.setRadius(radius);
+        // Positioniere den Kreis oben: die Mitte des Kreises liegt auf halber Höhe des Rechtecks.
+        topCircle.setPosition(new Vector2(0, rectHeight / 2f));
+        fixtureDef.shape = topCircle;
         body.createFixture(fixtureDef);
-        shape.dispose();
+        topCircle.dispose();
+
+        // Erstelle den unteren Kreis.
+        CircleShape bottomCircle = new CircleShape();
+        bottomCircle.setRadius(radius);
+        // Positioniere den Kreis unten.
+        bottomCircle.setPosition(new Vector2(0, -rectHeight / 2f));
+        fixtureDef.shape = bottomCircle;
+        body.createFixture(fixtureDef);
+        bottomCircle.dispose();
 
         // Setze UserData, um den Body später leichter identifizieren zu können
         body.setUserData(this);
     }
+
 
     @Override
     public void act(float delta) {
@@ -92,7 +129,7 @@ public class Player extends Actor {
         // die Position so setzen, dass der Actor mittig zum Body liegt.
         Vector2 bodyPos = body.getPosition();
         setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
-        
+
     }
 
     public int getChunkX() {
