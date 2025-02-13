@@ -33,9 +33,8 @@ For example, `core:clean` removes `build` folder only from the `core` project.
 
 ## Todo
 - mobs
-- save chunk/world
-- tilted blocks
 
 - settings
 - keybinds
 - esc menü
+- music

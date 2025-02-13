@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.world.GameScreen;
+import at.peckventure.world.WorldConfig;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -139,7 +140,6 @@ public class CreateWorld implements Screen {
                 // Lese Eingaben
                 String worldName = worldNameInput.getText();
                 String seedText = seedInput.getText();
-                // Falls kein Weltname eingegeben wurde, verwende einen Standardnamen
                 if (worldName == null || worldName.trim().isEmpty()) {
                     worldName = "World_" + System.currentTimeMillis();
                 }
@@ -147,24 +147,27 @@ public class CreateWorld implements Screen {
                 try {
                     seed = Long.parseLong(seedText);
                 } catch (NumberFormatException e) {
-                    // Falls der Seed nicht korrekt eingegeben wurde, verwende z. B. die aktuelle Zeit als Seed
                     seed = System.currentTimeMillis();
                 }
 
-                // Erstelle einen neuen Ordner im Verzeichnis saves (verwende dabei den in Const.savesDir definierten Pfad)
-                FileHandle newWorldDir = Gdx.files.absolute(savesDir + "/" + worldName);
-
-                if (!newWorldDir.exists()) {
+                FileHandle newWorldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
+                WorldConfig config;
+                if (newWorldDir.exists()) {
+                    // Welt existiert bereits – lade die Konfiguration
+                    FileHandle configFile = newWorldDir.child("worldconfig.txt");
+                    config = WorldConfig.load(configFile);
+                } else {
+                    // Neue Welt – erstelle den Ordner und speichere die Konfiguration
                     newWorldDir.mkdirs();
+                    config = new WorldConfig(seed);
+                    FileHandle configFile = newWorldDir.child("worldconfig.txt");
+                    config.save(configFile);
                 }
-                // Erstelle eine Weltkonfigurationsdatei, in der der Seed gespeichert wird
-                FileHandle worldConfigFile = newWorldDir.child("worldconfig.txt");
-                worldConfigFile.writeString("seed="+String.valueOf(seed), false);
-
-                // Starte den GameScreen mit der erstellten Welt (hier wird der Weltname übergeben)
+                // Starte den GameScreen mit dem Welt-Namen (der später im GameScreen auch den Seed verwendet)
                 game.setScreen(new GameScreen(game, worldName));
             }
         });
+
 
         // "Back"-Button: Gehe zurück zum vorherigen Screen
         backButton.addListener(new ClickListener() {
