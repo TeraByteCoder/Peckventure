@@ -1,5 +1,6 @@
 package at.peckventure.world.block;
 
+import at.peckventure.Textures;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
@@ -21,9 +22,9 @@ public class GrassTilted extends Block {
     public GrassTilted(World world, int gridX, int gridY, boolean left) {
         // Wähle das entsprechende Texture abhängig vom Boolean.
         // Dabei gehen wir davon aus, dass du für beide Richtungen ein eigenes Bild hast.
-        super(world, new Texture(left
-            ? "textures/blocks/grass_ramp_left.png"
-            : "textures/blocks/grass_ramp_right.png"), gridX, gridY);
+        super(world, left
+            ? Textures.GRASSRAMPLEFT.getTexture()
+            : Textures.GRASSRAMPRIGHT.getTexture(), gridX, gridY);
         this.leftRamp = left;
     }
 

@@ -2,6 +2,7 @@ package at.peckventure.world;
 
 import at.peckventure.entities.Player;
 import at.peckventure.world.block.Block;
+import at.peckventure.world.block.Box2DOperationManager;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -37,7 +38,6 @@ public class GameScreen implements Screen {
     public void show() {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
-        // Setze die Kamera so, dass sie etwa die Hälfte der Bildschirmgröße abbildet
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
 
         // Laden der Weltkonfiguration und der bereits gespeicherten Chunks
@@ -51,7 +51,7 @@ public class GameScreen implements Screen {
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         RegionManager regionManager = new RegionManager(worldDir);
 
-        // Erzeuge die InfiniteTilemap und übergebe die vorab geladenen Chunks und den RegionManager
+        // Erzeuge die InfiniteTilemap – übergebe die vorab geladenen Chunks und den RegionManager
         tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager);
 
         // Bestimme einen Spawnpunkt (hier beispielhaft anhand des Terrain-Generators)
@@ -63,24 +63,30 @@ public class GameScreen implements Screen {
         // Erstelle eine Stage, die den Spieler (und evtl. weitere Actors) verwaltet
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
         stage.addActor(player);
+
+        // Starte den Hintergrund-Thread, der die Chunk-Liste aktualisiert
+        tilemap.startChunkUpdateThread(player);
     }
 
     @Override
     public void render(float delta) {
+        Box2DOperationManager.processOperations();
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
+
         // Box2D Schritt – hier wird die Physik simuliert
         physicsWorld.step(delta, 6, 2);
 
         // Aktualisiere die Kamera so, dass sie dem Spieler folgt
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 2.0f;
+        camera.zoom = 10.0f;
         camera.update();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        // Die InfiniteTilemap führt intern den asynchronen Ladevorgang durch
-        tilemap.render(batch, player);
+        // Der Render-Thread zeichnet einfach alle aktuell geladenen Chunks,
+        // Änderungen in der Liste werden automatisch beim nächsten Frame sichtbar.
+        tilemap.render(batch);
         player.draw(batch);
         batch.end();
         stage.draw();
@@ -93,18 +99,18 @@ public class GameScreen implements Screen {
 
     @Override
     public void pause() {
-        // Beim Pausieren wird der aktuelle Zustand (alle geladenen Chunks) gespeichert.
+        // Speichere beim Pausieren den aktuellen Zustand (alle geladenen Chunks)
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks());
     }
 
     @Override
     public void resume() {
-        // Hier können zusätzliche Resumes-Aktionen erfolgen, falls nötig.
+        // Zusätzliche Resumes-Aktionen falls nötig.
     }
 
     @Override
     public void hide() {
-        // Falls zusätzliche Ressourcen freigegeben werden sollen, hier erledigen.
+        // Freigeben zusätzlicher Ressourcen, falls nötig.
     }
 
     @Override
@@ -115,8 +121,7 @@ public class GameScreen implements Screen {
         physicsWorld.dispose();
         // Speichere zuletzt alle noch im Speicher befindlichen Chunks
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks());
-        // Wichtiger Hinweis: Schalte den Executor des asynchronen Chunk-Lade-Systems ab,
-        // sodass keine Hintergrundthreads mehr laufen.
+        // Wichtiger Hinweis: Schalte den Chunk-Update-Thread ab, sodass keine Hintergrundthreads mehr laufen.
         tilemap.dispose();
     }
 }

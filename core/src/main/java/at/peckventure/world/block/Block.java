@@ -30,26 +30,26 @@ public abstract class Block extends Actor {
         float y = gridY * BLOCK_SIZE;
         setPosition(x, y);
 
-        // --- Body erstellen ---
-        BodyDef bodyDef = new BodyDef();
-        bodyDef.type = BodyDef.BodyType.StaticBody;
-        // Positioniere den Body in der Mitte des Blocks (Umrechnung in Meter: Pixel / BLOCK_SIZE)
-        bodyDef.position.set((x + getWidth() / 2f) / BLOCK_SIZE, (y + getHeight() / 2f) / BLOCK_SIZE);
-        body = world.createBody(bodyDef);
+        // Alle Box2D-Operationen werden in die Operation-Queue gepackt
+        Box2DOperationManager.queueOperation(() -> {
+            BodyDef bodyDef = new BodyDef();
+            bodyDef.type = BodyDef.BodyType.StaticBody;
+            // Positioniere den Body in der Mitte des Blocks (Umrechnung in Meter: Pixel / BLOCK_SIZE)
+            bodyDef.position.set((x + getWidth() / 2f) / BLOCK_SIZE, (y + getHeight() / 2f) / BLOCK_SIZE);
+            body = world.createBody(bodyDef);
 
-        // Erzeuge die Kollisionsform. Der Default ist ein Rechteck.
-        PolygonShape shape = createShape();
+            // Erzeuge die Kollisionsform. Der Default ist ein Rechteck.
+            PolygonShape shape = createShape();
+            FixtureDef fixtureDef = new FixtureDef();
+            fixtureDef.shape = shape;
+            fixtureDef.friction = 0.5f;
+            fixtureDef.restitution = 0f;
+            body.createFixture(fixtureDef);
+            shape.dispose();
 
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape;
-        fixtureDef.friction = 0.5f;
-        fixtureDef.restitution = 0f;
-
-        body.createFixture(fixtureDef);
-        shape.dispose();
-
-        // Setze UserData, damit der Body im ContactListener identifiziert werden kann
-        body.setUserData(this);
+            // Setze UserData, damit der Body im ContactListener identifiziert werden kann
+            body.setUserData(this);
+        });
     }
 
     /**
