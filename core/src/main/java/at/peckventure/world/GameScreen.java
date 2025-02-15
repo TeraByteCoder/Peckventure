@@ -79,7 +79,7 @@ public class GameScreen implements Screen {
 
         // Aktualisiere die Kamera so, dass sie dem Spieler folgt
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 10.0f;
+        camera.zoom = 2.0f;
         camera.update();
 
         batch.setProjectionMatrix(camera.combined);
