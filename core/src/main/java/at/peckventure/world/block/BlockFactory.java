@@ -15,7 +15,7 @@ public class BlockFactory {
                 return new GrassBlock(world, worldX, worldY);
             case GRASSTILTED_ID:
                 // Standardmäßig mit "true" als Rampenparameter; erweiterbar, wenn du weitere Daten speichern möchtest
-                return new GrassTilted(world, worldX, worldY, true);
+                return new GrassRamp(world, worldX, worldY, true);
             default:
                 return null;
         }
@@ -26,7 +26,7 @@ public class BlockFactory {
             return DIRT_ID;
         } else if (block instanceof GrassBlock) {
             return GRASS_ID;
-        } else if (block instanceof GrassTilted) {
+        } else if (block instanceof GrassRamp) {
             return GRASSTILTED_ID;
         }
         return 0;

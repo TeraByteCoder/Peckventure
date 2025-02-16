@@ -2,7 +2,7 @@ package at.peckventure.world.generator;
 
 import at.peckventure.world.block.DirtBlock;
 import at.peckventure.world.block.GrassBlock;
-import at.peckventure.world.block.GrassTilted;
+import at.peckventure.world.block.GrassRamp;
 import at.peckventure.world.chunk.Chunk;
 import com.badlogic.gdx.physics.box2d.World;
 
@@ -59,7 +59,7 @@ public class WorldGenerator {
                             // Beide Nachbarn sind niedriger – hier wird der stärkere Höhenunterschied berücksichtigt.
                             leftRamp = (currentHeight - leftHeight) < (currentHeight - rightHeight);
                         }
-                        chunk.setBlock(x, y, new GrassTilted(world, worldX, worldY, leftRamp));
+                        chunk.setBlock(x, y, new GrassRamp(world, worldX, worldY, leftRamp));
                     }
                     // Ansonsten wird ein normaler GrassBlock gesetzt.
                     else {
