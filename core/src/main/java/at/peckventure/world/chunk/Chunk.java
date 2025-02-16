@@ -75,24 +75,19 @@ public class Chunk
     {
         return Objects.hash(chunkX, chunkY);
     }
-/*
 
-
-    public void checkCollision(Player player)
-    {
-        for (int i = 0; i < CHUNK_SIZE; i++)
-        {
-            for (int j = 0; j < CHUNK_SIZE; j++)
-            {
-                if (blocks[i][j] != null)
-                {
-                    if (blocks[i][j].getCollisionBounds().overlaps(player.getCollisionBounds()))
-                    {
-                        player.colliding();
-                    }
+    /**
+     * Entlädt alle Ressourcen der Blöcke in diesem Chunk.
+     * Diese Methode sollte aufgerufen werden, bevor der Chunk entladen wird.
+     */
+    public void dispose() {
+        for (int i = 0; i < CHUNK_SIZE; i++) {
+            for (int j = 0; j < CHUNK_SIZE; j++) {
+                if (blocks[i][j] != null) {
+                    blocks[i][j].dispose();
+                    blocks[i][j] = null;
                 }
             }
         }
     }
-*/
 }

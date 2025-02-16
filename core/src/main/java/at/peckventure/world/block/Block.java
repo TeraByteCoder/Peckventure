@@ -80,4 +80,19 @@ public abstract class Block extends Actor {
     public Body getBody() {
         return body;
     }
+
+    public void dispose() {
+        if (body != null) {
+            // Lokale Kopie vom Body erstellen, damit die Lambda-Funktion darauf zugreifen kann
+            final Body b = body;
+            Box2DOperationManager.queueOperation(() -> {
+                if (b.getWorld() != null) {
+                    b.getWorld().destroyBody(b);
+                }
+            });
+            body = null;
+        }
+    }
+
+
 }

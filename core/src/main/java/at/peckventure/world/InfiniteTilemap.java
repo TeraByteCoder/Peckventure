@@ -67,6 +67,7 @@ public class InfiniteTilemap {
 
     /**
      * Unloadet Chunks, die zu weit vom Spieler entfernt sind und speichert sie vorher in der passenden Region-Datei.
+     * Dabei wird auch die dispose()-Methode des Chunks aufgerufen, um Ressourcen freizugeben.
      */
     private void unloadChunksOutsideRenderDistance(Player player) {
         Iterator<Chunk> iterator = loadedChunks.iterator();
@@ -75,6 +76,10 @@ public class InfiniteTilemap {
             if (Math.abs(chunk.getChunkX() - player.getChunkX()) > RENDER_DISTANCE + 2 ||
                 Math.abs(chunk.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2) {
 
+                // Ressourcen des Chunks freigeben
+                chunk.dispose();
+
+                // Speichern des Chunks in die Region-Datei
                 int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
                 int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
                 RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
@@ -139,6 +144,11 @@ public class InfiniteTilemap {
 
     public void dispose() {
         stopChunkUpdateThread();
+        // Optional: Alle noch geladenen Chunks entladen
+        for (Chunk chunk : loadedChunks) {
+            chunk.dispose();
+        }
+        loadedChunks.clear();
         // Falls weitere Ressourcen freigegeben werden müssen, hier ergänzen.
     }
 }
