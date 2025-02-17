@@ -1,8 +1,7 @@
-package at.peckventure.world.block;
+package at.peckventure.world;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import com.badlogic.gdx.Gdx;
 
 public class Box2DOperationManager {
     private static final Queue<Runnable> operationQueue = new ConcurrentLinkedQueue<>();

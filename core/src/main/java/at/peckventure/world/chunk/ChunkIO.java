@@ -2,6 +2,7 @@ package at.peckventure.world.chunk;
 
 import at.peckventure.world.block.Block;
 import at.peckventure.world.block.BlockFactory;
+import at.peckventure.world.block.GrassRamp;
 import com.badlogic.gdx.physics.box2d.World;
 
 import java.io.*;
@@ -20,13 +21,14 @@ public class ChunkIO {
                     Block block = chunk.getBlock(x, y);
                     if (block != null) {
                         dos.writeBoolean(true);
-                        dos.writeInt(BlockFactory.getBlockId(block)); // Block-ID speichern
-                        // Hier können weitere block-spezifische Daten gespeichert werden
+                        int blockId = BlockFactory.getBlockId(block);
+                        dos.writeInt(blockId);
                     } else {
                         dos.writeBoolean(false);
                     }
                 }
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,7 +47,10 @@ public class ChunkIO {
                     boolean hasBlock = dis.readBoolean();
                     if (hasBlock) {
                         int blockId = dis.readInt();
-                        Block block = BlockFactory.createBlock(blockId, world, chunkX * Chunk.CHUNK_SIZE + x, chunkY * Chunk.CHUNK_SIZE + y);
+                        // Umrechnung von Chunk- zu Weltkoordinaten:
+                        int worldX = chunkX * Chunk.CHUNK_SIZE + x;
+                        int worldY = chunkY * Chunk.CHUNK_SIZE + y;
+                        Block block = BlockFactory.createBlock(blockId, world, worldX, worldY);
                         chunk.setBlock(x, y, block);
                     }
                 }
@@ -56,4 +61,5 @@ public class ChunkIO {
         }
         return null;
     }
+
 }

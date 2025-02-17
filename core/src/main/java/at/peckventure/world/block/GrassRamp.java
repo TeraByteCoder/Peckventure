@@ -10,6 +10,11 @@ public class GrassRamp extends Block {
     // Gibt an, ob es sich um eine linke Rampe handelt (true) oder um eine rechte Rampe (false)
     private boolean leftRamp;
 
+    public boolean isLeftRamp()
+    {
+        return leftRamp;
+    }
+
     /**
      * Konstruktor für eine geneigte Grasoberfläche (Rampe).
      *

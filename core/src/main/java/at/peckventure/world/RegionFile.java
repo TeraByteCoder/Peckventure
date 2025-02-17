@@ -66,6 +66,9 @@ public class RegionFile {
     }
 
     public byte[] readChunk(int localX, int localY) throws IOException {
+        // Aktualisiere zuerst den Header, um sicherzustellen, dass wir die aktuellen Offsets haben
+        refreshHeader();
+
         int index = localX + localY * CHUNKS_PER_REGION;
         int headerEntry = offsets[index];
         if (headerEntry == 0) {
@@ -88,6 +91,7 @@ public class RegionFile {
             throw new IOException("Unsupported chunk version: " + version);
         }
     }
+
 
     // Helfermethoden für Kompression/Dekompression
     private byte[] compress(byte[] data) throws IOException {
@@ -125,4 +129,14 @@ public class RegionFile {
         channel.close();
         file.close();
     }
+
+    public void refreshHeader() throws IOException {
+        ByteBuffer header = ByteBuffer.allocate(HEADER_SIZE);
+        channel.read(header, 0);
+        header.rewind();
+        for (int i = 0; i < offsets.length; i++) {
+            offsets[i] = header.getInt();
+        }
+    }
+
 }

@@ -2,7 +2,6 @@ package at.peckventure.world;
 
 import at.peckventure.entities.Player;
 import at.peckventure.world.block.Block;
-import at.peckventure.world.block.Box2DOperationManager;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -55,7 +54,7 @@ public class GameScreen implements Screen {
         tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager);
 
         // Bestimme einen Spawnpunkt (hier beispielhaft anhand des Terrain-Generators)
-        float spawnX = 500;
+        float spawnX = 0;
         int terrainHeight = generator.getHeight((int) spawnX);
         float spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
         player = new Player(physicsWorld, spawnX, spawnY);
