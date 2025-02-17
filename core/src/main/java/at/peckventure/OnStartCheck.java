@@ -2,6 +2,7 @@ package at.peckventure;
 
 import static at.peckventure.Const.savesDir;
 import at.peckventure.Textures;
+import at.peckventure.world.block.BlockRegistration;
 
 public abstract class OnStartCheck
 {
@@ -9,6 +10,7 @@ public abstract class OnStartCheck
     {
         if (!savesDir.exists()) savesDir.mkdirs();
         loadTextures();
+        BlockRegistration.init();
     }
 
     public static void loadTextures()
