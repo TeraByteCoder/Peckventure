@@ -1,5 +1,6 @@
 package at.peckventure.world;
 
+import at.peckventure.entities.Player;
 import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Gdx;
@@ -17,11 +18,16 @@ public class WorldIO {
      * - Schreibt die Weltkonfiguration (z. B. den Seed) in worldconfig.txt
      * - Speichert alle aktuell geladenen Chunks in den entsprechenden Region-Dateien
      */
-    public static void saveWorld(String worldName, WorldConfig config, Set<Chunk> loadedChunks) {
+    public static void saveWorld(String worldName, WorldConfig config, Set<Chunk> loadedChunks, Player player) {
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         if (!worldDir.exists()) {
             worldDir.mkdirs();
         }
+
+        // Aktualisiere die Spielerposition in der Konfiguration:
+        config.setPlayerX(player.getX());
+        config.setPlayerY(player.getY());
+
         // Speichere die Konfiguration
         FileHandle configFile = worldDir.child("worldconfig.txt");
         config.save(configFile);
@@ -48,6 +54,7 @@ public class WorldIO {
         }
         regionManager.closeAll();
     }
+
 
     /**
      * Lädt eine Welt:
@@ -95,6 +102,8 @@ public class WorldIO {
         }
         return new LoadedWorld(config, loadedChunks);
     }
+
+
 
     public static class LoadedWorld {
         private WorldConfig config;

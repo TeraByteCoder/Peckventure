@@ -53,10 +53,15 @@ public class GameScreen implements Screen {
         // Erzeuge die InfiniteTilemap – übergebe die vorab geladenen Chunks und den RegionManager
         tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager);
 
-        // Bestimme einen Spawnpunkt (hier beispielhaft anhand des Terrain-Generators)
-        float spawnX = 0;
-        int terrainHeight = generator.getHeight((int) spawnX);
-        float spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
+        // Bestimme den Spawnpunkt anhand der gespeicherten Spielerposition, falls vorhanden
+        float spawnX = worldConfig.getPlayerX();
+        float spawnY = worldConfig.getPlayerY();
+        if (spawnX == 0 && spawnY == 0) {
+            // Falls keine Spielerposition gespeichert wurde, generiere einen Standard-Spawnpunkt.
+            spawnX = 0;
+            int terrainHeight = generator.getHeight((int) spawnX);
+            spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
+        }
         player = new Player(physicsWorld, spawnX, spawnY);
 
         // Erstelle eine Stage, die den Spieler (und evtl. weitere Actors) verwaltet
@@ -99,7 +104,7 @@ public class GameScreen implements Screen {
     @Override
     public void pause() {
         // Speichere beim Pausieren den aktuellen Zustand (alle geladenen Chunks)
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks());
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player);
     }
 
     @Override
@@ -119,7 +124,7 @@ public class GameScreen implements Screen {
         stage.dispose();
         physicsWorld.dispose();
         // Speichere zuletzt alle noch im Speicher befindlichen Chunks
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks());
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player);
         // Wichtiger Hinweis: Schalte den Chunk-Update-Thread ab, sodass keine Hintergrundthreads mehr laufen.
         tilemap.dispose();
     }
