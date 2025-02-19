@@ -81,6 +81,7 @@ public class GameScreen implements Screen {
         // Box2D Schritt – hier wird die Physik simuliert
         physicsWorld.step(delta, 6, 2);
 
+
         // Aktualisiere die Kamera so, dass sie dem Spieler folgt
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
         camera.zoom = 2.0f;
@@ -127,5 +128,6 @@ public class GameScreen implements Screen {
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player);
         // Wichtiger Hinweis: Schalte den Chunk-Update-Thread ab, sodass keine Hintergrundthreads mehr laufen.
         tilemap.dispose();
+
     }
 }

@@ -9,6 +9,7 @@ public enum Textures
     GRASS_BLOCK("textures/blocks/grass_block.png"),
     GRASSRAMPLEFT("textures/blocks/grass_ramp_left.png"),
     GRASSRAMPRIGHT("textures/blocks/grass_ramp_right.png"),
+    BEETLE("textures/criters/garden_foliage_beetle_idle.png"),
     ;
 
     private Texture texture;

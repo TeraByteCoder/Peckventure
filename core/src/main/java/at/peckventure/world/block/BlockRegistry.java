@@ -44,29 +44,23 @@ public class BlockRegistry {
      * @return Die zugewiesene ID oder 0, falls nicht gefunden.
      */
     public static int getBlockId(Block block) {
-        System.out.println("getBlockId: Suche ID für Block vom Typ " + block.getClass().getName());
 
         // Spezielle Unterscheidung für GrassRamp:
         if (block instanceof GrassRamp) {
             GrassRamp ramp = (GrassRamp) block;
             if (ramp.isLeftRamp()) {
-                System.out.println("GrassRamp erkannt: Linke Variante");
                 return BlockRegistration.GRASSRAMPLEFT_ID;
             } else {
-                System.out.println("GrassRamp erkannt: Rechte Variante");
                 return BlockRegistration.GRASSRAMPRIGHT_ID;
             }
         }
 
         // Standardfall für alle anderen Blocktypen
         for (Map.Entry<Class<? extends Block>, Integer> entry : classToId.entrySet()) {
-            System.out.println("Prüfe: registrierte Klasse " + entry.getKey().getName() + " mit ID " + entry.getValue());
             if (entry.getKey().isAssignableFrom(block.getClass())) {
-                System.out.println("getBlockId: Gefunden! ID = " + entry.getValue());
                 return entry.getValue();
             }
         }
-        System.out.println("getBlockId: Keine passende Registrierung gefunden!");
         return 0;
     }
 
