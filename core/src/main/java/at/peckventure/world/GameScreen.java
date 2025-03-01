@@ -1,18 +1,25 @@
 package at.peckventure.world;
 
+import at.peckventure.Textures;
 import at.peckventure.entities.Player;
+import at.peckventure.inventory.InventoryUI;
+import at.peckventure.inventory.ItemRegistry;
+import at.peckventure.inventory.item.Item;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 public class GameScreen implements Screen {
@@ -22,14 +29,17 @@ public class GameScreen implements Screen {
     private SpriteBatch batch;
     private Player player;
     private Stage stage;
+    private Stage uiStage;
     private InfiniteTilemap tilemap;
     private World physicsWorld;
     private WorldConfig worldConfig;
 
+    // Inventar-UI (arbeitet auf der separaten UI-Stage)
+    private InventoryUI inventoryUI;
+
     public GameScreen(Game game, String worldName) {
         this.game = game;
         this.worldName = worldName;
-        // Erstelle die physikalische Welt (Box2D)
         this.physicsWorld = new World(new Vector2(0, -19.81f), true);
     }
 
@@ -38,37 +48,46 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
+        stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
+        uiStage = new Stage(new ScreenViewport());
 
-        // Laden der Weltkonfiguration und der bereits gespeicherten Chunks
+        // InputMultiplexer für beide Stages
+        InputMultiplexer multiplexer = new InputMultiplexer();
+        multiplexer.addProcessor(uiStage);
+        multiplexer.addProcessor(stage);
+        Gdx.input.setInputProcessor(multiplexer);
+
+        // Welt laden
         WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldName, physicsWorld);
         worldConfig = loaded.getConfig();
-
-        // Erzeuge den WorldGenerator mit dem geladenen Seed
         WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
-
-        // Erstelle den RegionManager aus dem Weltordner
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         RegionManager regionManager = new RegionManager(worldDir);
-
-        // Erzeuge die InfiniteTilemap – übergebe die vorab geladenen Chunks und den RegionManager
         tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager);
 
-        // Bestimme den Spawnpunkt anhand der gespeicherten Spielerposition, falls vorhanden
         float spawnX = worldConfig.getPlayerX();
         float spawnY = worldConfig.getPlayerY();
         if (spawnX == 0 && spawnY == 0) {
-            // Falls keine Spielerposition gespeichert wurde, generiere einen Standard-Spawnpunkt.
             spawnX = 0;
             int terrainHeight = generator.getHeight((int) spawnX);
             spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
         }
         player = new Player(physicsWorld, spawnX, spawnY);
-
-        // Erstelle eine Stage, die den Spieler (und evtl. weitere Actors) verwaltet
-        stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
         stage.addActor(player);
 
-        // Starte den Hintergrund-Thread, der die Chunk-Liste aktualisiert
+        // Inventar-UI erstellen
+        inventoryUI = new InventoryUI(uiStage);
+        // Falls Inventardaten gespeichert sind, diese laden; ansonsten als Test ein Item hinzufügen
+        if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty()) {
+            inventoryUI.getInventory().deserialize(worldConfig.getInventoryHotbar(), worldConfig.getInventoryMain());
+        } else {
+            // Nutze das 'sword'-Item aus der Registry
+            if (ItemRegistry.contains("sword")) {
+                Item sword = ItemRegistry.createItem("sword");
+                inventoryUI.addItem(sword, 10);
+            }
+        }
+
         tilemap.startChunkUpdateThread(player);
     }
 
@@ -76,58 +95,45 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Box2DOperationManager.processOperations();
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        stage.act(delta);
-
-        // Box2D Schritt – hier wird die Physik simuliert
         physicsWorld.step(delta, 6, 2);
-
-
-        // Aktualisiere die Kamera so, dass sie dem Spieler folgt
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
         camera.zoom = 2.0f;
         camera.update();
-
+        stage.act(delta);
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        // Der Render-Thread zeichnet einfach alle aktuell geladenen Chunks,
-        // Änderungen in der Liste werden automatisch beim nächsten Frame sichtbar.
         tilemap.render(batch);
         player.draw(batch);
         batch.end();
         stage.draw();
+        uiStage.act(delta);
+        uiStage.draw();
     }
 
     @Override
     public void resize(int width, int height) {
-        camera.setToOrtho(false, width / 2f, height / 2f);
+        stage.getViewport().update(width, height, true);
+        uiStage.getViewport().update(width, height, true);
     }
 
     @Override
     public void pause() {
-        // Speichere beim Pausieren den aktuellen Zustand (alle geladenen Chunks)
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player);
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, inventoryUI.getInventory());
     }
 
     @Override
-    public void resume() {
-        // Zusätzliche Resumes-Aktionen falls nötig.
-    }
+    public void resume() { }
 
     @Override
-    public void hide() {
-        // Freigeben zusätzlicher Ressourcen, falls nötig.
-    }
+    public void hide() { }
 
     @Override
     public void dispose() {
-        // Zuerst alle grafischen und physikalischen Ressourcen freigeben
         batch.dispose();
         stage.dispose();
+        uiStage.dispose();
         physicsWorld.dispose();
-        // Speichere zuletzt alle noch im Speicher befindlichen Chunks
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player);
-        // Wichtiger Hinweis: Schalte den Chunk-Update-Thread ab, sodass keine Hintergrundthreads mehr laufen.
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, inventoryUI.getInventory());
         tilemap.dispose();
-
     }
 }

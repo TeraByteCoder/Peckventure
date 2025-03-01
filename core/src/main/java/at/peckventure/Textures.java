@@ -10,6 +10,10 @@ public enum Textures
     GRASSRAMPLEFT("textures/blocks/grass_ramp_left.png"),
     GRASSRAMPRIGHT("textures/blocks/grass_ramp_right.png"),
     BEETLE("textures/criters/garden_foliage_beetle_idle.png"),
+
+    INVENTORY_SLOT("textures/inventory_slot.png"),
+
+    TEST_ITEM("textures/test_item.png"),
     ;
 
     private Texture texture;

@@ -1,6 +1,7 @@
 package at.peckventure.world;
 
 import at.peckventure.entities.Player;
+import at.peckventure.inventory.Inventory;
 import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Gdx;
@@ -13,38 +14,31 @@ import java.util.Set;
 
 public class WorldIO {
 
-    /**
-     * Speichert die Welt:
-     * - Schreibt die Weltkonfiguration (z. B. den Seed) in worldconfig.txt
-     * - Speichert alle aktuell geladenen Chunks in den entsprechenden Region-Dateien
-     */
-    public static void saveWorld(String worldName, WorldConfig config, Set<Chunk> loadedChunks, Player player) {
+    public static void saveWorld(String worldName, WorldConfig config, Set<Chunk> loadedChunks,
+                                 Player player, Inventory inventory) {
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         if (!worldDir.exists()) {
             worldDir.mkdirs();
         }
-
-        // Aktualisiere die Spielerposition in der Konfiguration:
+        // Spielerposition aktualisieren
         config.setPlayerX(player.getX());
         config.setPlayerY(player.getY());
+        // Inventar serialisieren
+        config.setInventoryHotbar(inventory.serializeHotbar());
+        config.setInventoryMain(inventory.serializeMain());
 
-        // Speichere die Konfiguration
+        // Weltkonfiguration speichern
         FileHandle configFile = worldDir.child("worldconfig.txt");
         config.save(configFile);
 
-        // Speichere die Chunks mithilfe des RegionManagers
+        // Chunks speichern (unverändert)
         RegionManager regionManager = new RegionManager(worldDir);
         for (Chunk chunk : loadedChunks) {
-            // Bestimme, in welcher Region dieser Chunk liegt
             int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
             int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
             RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
-
-            // Bestimme die lokalen Koordinaten innerhalb der Region
             int localX = Math.floorMod(chunk.getChunkX(), RegionManager.REGION_SIZE);
             int localY = Math.floorMod(chunk.getChunkY(), RegionManager.REGION_SIZE);
-
-            // Serialisiere den Chunk
             byte[] data = ChunkIO.serialize(chunk);
             try {
                 regionFile.writeChunk(localX, localY, data);
@@ -55,35 +49,27 @@ public class WorldIO {
         regionManager.closeAll();
     }
 
-
     /**
-     * Lädt eine Welt:
-     * - Liest die Weltkonfiguration aus der worldconfig.txt
-     * - Lädt alle in den Region-Dateien gespeicherten Chunks
-     * (Hier wird zur Vereinfachung jeder gespeicherte Chunk geladen.)
+     * Lädt die Weltkonfiguration und alle gespeicherten Chunks.
      */
     public static LoadedWorld loadWorld(String worldName, World physicsWorld) {
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         if (!worldDir.exists()) {
             throw new RuntimeException("World does not exist: " + worldName);
         }
-        // Lese die Konfiguration
         FileHandle configFile = worldDir.child("worldconfig.txt");
         WorldConfig config = WorldConfig.load(configFile);
 
-        // Lade alle Chunks aus den Region-Dateien
         Set<Chunk> loadedChunks = new HashSet<>();
         FileHandle regionsDir = worldDir.child("regions");
         if (regionsDir.exists()) {
             for (FileHandle regionFileHandle : regionsDir.list()) {
                 try {
                     RegionFile regionFile = new RegionFile(regionFileHandle.file());
-                    // Der Dateiname hat das Format "r.regionX.regionY.pvr"
                     String[] tokens = regionFileHandle.nameWithoutExtension().split("\\.");
                     if (tokens.length >= 3) {
                         int regionX = Integer.parseInt(tokens[1]);
                         int regionY = Integer.parseInt(tokens[2]);
-                        // Versuche für jede mögliche lokale Position den Chunk zu laden
                         for (int localX = 0; localX < RegionFile.CHUNKS_PER_REGION; localX++) {
                             for (int localY = 0; localY < RegionFile.CHUNKS_PER_REGION; localY++) {
                                 byte[] data = regionFile.readChunk(localX, localY);
@@ -102,8 +88,6 @@ public class WorldIO {
         }
         return new LoadedWorld(config, loadedChunks);
     }
-
-
 
     public static class LoadedWorld {
         private WorldConfig config;
