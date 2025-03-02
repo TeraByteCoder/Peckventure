@@ -3,6 +3,8 @@ package at.peckventure.inventory;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import at.peckventure.Textures;
 import at.peckventure.inventory.item.Item;
 public class ItemRegistry {
 
@@ -23,5 +25,16 @@ public class ItemRegistry {
 
     public static boolean contains(String id) {
         return registry.containsKey(id);
+    }
+    static
+    {
+        ItemRegistry.register("sword", () ->
+            new Item("sword", "Schwert", Textures.TEST_ITEM.getTexture())
+        );
+    }
+
+    public static void init()
+    {
+
     }
 }

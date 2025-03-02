@@ -46,4 +46,20 @@ public enum Textures
             texture.dispose();
         }
     }
+
+    static
+    {
+        Textures.DIRT.loadTexture();
+        Textures.GRASS_BLOCK.loadTexture();
+        Textures.GRASSRAMPLEFT.loadTexture();
+        Textures.GRASSRAMPRIGHT.loadTexture();
+        Textures.BEETLE.loadTexture();
+        Textures.TEST_ITEM.loadTexture();
+        Textures.INVENTORY_SLOT.loadTexture();
+    }
+
+    public static void init()
+    {
+
+    }
 }

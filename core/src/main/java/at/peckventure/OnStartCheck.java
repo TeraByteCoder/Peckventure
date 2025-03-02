@@ -2,6 +2,7 @@ package at.peckventure;
 
 import static at.peckventure.Const.savesDir;
 import at.peckventure.Textures;
+import at.peckventure.chat.CommandRegistry;
 import at.peckventure.entities.mob.MobRegistration;
 import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.inventory.item.Item;
@@ -15,27 +16,13 @@ public abstract class OnStartCheck
     public static void checkOnStart()
     {
         if (!savesDir.exists()) savesDir.mkdirs();
-        loadTextures();
+
         BlockRegistration.init();
         MobRegistration.init();
-        registerItems();
+        CommandRegistry.init();
+        Textures.init();
+        ItemRegistry.init();
     }
 
-    public static void loadTextures()
-    {
-        Textures.DIRT.loadTexture();
-        Textures.GRASS_BLOCK.loadTexture();
-        Textures.GRASSRAMPLEFT.loadTexture();
-        Textures.GRASSRAMPRIGHT.loadTexture();
-        Textures.BEETLE.loadTexture();
-        Textures.TEST_ITEM.loadTexture();
-        Textures.INVENTORY_SLOT.loadTexture();
-    }
 
-    public static void registerItems()
-    {
-        ItemRegistry.register("sword", () ->
-            new Item("sword", "Schwert", Textures.TEST_ITEM.getTexture())
-        );
-    }
 }

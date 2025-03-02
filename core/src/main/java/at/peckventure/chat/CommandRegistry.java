@@ -1,14 +1,16 @@
 package at.peckventure.chat;
 
 import at.peckventure.chat.commands.Command;
+import at.peckventure.chat.commands.GiveCommand;
+import at.peckventure.chat.commands.PrintCommand;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Arrays;
 
 public class CommandRegistry {
-    private final Map<String, Command> commands = new HashMap<>();
-    public void registerCommand(Command command) {
+    private static final Map<String, Command> commands = new HashMap<>();
+    public static void registerCommand(Command command) {
         commands.put(command.getName().toLowerCase(), command);
     }
     public void executeCommand(String input, ChatUI chatUI) {
@@ -21,5 +23,16 @@ public class CommandRegistry {
         } else {
             chatUI.addMessage("Unknown command: " + parts[0]);
         }
+    }
+
+    static
+    {
+        registerCommand(new PrintCommand());
+        registerCommand(new GiveCommand());
+    }
+
+    public static void init()
+    {
+
     }
 }

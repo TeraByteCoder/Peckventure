@@ -47,8 +47,6 @@ public class ChatUI {
         tfs.font = font;
         tfs.fontColor = Color.WHITE;
         commandRegistry = new CommandRegistry();
-        commandRegistry.registerCommand(new PrintCommand());
-        commandRegistry.registerCommand(new GiveCommand());
         chatInput = new TextField("", tfs);
         chatInput.setMessageText("Enter command or chat...");
         chatInput.setVisible(false);
