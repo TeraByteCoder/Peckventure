@@ -21,24 +21,26 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import at.peckventure.chat.ChatUI;
 
-public class GameScreen implements Screen {
+public class GameScreen implements Screen
+{
 
     private ChatUI chatUI;
-    private Game game;
-    private String worldName;
+    private final Game game;
+    private final String worldName;
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private Player player;
     private Stage stage;
     private Stage uiStage;
     private InfiniteTilemap tilemap;
-    private World physicsWorld;
+    private final World physicsWorld;
     private WorldConfig worldConfig;
 
     // Inventar-UI (arbeitet auf der separaten UI-Stage)
     private InventoryUI inventoryUI;
 
-    public GameScreen(Game game, String worldName) {
+    public GameScreen(Game game, String worldName)
+    {
         this.game = game;
         this.worldName = worldName;
         this.physicsWorld = new World(new Vector2(0, -19.81f), true);
@@ -60,11 +62,14 @@ public class GameScreen implements Screen {
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);
         multiplexer.addProcessor(stage);
-        multiplexer.addProcessor(new InputAdapter() {
+        multiplexer.addProcessor(new InputAdapter()
+        {
             @Override
-            public boolean keyDown(int keycode) {
+            public boolean keyDown(int keycode)
+            {
                 // Wenn T gedrückt wird, Chat ein/aus schalten
-                if (keycode == Input.Keys.T) {
+                if (keycode == Input.Keys.T)
+                {
                     chatUI.toggleChat();
                     // return true => Event wird "verbraucht" und NICHT weitergeleitet
                     return true;
@@ -108,7 +113,8 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void render(float delta) {
+    public void render(float delta)
+    {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         Box2DOperationManager.processOperations();
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -128,24 +134,31 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void resize(int width, int height) {
+    public void resize(int width, int height)
+    {
         stage.getViewport().update(width, height, true);
         uiStage.getViewport().update(width, height, true);
     }
 
     @Override
-    public void pause() {
+    public void pause()
+    {
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, inventoryUI.getInventory());
     }
 
     @Override
-    public void resume() { }
+    public void resume()
+    {
+    }
 
     @Override
-    public void hide() { }
+    public void hide()
+    {
+    }
 
     @Override
-    public void dispose() {
+    public void dispose()
+    {
         batch.dispose();
         stage.dispose();
         uiStage.dispose();

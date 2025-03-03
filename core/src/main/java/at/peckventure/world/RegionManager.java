@@ -8,40 +8,51 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RegionManager {
-    private FileHandle regionsDir;
-    private Map<String, RegionFile> regionCache = new HashMap<>();
+public class RegionManager
+{
+    private final FileHandle regionsDir;
+    private final Map<String, RegionFile> regionCache = new HashMap<>();
     public static final int REGION_SIZE = RegionFile.CHUNKS_PER_REGION; // Anzahl Chunks pro Region in einer Richtung
 
-    public RegionManager(FileHandle worldDir) {
+    public RegionManager(FileHandle worldDir)
+    {
         regionsDir = worldDir.child("regions");
-        if (!regionsDir.exists()) {
+        if (!regionsDir.exists())
+        {
             regionsDir.mkdirs();
         }
     }
 
     // Ermittelt (und cached) die Region-Datei für gegebene Region-Koordinaten
-    public RegionFile getRegionFile(int regionX, int regionY) {
+    public RegionFile getRegionFile(int regionX, int regionY)
+    {
         String key = regionX + "_" + regionY;
-        if (regionCache.containsKey(key)) {
+        if (regionCache.containsKey(key))
+        {
             return regionCache.get(key);
         }
         FileHandle regionFileHandle = regionsDir.child("r." + regionX + "." + regionY + ".pvr");
-        try {
+        try
+        {
             RegionFile regionFile = new RegionFile(regionFileHandle.file());
             regionCache.put(key, regionFile);
             return regionFile;
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             e.printStackTrace();
         }
         return null;
     }
 
-    public void closeAll() {
-        for (RegionFile rf : regionCache.values()) {
-            try {
+    public void closeAll()
+    {
+        for (RegionFile rf : regionCache.values())
+        {
+            try
+            {
                 rf.close();
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 e.printStackTrace();
             }
         }

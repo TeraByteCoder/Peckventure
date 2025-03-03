@@ -11,21 +11,23 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
-public class Player extends Actor {
+public class Player extends Actor
+{
 
-    private World world;
-    private Body body;
-    private Sprite sprite;
+    private final World world;
+    private final Body body;
+    private final Sprite sprite;
 
     // Parameter in Pixel (für die Spielmechanik)
-    private float speed = 400;       // Horizontale Geschwindigkeit in Pixel/s
-    private float flyForce = 700;    // Vertikale "Flugkraft" in Pixel/s
-    private float maxHeight = 1000;  // Maximale Flughöhe (relativ zum Start) in Pixel
-    private float hoverDampening = 200; // Dämpfungswert, wenn oberhalb der Maximalhöhe
+    private final float speed = 400;       // Horizontale Geschwindigkeit in Pixel/s
+    private final float flyForce = 700;    // Vertikale "Flugkraft" in Pixel/s
+    private final float maxHeight = 1000;  // Maximale Flughöhe (relativ zum Start) in Pixel
+    private final float hoverDampening = 200; // Dämpfungswert, wenn oberhalb der Maximalhöhe
 
-    private float startY;            // Startposition in Pixel
+    private final float startY;            // Startposition in Pixel
 
-    public Player(World world, float x, float y) {
+    public Player(World world, float x, float y)
+    {
         this.world = world;
         this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
         this.startY = y;
@@ -51,7 +53,8 @@ public class Player extends Actor {
         float heightMeters = getHeight() / Block.BLOCK_SIZE;      // z.B. 64 / 32 = 2 m
         float radius = widthMeters / 2f;                          // Radius = 1 m (bei 64x64)
         float rectHeight = heightMeters - 2 * radius;             // Mittlerer Teil; kann 0 oder negativ werden, falls Höhe <= Breite
-        if (rectHeight < 0) {
+        if (rectHeight < 0)
+        {
             rectHeight = 0;
         }
 
@@ -61,7 +64,8 @@ public class Player extends Actor {
         fixtureDef.restitution = 0f;
 
         // Falls noch ein mittlerer Teil vorhanden ist, füge ein Rechteck hinzu.
-        if (rectHeight > 0) {
+        if (rectHeight > 0)
+        {
             PolygonShape rectShape = new PolygonShape();
             // Erstelle ein Rechteck, das zentriert ist: halbe Breite = radius, halbe Höhe = rectHeight/2.
             rectShape.setAsBox(radius, rectHeight / 2f, new Vector2(0, 0), 0);
@@ -94,14 +98,17 @@ public class Player extends Actor {
 
 
     @Override
-    public void act(float delta) {
+    public void act(float delta)
+    {
         // --- Steuerung horizontal (A/D) ---
         float direction = 0;
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.A))
+        {
             direction = -1;
             sprite.setFlip(false, false);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.D))
+        {
             direction = 1;
             sprite.setFlip(true, false);
         }
@@ -115,11 +122,14 @@ public class Player extends Actor {
         // Berechne die aktuelle Y-Position des Bodies in Pixeln
         float bodyYPixels = body.getPosition().y * Block.BLOCK_SIZE;
         float relativeHeight = startY - bodyYPixels;
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            if (relativeHeight < maxHeight) {
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE))
+        {
+            if (relativeHeight < maxHeight)
+            {
                 // Setze die vertikale Geschwindigkeit (in m/s)
                 body.setLinearVelocity(body.getLinearVelocity().x, flyForce / Block.BLOCK_SIZE);
-            } else {
+            } else
+            {
                 body.setLinearVelocity(body.getLinearVelocity().x, hoverDampening / Block.BLOCK_SIZE);
             }
         }
@@ -132,21 +142,25 @@ public class Player extends Actor {
 
     }
 
-    public int getChunkX() {
+    public int getChunkX()
+    {
         return (int) this.getX() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
-    public int getChunkY() {
+    public int getChunkY()
+    {
         return (int) this.getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
 
-    public void draw(Batch batch) {
+    public void draw(Batch batch)
+    {
         // Zeichne das Texture an der Position des Actors
         batch.draw(sprite, getX(), getY(), getWidth(), getHeight());
     }
 
-    public Body getBody() {
+    public Body getBody()
+    {
         return body;
     }
 }

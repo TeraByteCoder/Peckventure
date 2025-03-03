@@ -5,7 +5,7 @@ import com.badlogic.gdx.Screen;
 
 public class MultiPlayer implements Screen
 {
-    private Game game;
+    private final Game game;
 
     public MultiPlayer(Game game)
     {

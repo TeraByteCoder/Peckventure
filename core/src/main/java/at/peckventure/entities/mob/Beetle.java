@@ -7,18 +7,21 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.physics.box2d.*;
 
-public class Beetle extends Mob {
-    private Texture texture;
+public class Beetle extends Mob
+{
+    private final Texture texture;
     private Body body;
 
-    public Beetle(World world, float x, float y) {
+    public Beetle(World world, float x, float y)
+    {
         super(world, x, y);
         // Lade die Textur über dein Textur-Management (hier ein Beispiel)
         texture = Textures.BEETLE.getTexture();
         setSize(32, 32);
 
         // Erstelle den Box2D-Körper über die Operation-Queue
-        Box2DOperationManager.queueOperation(() -> {
+        Box2DOperationManager.queueOperation(() ->
+        {
             BodyDef bodyDef = new BodyDef();
             bodyDef.type = BodyDef.BodyType.DynamicBody;
             // Positioniere den Body in der Mitte des Mobs (Umrechnung in Meter: Pixel / BLOCK_SIZE)
@@ -42,13 +45,16 @@ public class Beetle extends Mob {
     }
 
     @Override
-    public void draw(Batch batch, float parentAlpha) {
+    public void draw(Batch batch, float parentAlpha)
+    {
         batch.draw(texture, getX(), getY(), getWidth(), getHeight());
     }
 
     @Override
-    public void update(float delta) {
-        if (body != null) {
+    public void update(float delta)
+    {
+        if (body != null)
+        {
             // Aktualisiere die Position anhand des Box2D-Körpers (Umrechnung Meter->Pixel)
             float newX = body.getPosition().x * Block.BLOCK_SIZE - getWidth() / 2f;
             float newY = body.getPosition().y * Block.BLOCK_SIZE - getHeight() / 2f;
@@ -57,11 +63,15 @@ public class Beetle extends Mob {
     }
 
     @Override
-    public void dispose() {
+    public void dispose()
+    {
         //texture.dispose();
-        if (body != null) {
-            Box2DOperationManager.queueOperation(() -> {
-                if (body.getWorld() != null) {
+        if (body != null)
+        {
+            Box2DOperationManager.queueOperation(() ->
+            {
+                if (body.getWorld() != null)
+                {
                     body.getWorld().destroyBody(body);
                 }
             });

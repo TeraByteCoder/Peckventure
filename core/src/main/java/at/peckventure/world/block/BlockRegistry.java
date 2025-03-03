@@ -1,10 +1,12 @@
 package at.peckventure.world.block;
 
 import com.badlogic.gdx.physics.box2d.World;
+
 import java.util.HashMap;
 import java.util.Map;
 
-public class BlockRegistry {
+public class BlockRegistry
+{
     private static final Map<Integer, BlockCreator> registry = new HashMap<>();
     // Neue Map, die Blockklassen ihren IDs zuordnet
     private static final Map<Class<? extends Block>, Integer> classToId = new HashMap<>();
@@ -16,7 +18,8 @@ public class BlockRegistry {
      * @param clazz   Die Klasse des Blocks (z. B. DirtBlock.class).
      * @param creator Die Factory, die den Block erzeugt.
      */
-    public static void registerBlock(int id, Class<? extends Block> clazz, BlockCreator creator) {
+    public static void registerBlock(int id, Class<? extends Block> clazz, BlockCreator creator)
+    {
         registry.put(id, creator);
         classToId.put(clazz, id);
     }
@@ -31,7 +34,8 @@ public class BlockRegistry {
      * @param args   Optionale zusätzliche Parameter.
      * @return Den erzeugten Block oder null, wenn kein Block unter dieser ID registriert ist.
      */
-    public static Block createBlock(int id, World world, int worldX, int worldY, Object... args) {
+    public static Block createBlock(int id, World world, int worldX, int worldY, Object... args)
+    {
         BlockCreator creator = registry.get(id);
         return (creator != null) ? creator.create(world, worldX, worldY, args) : null;
     }
@@ -43,27 +47,32 @@ public class BlockRegistry {
      * @param block Der Block.
      * @return Die zugewiesene ID oder 0, falls nicht gefunden.
      */
-    public static int getBlockId(Block block) {
+    public static int getBlockId(Block block)
+    {
 
         // Spezielle Unterscheidung für GrassRamp:
-        if (block instanceof GrassRamp) {
+        if (block instanceof GrassRamp)
+        {
             GrassRamp ramp = (GrassRamp) block;
-            if (ramp.isLeftRamp()) {
+            if (ramp.isLeftRamp())
+            {
                 return BlockRegistration.GRASSRAMPLEFT_ID;
-            } else {
+            } else
+            {
                 return BlockRegistration.GRASSRAMPRIGHT_ID;
             }
         }
 
         // Standardfall für alle anderen Blocktypen
-        for (Map.Entry<Class<? extends Block>, Integer> entry : classToId.entrySet()) {
-            if (entry.getKey().isAssignableFrom(block.getClass())) {
+        for (Map.Entry<Class<? extends Block>, Integer> entry : classToId.entrySet())
+        {
+            if (entry.getKey().isAssignableFrom(block.getClass()))
+            {
                 return entry.getValue();
             }
         }
         return 0;
     }
-
 
 
 }

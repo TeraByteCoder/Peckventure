@@ -16,7 +16,8 @@ public class GiveCommand extends Command
     @Override
     public void execute(String[] args, ChatUI chatUI)
     {
-        if (args.length < 2) {
+        if (args.length < 2)
+        {
             chatUI.addMessage("Usage: /give <item> <amount>");
             return;
         }
@@ -26,9 +27,11 @@ public class GiveCommand extends Command
 
         // Zweites Argument in einen int umwandeln
         int amount;
-        try {
+        try
+        {
             amount = Integer.parseInt(args[1]);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException e)
+        {
             chatUI.addMessage("Invalid amount: " + args[1]);
             return;
         }

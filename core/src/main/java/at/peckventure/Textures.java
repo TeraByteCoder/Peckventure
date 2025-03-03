@@ -5,11 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 
 public enum Textures
 {
-    DIRT("textures/blocks/dirt.png"),
-    GRASS_BLOCK("textures/blocks/grass_block.png"),
-    GRASSRAMPLEFT("textures/blocks/grass_ramp_left.png"),
-    GRASSRAMPRIGHT("textures/blocks/grass_ramp_right.png"),
-    BEETLE("textures/criters/garden_foliage_beetle_idle.png"),
+    DIRT("textures/blocks/dirt.png"), GRASS_BLOCK("textures/blocks/grass_block.png"), GRASSRAMPLEFT("textures/blocks/grass_ramp_left.png"), GRASSRAMPRIGHT("textures/blocks/grass_ramp_right.png"), BEETLE("textures/criters/garden_foliage_beetle_idle.png"),
 
     INVENTORY_SLOT("textures/inventory_slot.png"),
 

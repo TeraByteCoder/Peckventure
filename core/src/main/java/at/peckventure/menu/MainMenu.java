@@ -13,19 +13,22 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
-public class MainMenu implements Screen {
-    private Game game;
+public class MainMenu implements Screen
+{
+    private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
     private Label titleLabel;
 
-    public MainMenu(Game game) {
+    public MainMenu(Game game)
+    {
         this.game = game;
     }
 
     @Override
-    public void show() {
+    public void show()
+    {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
@@ -82,56 +85,74 @@ public class MainMenu implements Screen {
         stage.addActor(rootTable);
 
         // Button Events
-        singlePlayerButton.addListener(new ClickListener() {
+        singlePlayerButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new SinglePlayer(game));
             }
         });
 
-        settingsButton.addListener(new ClickListener() {
+        settingsButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new Settings(game)); // 🎯 Geht zu Settings
             }
         });
 
-        exitButton.addListener(new ClickListener() {
+        exitButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 Gdx.app.exit();
             }
         });
 
-        multiPlayerButton.addListener(new ClickListener() {
+        multiPlayerButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new MultiPlayer(game));
             }
         });
     }
 
     @Override
-    public void render(float delta) {
+    public void render(float delta)
+    {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
     }
 
     @Override
-    public void resize(int i, int i1) {}
+    public void resize(int i, int i1)
+    {
+    }
 
     @Override
-    public void pause() {}
+    public void pause()
+    {
+    }
 
     @Override
-    public void resume() {}
+    public void resume()
+    {
+    }
 
     @Override
-    public void hide() {}
+    public void hide()
+    {
+    }
 
     @Override
-    public void dispose() {
+    public void dispose()
+    {
         backgroundTexture.dispose();
         stage.dispose();
     }

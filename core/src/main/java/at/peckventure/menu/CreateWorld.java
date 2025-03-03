@@ -21,8 +21,9 @@ import com.badlogic.gdx.utils.Align;
 
 import static at.peckventure.Const.savesDir;
 
-public class CreateWorld implements Screen {
-    private Game game;
+public class CreateWorld implements Screen
+{
+    private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
@@ -32,12 +33,14 @@ public class CreateWorld implements Screen {
     // Texture für den Hintergrund der Textfelder (wird im dispose() aufgeräumt)
     private Texture textFieldTexture;
 
-    public CreateWorld(Game game) {
+    public CreateWorld(Game game)
+    {
         this.game = game;
     }
 
     @Override
-    public void show() {
+    public void show()
+    {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
@@ -134,29 +137,36 @@ public class CreateWorld implements Screen {
         // Button-Events
 
         // "Create World"-Button: Liest die Eingaben aus und erstellt den Welt-Ordner samt Konfigurationsdatei
-        createWorldButton.addListener(new ClickListener() {
+        createWorldButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 // Lese Eingaben
                 String worldName = worldNameInput.getText();
                 String seedText = seedInput.getText();
-                if (worldName == null || worldName.trim().isEmpty()) {
+                if (worldName == null || worldName.trim().isEmpty())
+                {
                     worldName = "World_" + System.currentTimeMillis();
                 }
                 long seed;
-                try {
+                try
+                {
                     seed = Long.parseLong(seedText);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException e)
+                {
                     seed = System.currentTimeMillis();
                 }
 
                 FileHandle newWorldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
                 WorldConfig config;
-                if (newWorldDir.exists()) {
+                if (newWorldDir.exists())
+                {
                     // Welt existiert bereits – lade die Konfiguration
                     FileHandle configFile = newWorldDir.child("worldconfig.txt");
                     config = WorldConfig.load(configFile);
-                } else {
+                } else
+                {
                     // Neue Welt – erstelle den Ordner und speichere die Konfiguration
                     newWorldDir.mkdirs();
                     config = new WorldConfig(seed);
@@ -170,47 +180,56 @@ public class CreateWorld implements Screen {
 
 
         // "Back"-Button: Gehe zurück zum vorherigen Screen
-        backButton.addListener(new ClickListener() {
+        backButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new SinglePlayer(game));
             }
         });
     }
 
     @Override
-    public void render(float delta) {
+    public void render(float delta)
+    {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
     }
 
     @Override
-    public void resize(int width, int height) {
+    public void resize(int width, int height)
+    {
         // Optional: Hier kannst du z. B. stage.getViewport().update(width, height, true) aufrufen
     }
 
     @Override
-    public void pause() {
+    public void pause()
+    {
         // Nicht benötigt
     }
 
     @Override
-    public void resume() {
+    public void resume()
+    {
         // Nicht benötigt
     }
 
     @Override
-    public void hide() {
+    public void hide()
+    {
         // Nicht benötigt
     }
 
     @Override
-    public void dispose() {
+    public void dispose()
+    {
         backgroundTexture.dispose();
         stage.dispose();
         font.dispose();
-        if (textFieldTexture != null) {
+        if (textFieldTexture != null)
+        {
             textFieldTexture.dispose();
         }
     }

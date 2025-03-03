@@ -1,6 +1,7 @@
 package at.peckventure;
 
 import static at.peckventure.Const.savesDir;
+
 import at.peckventure.Textures;
 import at.peckventure.chat.CommandRegistry;
 import at.peckventure.entities.mob.MobRegistration;
@@ -23,6 +24,4 @@ public abstract class OnStartCheck
         Textures.init();
         ItemRegistry.init();
     }
-
-
 }

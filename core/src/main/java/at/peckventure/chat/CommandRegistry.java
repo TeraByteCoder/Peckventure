@@ -8,19 +8,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Arrays;
 
-public class CommandRegistry {
+public class CommandRegistry
+{
     private static final Map<String, Command> commands = new HashMap<>();
-    public static void registerCommand(Command command) {
+
+    public static void registerCommand(Command command)
+    {
         commands.put(command.getName().toLowerCase(), command);
     }
-    public void executeCommand(String input, ChatUI chatUI) {
+
+    public void executeCommand(String input, ChatUI chatUI)
+    {
         String[] parts = input.split(" ");
         if (parts.length == 0) return;
         Command cmd = commands.get(parts[0].toLowerCase());
-        if (cmd != null) {
+        if (cmd != null)
+        {
             String[] args = Arrays.copyOfRange(parts, 1, parts.length);
             cmd.execute(args, chatUI);
-        } else {
+        } else
+        {
             chatUI.addMessage("Unknown command: " + parts[0]);
         }
     }

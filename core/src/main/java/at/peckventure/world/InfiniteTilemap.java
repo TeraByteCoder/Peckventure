@@ -14,12 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class InfiniteTilemap
 {
-    private World physicsWorld;
+    private final World physicsWorld;
     public static final int RENDER_DISTANCE = 2;
-    private WorldGenerator worldGenerator;
+    private final WorldGenerator worldGenerator;
     // Wir nutzen hier ein thread-sicheres Set – so kannst du im Render-Thread ohne Synchronisierung iterieren.
     private final Set<Chunk> loadedChunks = ConcurrentHashMap.newKeySet();
-    private RegionManager regionManager;
+    private final RegionManager regionManager;
 
     // Thread für das asynchrone Laden/Unloading der Chunks
     private Thread chunkUpdateThread;
@@ -126,9 +126,11 @@ public class InfiniteTilemap
                 int localX = Math.floorMod(chunk.getChunkX(), RegionManager.REGION_SIZE);
                 int localY = Math.floorMod(chunk.getChunkY(), RegionManager.REGION_SIZE);
 
-                try {
+                try
+                {
                     regionFile.writeChunk(localX, localY, data);
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     e.printStackTrace();
                 }
 

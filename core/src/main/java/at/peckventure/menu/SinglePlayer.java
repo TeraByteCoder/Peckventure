@@ -17,8 +17,9 @@ import com.badlogic.gdx.utils.Align;
 
 import static at.peckventure.Const.savesDir;
 
-public class SinglePlayer implements Screen {
-    private Game game;
+public class SinglePlayer implements Screen
+{
+    private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
@@ -26,12 +27,14 @@ public class SinglePlayer implements Screen {
     private Table worldTable; // Enthält die Welt-Buttons
     private BitmapFont font; // Schriftart für Buttons
 
-    public SinglePlayer(Game game) {
+    public SinglePlayer(Game game)
+    {
         this.game = game;
     }
 
     @Override
-    public void show() {
+    public void show()
+    {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
@@ -96,33 +99,41 @@ public class SinglePlayer implements Screen {
         stage.addActor(rootTable);
 
         // Button-Events
-        createWorldButton.addListener(new ClickListener() {
+        createWorldButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new CreateWorld(game));
             }
         });
 
-        backButton.addListener(new ClickListener() {
+        backButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new MainMenu(game));
             }
         });
     }
 
     // 📌 Methode zum Laden der Welten
-    private void loadWorlds(FileHandle savesDir) {
+    private void loadWorlds(FileHandle savesDir)
+    {
         FileHandle[] worldDirs = savesDir.list();
-        for (FileHandle world : worldDirs) {
-            if (world.isDirectory()) { // Nur Verzeichnisse als Welten anzeigen
+        for (FileHandle world : worldDirs)
+        {
+            if (world.isDirectory())
+            { // Nur Verzeichnisse als Welten anzeigen
                 addWorldButton(world.name());
             }
         }
     }
 
     // 📌 Fügt einen Button für eine gespeicherte Welt hinzu
-    private void addWorldButton(final String worldName) {
+    private void addWorldButton(final String worldName)
+    {
         // Verwende denselben Button-Stil wie "Create World" & "Back"
         Texture buttonTexture = new Texture("textures/gui/button1.png");
         TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
@@ -139,9 +150,11 @@ public class SinglePlayer implements Screen {
         worldButton.setSize(300, 60);
 
         // Klick-Event für Welt-Button
-        worldButton.addListener(new ClickListener() {
+        worldButton.addListener(new ClickListener()
+        {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent event, float x, float y)
+            {
                 game.setScreen(new GameScreen(game, worldName)); // Wechselt zur Spielwelt
             }
         });
@@ -153,7 +166,8 @@ public class SinglePlayer implements Screen {
 
 
     @Override
-    public void render(float delta) {
+    public void render(float delta)
+    {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
@@ -184,7 +198,8 @@ public class SinglePlayer implements Screen {
     }
 
     @Override
-    public void dispose() {
+    public void dispose()
+    {
         backgroundTexture.dispose();
         stage.dispose();
         font.dispose(); // ✅ Speicher aufräumen

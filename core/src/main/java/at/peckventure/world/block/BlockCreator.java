@@ -3,7 +3,8 @@ package at.peckventure.world.block;
 import com.badlogic.gdx.physics.box2d.World;
 
 @FunctionalInterface
-public interface BlockCreator {
+public interface BlockCreator
+{
     /**
      * Erzeugt einen neuen Block.
      *

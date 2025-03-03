@@ -13,7 +13,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
 
-public class ChatUI {
+public class ChatUI
+{
     private final Stage stage;
     private final BitmapFont font;
     private final TextField chatInput;
@@ -25,7 +26,8 @@ public class ChatUI {
     private final float visibleLinesHeight;
     private final CommandRegistry commandRegistry;
 
-    public ChatUI(Stage stage) {
+    public ChatUI(Stage stage)
+    {
         this.stage = stage;
         font = new BitmapFont();
         font.getData().setScale(1.5f);
@@ -62,12 +64,16 @@ public class ChatUI {
         stage.addActor(containerTable);
 
         // Enter-Listener
-        chatInput.setTextFieldListener((textField, key) -> {
-            if (key == '\r' || key == '\n') {
+        chatInput.setTextFieldListener((textField, key) ->
+        {
+            if (key == '\r' || key == '\n')
+            {
                 String text = chatInput.getText().trim();
-                if (text.isEmpty()) {
+                if (text.isEmpty())
+                {
                     closeChat();
-                } else {
+                } else
+                {
                     processChatInput(text);
                     closeChat();
                 }
@@ -75,25 +81,32 @@ public class ChatUI {
         });
     }
 
-    private void processChatInput(String text) {
-        if (text.startsWith("/")) {
+    private void processChatInput(String text)
+    {
+        if (text.startsWith("/"))
+        {
             commandRegistry.executeCommand(text.substring(1), this);
-        } else {
+        } else
+        {
             addMessage("Player: " + text);
         }
     }
 
-    private void executeCommand(String command) {
+    private void executeCommand(String command)
+    {
         String[] args = command.split(" ");
         if (args.length == 0) return;
-        if (args[0].equalsIgnoreCase("text")) {
+        if (args[0].equalsIgnoreCase("text"))
+        {
             addMessage("Console: " + command.substring(5));
-        } else {
+        } else
+        {
             addMessage("Unknown command: " + args[0]);
         }
     }
 
-    public void addMessage(String message) {
+    public void addMessage(String message)
+    {
         Label.LabelStyle ls = new Label.LabelStyle(font, Color.WHITE);
         Label label = new Label(message, ls);
         label.setWrap(true);
@@ -101,7 +114,8 @@ public class ChatUI {
         messageTable.add(label).width(380).left().padBottom(5).row();
 
         // Maximale Anzahl von Nachrichten
-        if (messageTable.getChildren().size > MAX_MESSAGES) {
+        if (messageTable.getChildren().size > MAX_MESSAGES)
+        {
             Actor oldest = messageTable.getChildren().first();
             oldest.remove();
         }
@@ -111,7 +125,8 @@ public class ChatUI {
         scrollPane.setScrollPercentY(1f);
 
         // Fade-Out, wenn Chat zu ist
-        if (!chatInput.isVisible()) {
+        if (!chatInput.isVisible())
+        {
             label.addAction(Actions.sequence(
                 Actions.delay(5f),
                 Actions.fadeOut(1f),
@@ -120,24 +135,28 @@ public class ChatUI {
         }
     }
 
-    private void openChat() {
+    private void openChat()
+    {
         chatInput.setVisible(true);
         stage.setKeyboardFocus(chatInput);
 
         // Alle Nachrichten sofort voll sichtbar machen
-        for (Actor actor : messageTable.getChildren()) {
+        for (Actor actor : messageTable.getChildren())
+        {
             actor.clearActions();
             actor.getColor().a = 1f;
         }
     }
 
-    private void closeChat() {
+    private void closeChat()
+    {
         chatInput.setText("");
         chatInput.setVisible(false);
         stage.setKeyboardFocus(null);
 
         // Fade-Out für alle Nachrichten neu starten
-        for (Actor actor : messageTable.getChildren()) {
+        for (Actor actor : messageTable.getChildren())
+        {
             actor.clearActions();
             actor.addAction(Actions.sequence(
                 Actions.delay(5f),
@@ -147,10 +166,13 @@ public class ChatUI {
         }
     }
 
-    public void toggleChat() {
-        if (chatInput.isVisible()) {
+    public void toggleChat()
+    {
+        if (chatInput.isVisible())
+        {
             closeChat();
-        } else {
+        } else
+        {
             openChat();
         }
     }

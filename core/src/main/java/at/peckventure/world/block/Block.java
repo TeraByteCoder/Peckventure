@@ -6,12 +6,13 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
-public abstract class Block extends Actor {
+public abstract class Block extends Actor
+{
     public static final int BLOCK_SIZE = 32; // Blockgröße in Pixel
 
-    private World world;
+    private final World world;
     private Body body;
-    private Texture texture;
+    private final Texture texture;
 
     /**
      * Konstruktor
@@ -21,7 +22,8 @@ public abstract class Block extends Actor {
      * @param gridX   X-Position im Blockraster (in Einheiten)
      * @param gridY   Y-Position im Blockraster (in Einheiten)
      */
-    public Block(World world, Texture texture, int gridX, int gridY) {
+    public Block(World world, Texture texture, int gridX, int gridY)
+    {
         this.world = world;
         this.texture = texture;
         setSize(BLOCK_SIZE, BLOCK_SIZE);
@@ -32,7 +34,8 @@ public abstract class Block extends Actor {
         setPosition(x, y);
 
         // Alle Box2D-Operationen werden in die Operation-Queue gepackt
-        Box2DOperationManager.queueOperation(() -> {
+        Box2DOperationManager.queueOperation(() ->
+        {
             BodyDef bodyDef = new BodyDef();
             bodyDef.type = BodyDef.BodyType.StaticBody;
             // Positioniere den Body in der Mitte des Blocks (Umrechnung in Meter: Pixel / BLOCK_SIZE)
@@ -57,37 +60,44 @@ public abstract class Block extends Actor {
 
     /**
      * Erzeugt die Kollisionsform des Blocks.
-     *
+     * <p>
      * Default: Rechteckige Kollisionsbox, so wie vorher.
-     *
+     * <p>
      * Diese Methode kann in abgeleiteten Klassen überschrieben werden,
      * um beispielsweise eine dreieckige oder andere Form zu definieren.
      *
      * @return Die erzeugte PolygonShape.
      */
-    protected PolygonShape createShape() {
+    protected PolygonShape createShape()
+    {
         PolygonShape shape = new PolygonShape();
         // Erzeugt ein Rechteck: setAsBox erwartet Halbmaße in Meter.
         shape.setAsBox(getWidth() / 2f / BLOCK_SIZE, getHeight() / 2f / BLOCK_SIZE);
         return shape;
     }
 
-    public void draw(Batch batch) {
+    public void draw(Batch batch)
+    {
         // Da sich der Block nicht bewegt, genügt es, den Actor an der
         // in der Konstruktor gesetzten Position zu zeichnen.
         batch.draw(texture, getX(), getY(), getWidth(), getHeight());
     }
 
-    public Body getBody() {
+    public Body getBody()
+    {
         return body;
     }
 
-    public void dispose() {
-        if (body != null) {
+    public void dispose()
+    {
+        if (body != null)
+        {
             // Lokale Kopie vom Body erstellen, damit die Lambda-Funktion darauf zugreifen kann
             final Body b = body;
-            Box2DOperationManager.queueOperation(() -> {
-                if (b.getWorld() != null) {
+            Box2DOperationManager.queueOperation(() ->
+            {
+                if (b.getWorld() != null)
+                {
                     b.getWorld().destroyBody(b);
                 }
             });
