@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import at.peckventure.InputManager;
 
 public class Player extends Actor
 {
@@ -102,13 +103,11 @@ public class Player extends Actor
     {
         // --- Steuerung horizontal (A/D) ---
         float direction = 0;
-        if (Gdx.input.isKeyPressed(Input.Keys.A))
-        {
+        if (InputManager.getInstance().isLeftPressed()) {
             direction = -1;
             sprite.setFlip(false, false);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D))
-        {
+        if (InputManager.getInstance().isRightPressed()) {
             direction = 1;
             sprite.setFlip(true, false);
         }
@@ -122,7 +121,7 @@ public class Player extends Actor
         // Berechne die aktuelle Y-Position des Bodies in Pixeln
         float bodyYPixels = body.getPosition().y * Block.BLOCK_SIZE;
         float relativeHeight = startY - bodyYPixels;
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE))
+        if (InputManager.getInstance().isJumpPressed())
         {
             if (relativeHeight < maxHeight)
             {

@@ -20,6 +20,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import at.peckventure.chat.ChatUI;
+import at.peckventure.InputManager;
 
 public class GameScreen implements Screen
 {
@@ -47,36 +48,35 @@ public class GameScreen implements Screen
     }
 
     @Override
-    public void show()
-    {
+    public void show() {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
         uiStage = new Stage(new ScreenViewport());
 
-        // Chat zur UI-Stage hinzufügen (statt zur game stage)
+        // Chat zur UI-Stage hinzufügen
         chatUI = new ChatUI(uiStage);
-
-        // InputMultiplexer für beide Stages
-        InputMultiplexer multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(uiStage);
-        multiplexer.addProcessor(stage);
-        multiplexer.addProcessor(new InputAdapter()
-        {
+        // Verknüpfe den Chat mit dem InputManager
+        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle() {
             @Override
-            public boolean keyDown(int keycode)
+            public void toggleChat() {
+                chatUI.toggleChat();
+            }
+
+            @Override
+            public void cancelChat()
             {
-                // Wenn T gedrückt wird, Chat ein/aus schalten
-                if (keycode == Input.Keys.T)
-                {
-                    chatUI.toggleChat();
-                    // return true => Event wird "verbraucht" und NICHT weitergeleitet
-                    return true;
-                }
-                return false;
+                chatUI.cancelChat();
             }
         });
+
+        InputMultiplexer multiplexer = new InputMultiplexer();
+        // Füge den zentralen InputManager hinzu
+        multiplexer.addProcessor(InputManager.getInstance());
+        // Dann die UI-Stage und die Spiel-Stage
+        multiplexer.addProcessor(uiStage);
+        multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
 
 

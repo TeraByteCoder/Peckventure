@@ -1,7 +1,7 @@
 package at.peckventure.chat;
 
-import at.peckventure.chat.commands.GiveCommand;
-import at.peckventure.chat.commands.PrintCommand;
+
+import at.peckventure.InputManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -37,7 +37,7 @@ public class ChatUI
 
         // Nachrichten-Tabelle
         messageTable = new Table();
-        messageTable.left().top();
+        messageTable.left().bottom();
 
         // ScrollPane
         scrollPane = new ScrollPane(messageTable);
@@ -50,6 +50,21 @@ public class ChatUI
         tfs.fontColor = Color.WHITE;
         commandRegistry = new CommandRegistry();
         chatInput = new TextField("", tfs);
+        chatInput.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
+            @Override
+            public boolean keyDown(com.badlogic.gdx.scenes.scene2d.InputEvent event, int keycode) {
+                if(keycode == com.badlogic.gdx.Input.Keys.T) {
+                    toggleChat(); // Schließt den Chat, wenn er offen ist
+                    return true;  // Event verbrauchen, damit T nicht ins Textfeld gelangt
+                }
+                if(keycode == com.badlogic.gdx.Input.Keys.ESCAPE) {
+                    cancelChat();
+                    return true;
+                }
+                return false;
+            }
+        });
+
         chatInput.setMessageText("Enter command or chat...");
         chatInput.setVisible(false);
 
@@ -139,6 +154,8 @@ public class ChatUI
     {
         chatInput.setVisible(true);
         stage.setKeyboardFocus(chatInput);
+        InputManager.getInstance().pauseInputs();
+
 
         // Alle Nachrichten sofort voll sichtbar machen
         for (Actor actor : messageTable.getChildren())
@@ -148,15 +165,13 @@ public class ChatUI
         }
     }
 
-    private void closeChat()
-    {
+    private void closeChat() {
         chatInput.setText("");
         chatInput.setVisible(false);
         stage.setKeyboardFocus(null);
 
         // Fade-Out für alle Nachrichten neu starten
-        for (Actor actor : messageTable.getChildren())
-        {
+        for (Actor actor : messageTable.getChildren()) {
             actor.clearActions();
             actor.addAction(Actions.sequence(
                 Actions.delay(5f),
@@ -164,7 +179,12 @@ public class ChatUI
                 Actions.run(actor::remove)
             ));
         }
+
+        // Wichtig: Inputs wieder freigeben
+        at.peckventure.InputManager.getInstance().resumeInputs();
     }
+
+
 
     public void toggleChat()
     {
@@ -176,4 +196,9 @@ public class ChatUI
             openChat();
         }
     }
+
+    public void cancelChat() {
+        closeChat();
+    }
+
 }
