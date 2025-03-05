@@ -13,6 +13,8 @@ public class InputManager extends InputAdapter {
         void toggleChat();
 
         void cancelChat();
+
+        boolean isChatActive();
     }
 
     private InputManager() { }
@@ -31,11 +33,13 @@ public class InputManager extends InputAdapter {
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.T) {
-            if (chatToggle != null) {
+            // Nur aktivieren, wenn der Chat noch nicht offen ist
+            if (chatToggle != null && !chatToggle.isChatActive()) {
                 chatToggle.toggleChat();
             }
             return true;
         }
+
         if (keycode == Input.Keys.ESCAPE) {
             if (chatToggle != null) {
                 chatToggle.cancelChat();
@@ -94,4 +98,6 @@ public class InputManager extends InputAdapter {
     public boolean isJumpPressed() {
         return jumpPressed;
     }
+
+
 }

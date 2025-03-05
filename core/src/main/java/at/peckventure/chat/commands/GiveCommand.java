@@ -1,6 +1,7 @@
 package at.peckventure.chat.commands;
 
 import at.peckventure.chat.ChatUI;
+import at.peckventure.entities.Player;
 import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.inventory.item.Item;
 
@@ -14,7 +15,7 @@ public class GiveCommand extends Command
     }
 
     @Override
-    public void execute(String[] args, ChatUI chatUI)
+    public void execute(String[] args, ChatUI chatUI,  Player executor)
     {
         if (args.length < 2)
         {

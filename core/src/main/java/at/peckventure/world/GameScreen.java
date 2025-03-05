@@ -69,6 +69,11 @@ public class GameScreen implements Screen
             {
                 chatUI.cancelChat();
             }
+
+            @Override
+            public boolean isChatActive() {
+                return chatUI.isChatActive();
+            }
         });
 
         InputMultiplexer multiplexer = new InputMultiplexer();
@@ -101,7 +106,7 @@ public class GameScreen implements Screen
 
         // Inventar-UI erstellen
         inventoryUI = new InventoryUI(uiStage);
-        Globals.inventoryUI = inventoryUI;
+
         // Falls Inventardaten gespeichert sind, diese laden; ansonsten als Test ein Item hinzufügen
         if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty())
         {
@@ -110,6 +115,9 @@ public class GameScreen implements Screen
 
 
         tilemap.startChunkUpdateThread(player);
+
+        Globals.inventoryUI = inventoryUI;
+        Globals.player = this.player;
     }
 
     @Override

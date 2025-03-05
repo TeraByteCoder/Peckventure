@@ -1,6 +1,7 @@
 package at.peckventure.chat.commands;
 
 import at.peckventure.chat.ChatUI;
+import at.peckventure.entities.Player;
 
 public abstract class Command
 {
@@ -16,5 +17,5 @@ public abstract class Command
         return name;
     }
 
-    public abstract void execute(String[] args, ChatUI chatUI);
+    public abstract void execute(String[] args, ChatUI chatUI, Player executor);
 }

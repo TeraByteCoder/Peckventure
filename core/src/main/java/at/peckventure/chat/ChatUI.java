@@ -1,8 +1,12 @@
 package at.peckventure.chat;
 
 
+import at.peckventure.Globals;
 import at.peckventure.InputManager;
+import at.peckventure.entities.Player;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -11,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
 public class ChatUI
@@ -39,10 +44,12 @@ public class ChatUI
         messageTable = new Table();
         messageTable.left().bottom();
 
-        // ScrollPane
+// ScrollPane
         scrollPane = new ScrollPane(messageTable);
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(false, false);
+
+
 
         // TextField
         TextField.TextFieldStyle tfs = new TextField.TextFieldStyle();
@@ -89,18 +96,18 @@ public class ChatUI
                     closeChat();
                 } else
                 {
-                    processChatInput(text);
+                    processChatInput(text, Globals.player);
                     closeChat();
                 }
             }
         });
     }
 
-    private void processChatInput(String text)
+    private void processChatInput(String text, Player sender)
     {
         if (text.startsWith("/"))
         {
-            commandRegistry.executeCommand(text.substring(1), this);
+            commandRegistry.executeCommand(text.substring(1), this, sender);
         } else
         {
             addMessage("Player: " + text);
@@ -197,8 +204,13 @@ public class ChatUI
         }
     }
 
-    public void cancelChat() {
+    public void cancelChat()
+    {
         closeChat();
+    }
+
+    public boolean isChatActive() {
+        return chatInput.isVisible();
     }
 
 }
