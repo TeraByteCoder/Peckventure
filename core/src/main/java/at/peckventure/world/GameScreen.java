@@ -116,8 +116,9 @@ public class GameScreen implements Screen
 
         tilemap.startChunkUpdateThread(player);
 
-        Globals.inventoryUI = inventoryUI;
+        Globals.inventoryUI = this.inventoryUI;
         Globals.player = this.player;
+        Globals.physicsWorld = this.physicsWorld;
     }
 
     @Override

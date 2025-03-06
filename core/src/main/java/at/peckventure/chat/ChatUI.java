@@ -4,6 +4,7 @@ package at.peckventure.chat;
 import at.peckventure.Globals;
 import at.peckventure.InputManager;
 import at.peckventure.entities.Player;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -18,6 +19,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
+import java.util.LinkedList;
+
 public class ChatUI
 {
     private final Stage stage;
@@ -31,8 +34,19 @@ public class ChatUI
     private final float visibleLinesHeight;
     private final CommandRegistry commandRegistry;
 
+    private final LinkedList<String> messageHistory = new LinkedList<>();
+    private int historyIndex = 0;
+
+    private static ChatUI instance;
+
+    public static ChatUI getInstance()
+    {
+        return instance;
+    }
+
     public ChatUI(Stage stage)
     {
+        instance = this;
         this.stage = stage;
         font = new BitmapFont();
         font.getData().setScale(1.5f);
@@ -50,24 +64,44 @@ public class ChatUI
         scrollPane.setScrollingDisabled(false, false);
 
 
-
         // TextField
         TextField.TextFieldStyle tfs = new TextField.TextFieldStyle();
         tfs.font = font;
         tfs.fontColor = Color.WHITE;
         commandRegistry = new CommandRegistry();
         chatInput = new TextField("", tfs);
-        chatInput.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
+        chatInput.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener()
+        {
             @Override
-            public boolean keyDown(com.badlogic.gdx.scenes.scene2d.InputEvent event, int keycode) {
-                if(keycode == com.badlogic.gdx.Input.Keys.T) {
+            public boolean keyDown(com.badlogic.gdx.scenes.scene2d.InputEvent event, int keycode)
+            {
+                if (keycode == Input.Keys.T)
+                {
                     toggleChat(); // Schließt den Chat, wenn er offen ist
                     return true;  // Event verbrauchen, damit T nicht ins Textfeld gelangt
                 }
-                if(keycode == com.badlogic.gdx.Input.Keys.ESCAPE) {
+                if (keycode == Input.Keys.ESCAPE)
+                {
                     cancelChat();
                     return true;
                 }
+                if (keycode == Input.Keys.L)
+                {
+                    System.out.println("up");
+                    if (!messageHistory.isEmpty())
+                    {
+                        if (historyIndex > 0)
+                        {
+                            historyIndex--;
+                            chatInput.setText("testttttttz");
+                        }
+                        chatInput.setText("testtttttt");
+                        //chatInput.setText(messageHistory.get(historyIndex));
+                        chatInput.setCursorPosition(chatInput.getText().length());
+                    }
+                    return true;
+                }
+
                 return false;
             }
         });
@@ -103,6 +137,34 @@ public class ChatUI
         });
     }
 
+    public void loadLastMessage(boolean direction)
+    {
+        if (!messageHistory.isEmpty())
+        {
+            if (direction)
+            {
+                if (historyIndex > 0)
+                {
+                    historyIndex--;
+                }
+                chatInput.setText(messageHistory.get(historyIndex));
+                chatInput.setCursorPosition(chatInput.getText().length());
+            } else
+            {
+                if (historyIndex < messageHistory.size() - 1)
+                {
+                    historyIndex++;
+                    chatInput.setText(messageHistory.get(historyIndex));
+                } else
+                {
+                    historyIndex = messageHistory.size();
+                    chatInput.setText("");
+                }
+                chatInput.setCursorPosition(chatInput.getText().length());
+            }
+        }
+    }
+
     private void processChatInput(String text, Player sender)
     {
         if (text.startsWith("/"))
@@ -112,7 +174,19 @@ public class ChatUI
         {
             addMessage("Player: " + text);
         }
+        addToHistory(text);
+        historyIndex = messageHistory.size();
     }
+
+    private void addToHistory(String text)
+    {
+        messageHistory.add(text);
+        if (messageHistory.size() > 50)
+        {
+            messageHistory.removeFirst();
+        }
+    }
+
 
     private void executeCommand(String command)
     {
@@ -172,13 +246,15 @@ public class ChatUI
         }
     }
 
-    private void closeChat() {
+    private void closeChat()
+    {
         chatInput.setText("");
         chatInput.setVisible(false);
         stage.setKeyboardFocus(null);
 
         // Fade-Out für alle Nachrichten neu starten
-        for (Actor actor : messageTable.getChildren()) {
+        for (Actor actor : messageTable.getChildren())
+        {
             actor.clearActions();
             actor.addAction(Actions.sequence(
                 Actions.delay(5f),
@@ -190,7 +266,6 @@ public class ChatUI
         // Wichtig: Inputs wieder freigeben
         at.peckventure.InputManager.getInstance().resumeInputs();
     }
-
 
 
     public void toggleChat()
@@ -209,7 +284,8 @@ public class ChatUI
         closeChat();
     }
 
-    public boolean isChatActive() {
+    public boolean isChatActive()
+    {
         return chatInput.isVisible();
     }
 

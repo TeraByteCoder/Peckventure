@@ -3,6 +3,8 @@ package at.peckventure.chat;
 import at.peckventure.chat.commands.Command;
 import at.peckventure.chat.commands.GiveCommand;
 import at.peckventure.chat.commands.PrintCommand;
+import at.peckventure.chat.commands.SummonCommand;
+import at.peckventure.entities.Player;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,7 @@ public class CommandRegistry
         commands.put(command.getName().toLowerCase(), command);
     }
 
-    public void executeCommand(String input, ChatUI chatUI)
+    public void executeCommand(String input, ChatUI chatUI, Player executor)
     {
         String[] parts = input.split(" ");
         if (parts.length == 0) return;
@@ -25,7 +27,7 @@ public class CommandRegistry
         if (cmd != null)
         {
             String[] args = Arrays.copyOfRange(parts, 1, parts.length);
-            cmd.execute(args, chatUI);
+            cmd.execute(args, chatUI, executor);
         } else
         {
             chatUI.addMessage("Unknown command: " + parts[0]);
@@ -36,6 +38,7 @@ public class CommandRegistry
     {
         registerCommand(new PrintCommand());
         registerCommand(new GiveCommand());
+        registerCommand(new SummonCommand());
     }
 
     public static void init()
