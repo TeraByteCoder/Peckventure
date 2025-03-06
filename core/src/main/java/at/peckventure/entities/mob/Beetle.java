@@ -51,16 +51,15 @@ public class Beetle extends Mob
     }
 
     @Override
-    public void update(float delta)
-    {
-        if (body != null)
-        {
-            // Aktualisiere die Position anhand des Box2D-Körpers (Umrechnung Meter->Pixel)
-            float newX = body.getPosition().x * Block.BLOCK_SIZE - getWidth() / 2f;
-            float newY = body.getPosition().y * Block.BLOCK_SIZE - getHeight() / 2f;
-            setPosition(newX, newY);
+    public void act(float delta) {
+        super.act(delta);
+        if (body != null) {
+            float blockSize = Block.BLOCK_SIZE; // Beispiel: Umrechnung von Metern zu Pixeln
+            setPosition(body.getPosition().x * blockSize - getWidth() / 2f,
+                body.getPosition().y * blockSize - getHeight() / 2f);
         }
     }
+
 
     @Override
     public void dispose()

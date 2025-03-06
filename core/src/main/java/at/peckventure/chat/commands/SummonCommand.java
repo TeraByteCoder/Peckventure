@@ -61,6 +61,7 @@ public class SummonCommand extends Command
         if (MobRegistry.isRegistered(entityName))
         {
             Mob mob = MobRegistry.createMob(entityName, Globals.physicsWorld,  position_x, position_y);
+            Globals.gamestage.addActor(mob);
         }
         else {
             chatUI.addMessage("Mob " + entityName + " not found");

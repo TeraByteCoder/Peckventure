@@ -119,6 +119,7 @@ public class GameScreen implements Screen
         Globals.inventoryUI = this.inventoryUI;
         Globals.player = this.player;
         Globals.physicsWorld = this.physicsWorld;
+        Globals.gamestage = this.stage;
     }
 
     @Override
