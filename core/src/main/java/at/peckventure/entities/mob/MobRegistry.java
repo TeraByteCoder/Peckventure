@@ -1,5 +1,6 @@
 package at.peckventure.entities.mob;
 
+import at.peckventure.Globals;
 import com.badlogic.gdx.physics.box2d.World;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,11 +24,25 @@ public class MobRegistry {
     }
 
     public static Mob createMob(int id, World world, float x, float y, Object... args) {
+        Mob mob = createMobObject(id, world, x, y, args);
+        Globals.gamestage.addActor(mob);
+        return mob;
+    }
+
+    public static Mob createMob(String stringId, World world, float x, float y, Object... args) {
+        Mob mob = createMobObject(stringId, world, x, y, args);
+        Globals.gamestage.addActor(mob);
+        Globals.mobManager.addMob(mob);
+        return mob;
+    }
+
+    public static Mob createMobObject(int id, World world, float x, float y, Object... args)
+    {
         MobCreator creator = registry.get(id);
         return (creator != null) ? creator.create(world, x, y, args) : null;
     }
 
-    public static Mob createMob(String stringId, World world, float x, float y, Object... args) {
+    public static Mob createMobObject(String stringId, World world, float x, float y, Object... args) {
         Integer id = stringToId.get(stringId);
         return (id != null) ? createMob(id, world, x, y, args) : null;
     }

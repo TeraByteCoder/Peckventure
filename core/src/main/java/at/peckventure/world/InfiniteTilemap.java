@@ -1,6 +1,9 @@
 package at.peckventure.world;
 
+import at.peckventure.entities.MobManager;
 import at.peckventure.entities.Player;
+import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobIO;
 import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import at.peckventure.world.generator.WorldGenerator;
@@ -8,8 +11,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.physics.box2d.World;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InfiniteTilemap
@@ -23,9 +25,13 @@ public class InfiniteTilemap
 
     // Thread für das asynchrone Laden/Unloading der Chunks
     private Thread chunkUpdateThread;
+
+    private final MobManager mobManager;
+
+    private List<Mob> mobs = Collections.synchronizedList(new LinkedList<>());
     private volatile boolean running = false;
 
-    public InfiniteTilemap(World world, WorldGenerator generator, Set<Chunk> preLoadedChunks, RegionManager regionManager)
+    public InfiniteTilemap(World world, WorldGenerator generator, Set<Chunk> preLoadedChunks, RegionManager regionManager, MobManager mobManager)
     {
         this.physicsWorld = world;
         this.worldGenerator = generator;
@@ -33,7 +39,9 @@ public class InfiniteTilemap
         {
             loadedChunks.addAll(preLoadedChunks);
         }
+
         this.regionManager = regionManager;
+        this.mobManager = mobManager;
     }
 
     /**
@@ -60,6 +68,9 @@ public class InfiniteTilemap
     /**
      * Lädt neue Chunks um den Spieler, falls sie noch nicht vorhanden sind.
      */
+
+
+
     private void loadChunksAroundPlayer(Player player)
     {
         for (int x_offset = -RENDER_DISTANCE - 1; x_offset <= RENDER_DISTANCE; x_offset++)
@@ -109,10 +120,10 @@ public class InfiniteTilemap
      */
     private void unloadChunksOutsideRenderDistance(Player player)
     {
-        Iterator<Chunk> iterator = loadedChunks.iterator();
-        while (iterator.hasNext())
+        Iterator<Chunk> chunkIterator = loadedChunks.iterator();
+        while (chunkIterator.hasNext())
         {
-            Chunk chunk = iterator.next();
+            Chunk chunk = chunkIterator.next();
             if (Math.abs(chunk.getChunkX() - player.getChunkX()) > RENDER_DISTANCE + 2 ||
                 Math.abs(chunk.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2)
             {
@@ -136,7 +147,7 @@ public class InfiniteTilemap
 
                 // Jetzt die Ressourcen freigeben
                 chunk.dispose();
-                iterator.remove();
+                chunkIterator.remove();
             }
         }
     }
@@ -148,8 +159,33 @@ public class InfiniteTilemap
     private void updateChunks(Player player)
     {
         loadChunksAroundPlayer(player);
+        loadMobsAroundPlayer(player);
+        unloadMobsOutsideRenderDistance(player);
         unloadChunksOutsideRenderDistance(player);
     }
+
+    private void loadMobsAroundPlayer(Player player) {
+        List<Mob> inactiveSnapshot = new ArrayList<>(mobManager.getInactiveMobs());
+        for (Mob mob : inactiveSnapshot) {
+            if (Math.abs(mob.getChunkX() - player.getChunkX()) <= RENDER_DISTANCE + 2 &&
+                Math.abs(mob.getChunkY() - player.getChunkY()) <= RENDER_DISTANCE + 2) {
+                mobManager.loadMob(mob);
+            }
+        }
+    }
+
+
+    private void unloadMobsOutsideRenderDistance(Player player) {
+        List<Mob> activeMobsSnapshot = new ArrayList<>(mobManager.getActiveMobs());
+        for (Mob mob : activeMobsSnapshot) {
+            if (Math.abs(mob.getChunkX() - player.getChunkX()) > RENDER_DISTANCE + 2 ||
+                Math.abs(mob.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2) {
+                mobManager.unloadMob(mob);
+            }
+        }
+    }
+
+
 
     /**
      * Startet einen Hintergrund-Thread, der in regelmäßigen Abständen (z. B. alle 100ms) die Chunk-Liste aktualisiert.
@@ -177,6 +213,12 @@ public class InfiniteTilemap
         });
         chunkUpdateThread.setDaemon(true);
         chunkUpdateThread.start();
+    }
+
+
+    public void addMob(Mob mob)
+    {
+        mobs.add(mob);
     }
 
     /**

@@ -22,9 +22,9 @@ public class SummonCommand extends Command
     @Override
     public void execute(String[] args, ChatUI chatUI, Player executor)
     {
-        if (args.length < 1 || args.length == 3 || args.length > 4)
+        if (args.length < 1 || args.length > 4)
         {
-            chatUI.addMessage("Usage: /summon <entity> <location>");
+            chatUI.addMessage("Usage: /summon <entity> <x> <y> <amount> ");
             return;
         }
 
@@ -34,7 +34,7 @@ public class SummonCommand extends Command
         float position_x;
         float position_y;
         // Zweites Argument in einen int umwandeln
-        if (args.length == 3)
+        if (args.length >= 3)
         {
             try
             {
@@ -42,12 +42,10 @@ public class SummonCommand extends Command
                 position_y = Float.parseFloat(args[2]);
             } catch (NumberFormatException e)
             {
-                chatUI.addMessage("Invalid position: " + args[1] +  " " + args[2]);
+                chatUI.addMessage("Invalid position: " + args[1] + " " + args[2]);
                 return;
             }
-        }
-
-        else
+        } else
         {
             position_x = executor.getX();
             position_y = executor.getY();
@@ -60,10 +58,28 @@ public class SummonCommand extends Command
         // Nutze das 'sword'-Item aus der Registry
         if (MobRegistry.isRegistered(entityName))
         {
-            Mob mob = MobRegistry.createMob(entityName, Globals.physicsWorld,  position_x, position_y);
-            Globals.gamestage.addActor(mob);
-        }
-        else {
+            if (args.length == 2 || args.length == 4)
+            {
+                int amount;
+                if (args.length == 4)
+                {
+                    amount = Integer.parseInt(args[1]);
+                }
+
+                else {
+                    amount = Integer.parseInt(args[1]);
+                }
+                for (int i = 0; i < amount; i++)
+                {
+                    MobRegistry.createMob(entityName, Globals.physicsWorld, position_x, position_y+i*10);
+                }
+            } else
+            {
+                MobRegistry.createMob(entityName, Globals.physicsWorld, position_x, position_y);
+            }
+
+        } else
+        {
             chatUI.addMessage("Mob " + entityName + " not found");
         }
     }

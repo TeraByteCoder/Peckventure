@@ -78,6 +78,7 @@ public class WorldGenerator
                     else
                     {
                         chunk.setBlock(x, y, new GrassBlock(world, worldX, worldY));
+
                     }
                 }
                 // Oberhalb der Oberfläche bleibt der Block leer (Luft)

@@ -1,6 +1,8 @@
 package at.peckventure.entities.mob;
 
 import at.peckventure.Globals;
+import at.peckventure.world.block.Block;
+import at.peckventure.world.chunk.Chunk;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.physics.box2d.World;
@@ -29,4 +31,13 @@ public abstract class Mob extends Actor
         super.act(delta);
     }
 
+    public int getChunkX()
+    {
+        return (int) this.getX() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
+    }
+
+    public int getChunkY()
+    {
+        return (int) this.getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
+    }
 }

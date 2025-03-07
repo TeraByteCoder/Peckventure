@@ -2,6 +2,7 @@ package at.peckventure.world;
 
 import at.peckventure.Globals;
 import at.peckventure.Textures;
+import at.peckventure.entities.MobManager;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.ItemRegistry;
@@ -21,6 +22,8 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.InputManager;
+
+import java.io.File;
 
 public class GameScreen implements Screen
 {
@@ -91,7 +94,9 @@ public class GameScreen implements Screen
         WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         RegionManager regionManager = new RegionManager(worldDir);
-        tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager);
+        MobManager mobManager = new MobManager(worldDir, physicsWorld);
+        Globals.mobManager = mobManager;
+        tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobManager);
 
         float spawnX = worldConfig.getPlayerX();
         float spawnY = worldConfig.getPlayerY();
@@ -130,7 +135,7 @@ public class GameScreen implements Screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 2.0f;
+        camera.zoom = 10.0f;
         camera.update();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);
