@@ -14,222 +14,153 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
+import java.util.Random;
+
 import static at.peckventure.Const.savesDir;
 
-public class CreateWorld implements Screen
-{
+public class CreateWorld implements Screen {
     private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
-    private Label titleLabel;
-    private Table worldTable; // Enthält die Welt-Buttons (z. B. für eine Liste bereits vorhandener Welten)
-    private BitmapFont font;  // Schriftart für Buttons und Labels
-    // Texture für den Hintergrund der Textfelder (wird im dispose() aufgeräumt)
+    private BitmapFont font;
     private Texture textFieldTexture;
 
-    public CreateWorld(Game game)
-    {
+    public CreateWorld(Game game) {
         this.game = game;
     }
 
     @Override
-    public void show()
-    {
+    public void show() {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
-
-        // Standard-Schriftart
         font = new BitmapFont();
-
-        // Hintergrundbild
+        font.getData().setScale(2f);
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
-
-        // Titel oben
-        Label.LabelStyle titleStyle = new Label.LabelStyle();
-        titleStyle.font = font;
-        titleLabel = new Label("Create World", titleStyle);
-        titleLabel.setFontScale(2f);
+        Label.LabelStyle labelStyle = new Label.LabelStyle();
+        labelStyle.font = font;
+        labelStyle.fontColor = Color.WHITE;
+        Label titleLabel = new Label("Create World", labelStyle);
+        titleLabel.setFontScale(3f);
         titleLabel.setAlignment(Align.center);
-
-        // Button-Stil mit eigener Textur
         Texture buttonTexture = new Texture("textures/gui/button1.png");
         TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.up = buttonDrawable;
         buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font; // Schriftart setzen
-
-        // Buttons
+        buttonStyle.font = font;
         TextButton createWorldButton = new TextButton("Create World", buttonStyle);
         TextButton backButton = new TextButton("Back", buttonStyle);
-
-        // Scrollbare Liste für Welten (optional; kann z. B. vorhandene Welten anzeigen)
-        worldTable = new Table();
-        worldTable.top().pad(20); // 20 Pixel Padding oben & unten
-
-        ScrollPane scrollPane = new ScrollPane(worldTable);
-        scrollPane.setScrollingDisabled(true, false); // Horizontal deaktiviert, vertikal aktiv
-
-        // ───────────────────────────────────────────────
-        // Textfelder für Eingaben: Weltname und Seed
-        // Erstelle zunächst einen einfachen TextField-Stil
         TextField.TextFieldStyle textFieldStyle = new TextField.TextFieldStyle();
         textFieldStyle.font = font;
         textFieldStyle.fontColor = Color.WHITE;
-        // Erzeuge einen einfachen Hintergrund (einfarbig)
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.DARK_GRAY);
         pixmap.fill();
         textFieldTexture = new Texture(pixmap);
         pixmap.dispose();
         textFieldStyle.background = new TextureRegionDrawable(new TextureRegion(textFieldTexture));
-
-        // Erstelle die Eingabefelder
-        final TextField worldNameInput = new TextField("", textFieldStyle);
+        final TextField worldNameInput = new TextField("New World", textFieldStyle);
         final TextField seedInput = new TextField("", textFieldStyle);
-
-        // Labels für die Eingabefelder
-        Label worldNameLabel = new Label("World Name:", titleStyle);
-        Label seedLabel = new Label("Seed:", titleStyle);
-
-        // Tabelle für die Eingabefelder
+        Label worldNameLabel = new Label("World Name:", labelStyle);
+        Label seedLabel = new Label("World Seed:", labelStyle);
         Table inputTable = new Table();
-        inputTable.add(worldNameLabel).pad(5);
-        inputTable.add(worldNameInput).width(300).pad(5);
+        inputTable.center();
+        inputTable.add(worldNameLabel).pad(10).center();
+        inputTable.add(worldNameInput).width(600).height(80).pad(10).center();
         inputTable.row();
-        inputTable.add(seedLabel).pad(5);
-        inputTable.add(seedInput).width(300).pad(5);
-        // ───────────────────────────────────────────────
-
-        // Hauptlayout (Root Table)
+        inputTable.add(seedLabel).pad(10).center();
+        inputTable.add(seedInput).width(600).height(80).pad(10).center();
+        Table buttonTable = new Table();
+        buttonTable.add(createWorldButton).size(400, 120).pad(10);
+        buttonTable.add(backButton).size(400, 120).pad(10);
         Table rootTable = new Table();
         rootTable.setFillParent(true);
-        rootTable.top();
-
-        // Aufbau der Tabelle:
-        // 1. Titel oben
-        rootTable.add(titleLabel).padTop(50).expandX().center();
+        rootTable.center();
+        rootTable.add(titleLabel).expandX().center().padTop(50);
         rootTable.row();
-        // 2. ScrollPane (z. B. Liste vorhandener Welten)
-        rootTable.add(scrollPane).expand().fill().pad(20);
+        rootTable.add(inputTable).expand().center().pad(20);
         rootTable.row();
-        // 3. Eingabefelder für Weltname und Seed
-        rootTable.add(inputTable).pad(20);
-        rootTable.row();
-        // 4. Buttons unten
-        Table buttonTable = new Table();
-        buttonTable.add(createWorldButton).size(300, 80).pad(10);
-        buttonTable.add(backButton).size(300, 80).pad(10);
-        rootTable.add(buttonTable).padBottom(10).expandX().bottom();
-
+        rootTable.add(buttonTable).expandX().center().padBottom(10);
         stage.addActor(rootTable);
-
-        // ───────────────────────────────────────────────
-        // Button-Events
-
-        // "Create World"-Button: Liest die Eingaben aus und erstellt den Welt-Ordner samt Konfigurationsdatei
-        createWorldButton.addListener(new ClickListener()
-        {
+        createWorldButton.addListener(new ClickListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y)
-            {
-                // Lese Eingaben
+            public void clicked(InputEvent event, float x, float y) {
                 String worldName = worldNameInput.getText();
+                if (worldName == null || worldName.trim().isEmpty()) {
+                    worldName = "New World";
+                }
+                FileHandle newWorldDir = Gdx.files.absolute(savesDir + "/" + worldName);
+                while (newWorldDir.exists()) {
+                    worldName += "_";
+                    newWorldDir = Gdx.files.absolute(savesDir + "/" + worldName);
+                }
                 String seedText = seedInput.getText();
-                if (worldName == null || worldName.trim().isEmpty())
-                {
-                    worldName = "World_" + System.currentTimeMillis();
-                }
                 long seed;
-                try
-                {
-                    seed = Long.parseLong(seedText);
-                } catch (NumberFormatException e)
-                {
-                    seed = System.currentTimeMillis();
+                if(seedText.isEmpty()) seed = new Random().nextInt();
+                else{
+                    try {
+                        seed = Long.parseLong(seedText);
+                    } catch (NumberFormatException e) {
+                        seed = seedText.isEmpty() ? System.currentTimeMillis() : seedText.hashCode();
+                    }
                 }
-
-                FileHandle newWorldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
-                WorldConfig config;
-                if (newWorldDir.exists())
-                {
-                    // Welt existiert bereits – lade die Konfiguration
-                    FileHandle configFile = newWorldDir.child("worldconfig.txt");
-                    config = WorldConfig.load(configFile);
-                } else
-                {
-                    // Neue Welt – erstelle den Ordner und speichere die Konfiguration
-                    newWorldDir.mkdirs();
-                    config = new WorldConfig(seed);
-                    FileHandle configFile = newWorldDir.child("worldconfig.txt");
-                    config.save(configFile);
-                }
-                // Starte den GameScreen mit dem Welt-Namen (der später im GameScreen auch den Seed verwendet)
+                newWorldDir.mkdirs();
+                WorldConfig config = new WorldConfig(seed);
+                FileHandle configFile = newWorldDir.child("worldconfig.txt");
+                config.save(configFile);
                 game.setScreen(new GameScreen(game, worldName));
             }
         });
-
-
-        // "Back"-Button: Gehe zurück zum vorherigen Screen
-        backButton.addListener(new ClickListener()
-        {
+        backButton.addListener(new ClickListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y)
-            {
+            public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new SinglePlayer(game));
             }
         });
     }
 
     @Override
-    public void render(float delta)
-    {
+    public void render(float delta) {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
     }
 
     @Override
-    public void resize(int width, int height)
-    {
-        // Optional: Hier kannst du z. B. stage.getViewport().update(width, height, true) aufrufen
+    public void resize(int width, int height) {
     }
 
     @Override
-    public void pause()
-    {
-        // Nicht benötigt
+    public void pause() {
     }
 
     @Override
-    public void resume()
-    {
-        // Nicht benötigt
+    public void resume() {
     }
 
     @Override
-    public void hide()
-    {
-        // Nicht benötigt
+    public void hide() {
     }
 
     @Override
-    public void dispose()
-    {
+    public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
         font.dispose();
-        if (textFieldTexture != null)
-        {
+        if (textFieldTexture != null) {
             textFieldTexture.dispose();
         }
     }

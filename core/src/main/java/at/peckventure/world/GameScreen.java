@@ -135,7 +135,7 @@ public class GameScreen implements Screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 10.0f;
+        camera.zoom = 2.0f;
         camera.update();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);
