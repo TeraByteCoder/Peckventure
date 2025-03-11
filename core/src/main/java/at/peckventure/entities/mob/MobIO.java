@@ -1,41 +1,27 @@
 package at.peckventure.entities.mob;
 
 import com.badlogic.gdx.physics.box2d.World;
+import com.google.gson.Gson;
 
-import java.io.*;
-
-public class MobIO
-{
-    public static byte[] serialize(Mob mob)
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (DataOutputStream dos = new DataOutputStream(baos))
-        {
-            int id = MobRegistry.getMobId(mob);
-            dos.writeInt(id);
-            dos.writeFloat(mob.getX());
-            dos.writeFloat(mob.getY());
-            // Hier können weitere Parameter ergänzt werden
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        return baos.toByteArray();
+public class MobIO {
+    public static String serializeToJson(Mob mob) {
+        Gson gson = new Gson();
+        MobData data = new MobData();
+        data.id = MobRegistry.getMobId(mob);
+        data.x = mob.getX();
+        data.y = mob.getY();
+        return gson.toJson(data);
     }
 
-    public static Mob deserialize(byte[] data, World world)
-    {
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        try (DataInputStream dis = new DataInputStream(bais))
-        {
-            int id = dis.readInt();
-            float x = dis.readFloat();
-            float y = dis.readFloat();
-            return MobRegistry.createMob(id, world, x, y);
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        return null;
+    public static Mob deserializeFromJson(String json, World world) {
+        Gson gson = new Gson();
+        MobData data = gson.fromJson(json, MobData.class);
+        return MobRegistry.createMob(data.id, world, data.x, data.y);
+    }
+
+    static class MobData {
+        int id;
+        float x;
+        float y;
     }
 }

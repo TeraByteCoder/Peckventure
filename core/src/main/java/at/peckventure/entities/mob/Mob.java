@@ -1,15 +1,21 @@
 package at.peckventure.entities.mob;
 
 import at.peckventure.Globals;
+import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.physics.box2d.World;
 
 public abstract class Mob extends Actor
 {
     protected World world;
+
+    protected Body body;
+
+    private boolean disposed = false;
 
     public Mob(World world, float x, float y)
     {
@@ -21,9 +27,16 @@ public abstract class Mob extends Actor
     public abstract void draw(Batch batch, float parentAlpha);
 
 
-    public void dispose()
-    {
-        // Ressourcen freigeben, z. B. Box2D-Körper zerstören, falls vorhanden.
+    public void dispose() {
+        if (!disposed && body != null) {
+            disposed = true;
+            Box2DOperationManager.queueOperation(() -> {
+                if (body != null && body.getWorld() != null) {
+                    body.getWorld().destroyBody(body);
+                }
+            });
+            body = null;
+        }
     }
 
     @Override

@@ -2,7 +2,6 @@ package at.peckventure.world;
 
 import at.peckventure.Globals;
 import at.peckventure.Textures;
-import at.peckventure.entities.MobManager;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.ItemRegistry;
@@ -56,52 +55,38 @@ public class GameScreen implements Screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
+        Globals.gamestage = stage;
         uiStage = new Stage(new ScreenViewport());
+        FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
 
-        // Chat zur UI-Stage hinzufügen
         chatUI = new ChatUI(uiStage);
-        // Verknüpfe den Chat mit dem InputManager
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle() {
-            @Override
             public void toggleChat() {
                 chatUI.toggleChat();
             }
-
-            @Override
-            public void cancelChat()
-            {
+            public void cancelChat() {
                 chatUI.cancelChat();
             }
-
-            @Override
             public boolean isChatActive() {
                 return chatUI.isChatActive();
             }
         });
-
         InputMultiplexer multiplexer = new InputMultiplexer();
-        // Füge den zentralen InputManager hinzu
         multiplexer.addProcessor(InputManager.getInstance());
-        // Dann die UI-Stage und die Spiel-Stage
         multiplexer.addProcessor(uiStage);
         multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
 
-
-        // Welt laden
         WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldName, physicsWorld);
         worldConfig = loaded.getConfig();
         WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
-        FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         RegionManager regionManager = new RegionManager(worldDir);
-        MobManager mobManager = new MobManager(worldDir, physicsWorld);
-        Globals.mobManager = mobManager;
-        tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobManager);
+        MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
+        tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobRegionManager);
 
         float spawnX = worldConfig.getPlayerX();
         float spawnY = worldConfig.getPlayerY();
-        if (spawnX == 0 && spawnY == 0)
-        {
+        if (spawnX == 0 && spawnY == 0) {
             spawnX = 0;
             int terrainHeight = generator.getHeight((int) spawnX);
             spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
@@ -109,23 +94,16 @@ public class GameScreen implements Screen
         player = new Player(physicsWorld, spawnX, spawnY);
         stage.addActor(player);
 
-        // Inventar-UI erstellen
         inventoryUI = new InventoryUI(uiStage);
-
-        // Falls Inventardaten gespeichert sind, diese laden; ansonsten als Test ein Item hinzufügen
-        if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty())
-        {
+        if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty()) {
             inventoryUI.getInventory().deserialize(worldConfig.getInventoryHotbar(), worldConfig.getInventoryMain());
         }
-
-
+        Globals.inventoryUI = inventoryUI;
+        Globals.player = player;
+        Globals.physicsWorld = physicsWorld;
         tilemap.startChunkUpdateThread(player);
-
-        Globals.inventoryUI = this.inventoryUI;
-        Globals.player = this.player;
-        Globals.physicsWorld = this.physicsWorld;
-        Globals.gamestage = this.stage;
     }
+
 
     @Override
     public void render(float delta)
@@ -135,7 +113,7 @@ public class GameScreen implements Screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 2.0f;
+        camera.zoom = 6.0f;
         camera.update();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);

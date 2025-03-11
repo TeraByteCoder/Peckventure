@@ -10,7 +10,6 @@ import com.badlogic.gdx.physics.box2d.*;
 
 public class Beetle extends Mob {
     private final Texture texture;
-    private Body body;
     private float direction;
     private float speed = 1.5f;
     private float checkTime;
@@ -91,15 +90,4 @@ public class Beetle extends Mob {
         }
     }
 
-    @Override
-    public void dispose() {
-        if (body != null) {
-            Box2DOperationManager.queueOperation(() -> {
-                if (body.getWorld() != null) {
-                    body.getWorld().destroyBody(body);
-                }
-            });
-        }
-        super.dispose();
-    }
 }

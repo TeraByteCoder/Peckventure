@@ -1,6 +1,5 @@
 package at.peckventure.world;
 
-import at.peckventure.entities.MobManager;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobIO;
@@ -9,102 +8,70 @@ import at.peckventure.world.chunk.ChunkIO;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.physics.box2d.World;
-
+import static at.peckventure.Globals.mobs;
 import java.io.IOException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InfiniteTilemap
-{
+public class InfiniteTilemap {
     private final World physicsWorld;
-    public static final int RENDER_DISTANCE = 2;
+    public static final int RENDER_DISTANCE = 3;
+    public static final int MOB_DISTANCE = RENDER_DISTANCE - 2;
     private final WorldGenerator worldGenerator;
-    // Wir nutzen hier ein thread-sicheres Set – so kannst du im Render-Thread ohne Synchronisierung iterieren.
     private final Set<Chunk> loadedChunks = ConcurrentHashMap.newKeySet();
     private final RegionManager regionManager;
-
-    // Thread für das asynchrone Laden/Unloading der Chunks
+    private final MobRegionManager mobRegionManager;
     private Thread chunkUpdateThread;
-
-    private final MobManager mobManager;
-
-    private List<Mob> mobs = Collections.synchronizedList(new LinkedList<>());
     private volatile boolean running = false;
 
-    public InfiniteTilemap(World world, WorldGenerator generator, Set<Chunk> preLoadedChunks, RegionManager regionManager, MobManager mobManager)
-    {
+    public InfiniteTilemap(World world, WorldGenerator generator, Set<Chunk> preLoadedChunks, RegionManager regionManager, MobRegionManager mobRegionManager) {
         this.physicsWorld = world;
         this.worldGenerator = generator;
-        if (preLoadedChunks != null)
-        {
+        if (preLoadedChunks != null) {
             loadedChunks.addAll(preLoadedChunks);
         }
-
         this.regionManager = regionManager;
-        this.mobManager = mobManager;
+        this.mobRegionManager = mobRegionManager;
     }
 
-    /**
-     * Rendern: Hier werden einfach alle aktuell geladenen Chunks gezeichnet.
-     */
-    public void render(Batch batch)
-    {
-        for (Chunk chunk : loadedChunks)
-        {
+    public void render(Batch batch) {
+        for (Chunk chunk : loadedChunks) {
             chunk.render(batch);
         }
     }
 
-    public WorldGenerator getWorldGenerator()
-    {
+    public WorldGenerator getWorldGenerator() {
         return worldGenerator;
     }
 
-    public Set<Chunk> getLoadedChunks()
-    {
+    public Set<Chunk> getLoadedChunks() {
         return loadedChunks;
     }
 
-    /**
-     * Lädt neue Chunks um den Spieler, falls sie noch nicht vorhanden sind.
-     */
-
-
-
-    private void loadChunksAroundPlayer(Player player)
-    {
-        for (int x_offset = -RENDER_DISTANCE - 1; x_offset <= RENDER_DISTANCE; x_offset++)
-        {
-            for (int y_offset = -RENDER_DISTANCE; y_offset <= RENDER_DISTANCE; y_offset++)
-            {
+    private void loadChunksAroundPlayer(Player player) {
+        for (int x_offset = -RENDER_DISTANCE - 1; x_offset <= RENDER_DISTANCE; x_offset++) {
+            for (int y_offset = -RENDER_DISTANCE; y_offset <= RENDER_DISTANCE; y_offset++) {
                 int targetChunkX = player.getChunkX() + x_offset;
                 int targetChunkY = player.getChunkY() + y_offset;
                 Chunk dummy = new Chunk(targetChunkX, targetChunkY);
-                if (!loadedChunks.contains(dummy))
-                {
-                    // Bestimme Region- und lokale Koordinaten
+                if (!loadedChunks.contains(dummy)) {
                     int regionX = Math.floorDiv(targetChunkX, RegionManager.REGION_SIZE);
                     int regionY = Math.floorDiv(targetChunkY, RegionManager.REGION_SIZE);
                     RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
                     int localX = Math.floorMod(targetChunkX, RegionManager.REGION_SIZE);
                     int localY = Math.floorMod(targetChunkY, RegionManager.REGION_SIZE);
-
                     byte[] data = null;
-                    try
-                    {
+                    try {
                         data = regionFile.readChunk(localX, localY);
-                    } catch (IOException e)
-                    {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                     Chunk chunk;
-                    if (data != null)
-                    {
-                        // Chunk existiert bereits – laden!
+                    if (data != null) {
                         chunk = ChunkIO.deserialize(data, physicsWorld);
-                    } else
-                    {
-                        // Chunk nicht gefunden – generieren
+                    } else {
                         chunk = new Chunk(targetChunkX, targetChunkY);
                         worldGenerator.generateChunk(chunk);
                     }
@@ -114,99 +81,106 @@ public class InfiniteTilemap
         }
     }
 
-    /**
-     * Unloadet Chunks, die zu weit vom Spieler entfernt sind und speichert sie vorher in der passenden Region-Datei.
-     * Dabei wird auch die dispose()-Methode des Chunks aufgerufen, um Ressourcen freizugeben.
-     */
-    private void unloadChunksOutsideRenderDistance(Player player)
-    {
-        Iterator<Chunk> chunkIterator = loadedChunks.iterator();
-        while (chunkIterator.hasNext())
-        {
-            Chunk chunk = chunkIterator.next();
+    private void unloadChunksOutsideRenderDistance(Player player) {
+        Iterator<Chunk> iterator = loadedChunks.iterator();
+        while (iterator.hasNext()) {
+            Chunk chunk = iterator.next();
             if (Math.abs(chunk.getChunkX() - player.getChunkX()) > RENDER_DISTANCE + 2 ||
-                Math.abs(chunk.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2)
-            {
-                // Zuerst serialisieren
+                Math.abs(chunk.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2) {
                 byte[] data = ChunkIO.serialize(chunk);
-
-                // Speichern des Chunks in die Region-Datei
                 int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
                 int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
                 RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
                 int localX = Math.floorMod(chunk.getChunkX(), RegionManager.REGION_SIZE);
                 int localY = Math.floorMod(chunk.getChunkY(), RegionManager.REGION_SIZE);
-
-                try
-                {
+                try {
                     regionFile.writeChunk(localX, localY, data);
-                } catch (IOException e)
-                {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                // Jetzt die Ressourcen freigeben
                 chunk.dispose();
-                chunkIterator.remove();
+                iterator.remove();
             }
         }
     }
 
-
-    /**
-     * Führt beide Operationen aus – das wird im Hintergrund-Thread regelmäßig aufgerufen.
-     */
-    private void updateChunks(Player player)
-    {
-        loadChunksAroundPlayer(player);
-        loadMobsAroundPlayer(player);
-        unloadMobsOutsideRenderDistance(player);
-        unloadChunksOutsideRenderDistance(player);
+    private void unloadMobsOutsideRenderDistance(Player player) {
+        Iterator<Mob> iterator = mobs.iterator();
+        while (iterator.hasNext()) {
+            Mob mob = iterator.next();
+            if (Math.abs(mob.getChunkX() - player.getChunkX()) > MOB_DISTANCE + 2 ||
+                Math.abs(mob.getChunkY() - player.getChunkY()) > MOB_DISTANCE + 2) {
+                int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
+                int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
+                MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
+                int localX = Math.floorMod(mob.getChunkX(), MobRegionManager.REGION_SIZE);
+                int localY = Math.floorMod(mob.getChunkY(), MobRegionManager.REGION_SIZE);
+                String mobJson = MobIO.serializeToJson(mob);
+                byte[] mobData = mobJson.getBytes(StandardCharsets.UTF_8);
+                try {
+                    mobRegionFile.writeMobs(localX, localY, mobData);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                mob.dispose();
+                mob.remove();
+                iterator.remove();
+            }
+        }
     }
 
     private void loadMobsAroundPlayer(Player player) {
-        List<Mob> inactiveSnapshot = new ArrayList<>(mobManager.getInactiveMobs());
-        for (Mob mob : inactiveSnapshot) {
-            if (Math.abs(mob.getChunkX() - player.getChunkX()) <= RENDER_DISTANCE + 2 &&
-                Math.abs(mob.getChunkY() - player.getChunkY()) <= RENDER_DISTANCE + 2) {
-                mobManager.loadMob(mob);
+        for (int x_offset = -MOB_DISTANCE - 1; x_offset <= MOB_DISTANCE; x_offset++) {
+            for (int y_offset = -MOB_DISTANCE; y_offset <= MOB_DISTANCE; y_offset++) {
+                int targetChunkX = player.getChunkX() + x_offset;
+                int targetChunkY = player.getChunkY() + y_offset;
+                boolean mobExists = false;
+                for (Mob m : mobs) {
+                    if (m.getChunkX() == targetChunkX && m.getChunkY() == targetChunkY) {
+                        mobExists = true;
+                        break;
+                    }
+                }
+                if (!mobExists) {
+                    int regionX = Math.floorDiv(targetChunkX, MobRegionManager.REGION_SIZE);
+                    int regionY = Math.floorDiv(targetChunkY, MobRegionManager.REGION_SIZE);
+                    MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
+                    int localX = Math.floorMod(targetChunkX, MobRegionManager.REGION_SIZE);
+                    int localY = Math.floorMod(targetChunkY, MobRegionManager.REGION_SIZE);
+                    byte[] mobData = null;
+                    try {
+                        mobData = mobRegionFile.readMobs(localX, localY);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (mobData != null) {
+                        String mobJson = new String(mobData, StandardCharsets.UTF_8);
+                        Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
+                        mobs.add(mob);
+                    }
+                }
             }
         }
     }
 
-
-    private void unloadMobsOutsideRenderDistance(Player player) {
-        List<Mob> activeMobsSnapshot = new ArrayList<>(mobManager.getActiveMobs());
-        for (Mob mob : activeMobsSnapshot) {
-            if (Math.abs(mob.getChunkX() - player.getChunkX()) > RENDER_DISTANCE + 2 ||
-                Math.abs(mob.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2) {
-                mobManager.unloadMob(mob);
-            }
-        }
+    private void updateChunks(Player player) {
+        loadChunksAroundPlayer(player);
+        unloadChunksOutsideRenderDistance(player);
+        loadMobsAroundPlayer(player);
+        unloadMobsOutsideRenderDistance(player);
     }
 
-
-
-    /**
-     * Startet einen Hintergrund-Thread, der in regelmäßigen Abständen (z. B. alle 100ms) die Chunk-Liste aktualisiert.
-     */
-    public void startChunkUpdateThread(Player player)
-    {
-        if (chunkUpdateThread != null && chunkUpdateThread.isAlive())
-        {
+    public void startChunkUpdateThread(Player player) {
+        if (chunkUpdateThread != null && chunkUpdateThread.isAlive()) {
             return;
         }
         running = true;
-        chunkUpdateThread = new Thread(() ->
-        {
-            while (running)
-            {
+        chunkUpdateThread = new Thread(() -> {
+            while (running) {
                 updateChunks(player);
-                try
-                {
-                    Thread.sleep(100); // Anpassbar – hier 100ms Pause zwischen den Updates
-                } catch (InterruptedException e)
-                {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
@@ -215,39 +189,34 @@ public class InfiniteTilemap
         chunkUpdateThread.start();
     }
 
-
-    public void addMob(Mob mob)
-    {
-        mobs.add(mob);
-    }
-
-    /**
-     * Stoppt den Hintergrund-Thread.
-     */
-    public void stopChunkUpdateThread()
-    {
+    public void stopChunkUpdateThread() {
         running = false;
-        if (chunkUpdateThread != null)
-        {
-            try
-            {
+        if (chunkUpdateThread != null) {
+            try {
                 chunkUpdateThread.join();
-            } catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
     }
 
-    public void dispose()
-    {
+    public void dispose() {
         stopChunkUpdateThread();
-        // Optional: Alle noch geladenen Chunks entladen
-        for (Chunk chunk : loadedChunks)
-        {
+        for (Chunk chunk : loadedChunks) {
+            int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
+            int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
+            RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
+            int localX = Math.floorMod(chunk.getChunkX(), RegionManager.REGION_SIZE);
+            int localY = Math.floorMod(chunk.getChunkY(), RegionManager.REGION_SIZE);
+            byte[] data = ChunkIO.serialize(chunk);
+            try {
+                regionFile.writeChunk(localX, localY, data);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             chunk.dispose();
         }
         loadedChunks.clear();
-        // Falls weitere Ressourcen freigegeben werden müssen, hier ergänzen.
+        regionManager.closeAll();
     }
 }

@@ -8,10 +8,6 @@ buildscript {
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
   }
-  dependencies {
-
-
-  }
 }
 
 allprojects {
@@ -67,6 +63,9 @@ subprojects {
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
     maven { url 'https://jitpack.io' }
+  }
+  dependencies {
+    implementation 'com.google.code.gson:gson:2.8.9'
   }
 }
 
