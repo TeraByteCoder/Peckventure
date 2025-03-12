@@ -5,6 +5,7 @@ buildscript {
     gradlePluginPortal()
     mavenLocal()
     google()
+    maven { url 'https://jitpack.io' }
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
   }
@@ -66,7 +67,7 @@ subprojects {
   }
   dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
-  }
+    implementation 'com.github.crykn:kryonet:2.22'  }
 }
 
 eclipse.project.name = 'Peckventure' + '-parent'
