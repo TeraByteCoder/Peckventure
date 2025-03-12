@@ -3,14 +3,14 @@ package at.peckventure.inventory;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import at.peckventure.inventory.item.Item;
+import at.peckventure.inventory.item.Sword;
 
 public class InventorySlot extends Actor
 {
     private static final BitmapFont font = new BitmapFont(); // einfache Standard-Font
     private static final GlyphLayout layout = new GlyphLayout();
 
-    private Item item;               // das Item (kann null sein)
+    private Sword item;               // das Item (kann null sein)
     private final Texture slotTexture; // Hintergrund
 
     public InventorySlot(Texture slotTexture)
@@ -19,12 +19,12 @@ public class InventorySlot extends Actor
         setSize(64, 64);
     }
 
-    public void setItem(Item item)
+    public void setItem(Sword item)
     {
         this.item = item;
     }
 
-    public Item getItem()
+    public Sword getItem()
     {
         return item;
     }

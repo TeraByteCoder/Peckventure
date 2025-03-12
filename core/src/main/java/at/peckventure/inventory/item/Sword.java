@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 /**
  * Ein Item mit ID, Name, Textur und Stack-Logik (max. 32).
  */
-public class Item
+public class Sword
 {
     private final String id;
     private final String name;
@@ -14,7 +14,7 @@ public class Item
     private int stackSize = 1;           // aktuelle Anzahl in diesem Stack
     public static final int MAX_STACK_SIZE = 32; // globales Stacklimit
 
-    public Item(String id, String name, Texture texture)
+    public Sword(String id, String name, Texture texture)
     {
         this.id = id;
         this.name = name;

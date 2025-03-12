@@ -19,18 +19,18 @@ public class CommandRegistry
         commands.put(command.getName().toLowerCase(), command);
     }
 
-    public void executeCommand(String input, ChatUI chatUI, Player executor)
+    public String executeCommand(String input, Player executor)
     {
         String[] parts = input.split(" ");
-        if (parts.length == 0) return;
+        if (parts.length == 0) return "No command entered";
         Command cmd = commands.get(parts[0].toLowerCase());
         if (cmd != null)
         {
             String[] args = Arrays.copyOfRange(parts, 1, parts.length);
-            cmd.execute(args, chatUI, executor);
+             return cmd.execute(args, executor);
         } else
         {
-            chatUI.addMessage("Unknown command: " + parts[0]);
+            return "Unknown command: " + parts[0];
         }
     }
 

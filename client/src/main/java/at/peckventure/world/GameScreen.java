@@ -1,18 +1,15 @@
 package at.peckventure.world;
 
 import at.peckventure.Globals;
-import at.peckventure.Textures;
+import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
-import at.peckventure.inventory.ItemRegistry;
-import at.peckventure.inventory.item.Item;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
@@ -21,8 +18,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.InputManager;
-
-import java.io.File;
 
 public class GameScreen implements Screen
 {
@@ -55,7 +50,6 @@ public class GameScreen implements Screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
-        Globals.gamestage = stage;
         uiStage = new Stage(new ScreenViewport());
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
 
@@ -91,16 +85,13 @@ public class GameScreen implements Screen
             int terrainHeight = generator.getHeight((int) spawnX);
             spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
         }
-        player = new Player(physicsWorld, spawnX, spawnY);
-        Globals.player = player;
+        player = ControlledPlayer.getInstance(physicsWorld, spawnX, spawnY);
         stage.addActor(player);
 
         inventoryUI = new InventoryUI(uiStage);
         if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty()) {
-            inventoryUI.getInventory().deserialize(worldConfig.getInventoryHotbar(), worldConfig.getInventoryMain());
+            ControlledPlayer.getInstance().getInventory().deserialize(worldConfig.getInventoryHotbar(), worldConfig.getInventoryMain());
         }
-        Globals.inventoryUI = inventoryUI;
-        Globals.player = player;
         Globals.physicsWorld = physicsWorld;
         tilemap.startChunkUpdateThread(player);
     }
@@ -137,7 +128,7 @@ public class GameScreen implements Screen
     @Override
     public void pause()
     {
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, inventoryUI.getInventory());
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, ControlledPlayer.getInstance().getInventory());
     }
 
     @Override
@@ -157,7 +148,7 @@ public class GameScreen implements Screen
         stage.dispose();
         uiStage.dispose();
         physicsWorld.dispose();
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, inventoryUI.getInventory());
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, ControlledPlayer.getInstance().getInventory());
         tilemap.dispose();
     }
 }

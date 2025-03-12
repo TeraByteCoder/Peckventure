@@ -5,7 +5,7 @@ import at.peckventure.entities.Player;
 import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
-import at.peckventure.inventory.item.Item;
+import at.peckventure.inventory.item.Sword;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
@@ -16,9 +16,9 @@ import com.badlogic.gdx.physics.box2d.World;
 
 public class ItemActor extends Mob {
     private final Texture texture;
-    private final Item inventoryItem;
+    private final Sword inventoryItem;
 
-    public ItemActor(World world, float x, float y, Item inventoryItem) {
+    public ItemActor(World world, float x, float y, Sword inventoryItem) {
         super(world, x, y);
         this.inventoryItem = inventoryItem;
         this.texture = inventoryItem.getTexture();
@@ -51,7 +51,7 @@ public class ItemActor extends Mob {
         System.out.println("fallback construcktor used");
     }
 
-    public Item getInventoryItem() {
+    public Sword getInventoryItem() {
         return inventoryItem;
     }
 
@@ -78,7 +78,7 @@ public class ItemActor extends Mob {
     }
 
     public void onPlayerContact(Player player) {
-        Globals.inventoryUI.addItem(inventoryItem, 1);
+        // todo: Globals.inventoryUI.addItem(inventoryItem, 1);
         remove();
     }
 }

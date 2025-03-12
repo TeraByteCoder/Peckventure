@@ -3,11 +3,10 @@ package at.peckventure.chat;
 
 import at.peckventure.Globals;
 import at.peckventure.InputManager;
+import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -16,7 +15,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
 import java.util.LinkedList;
@@ -130,7 +128,7 @@ public class ChatUI
                     closeChat();
                 } else
                 {
-                    processChatInput(text, Globals.player);
+                    processChatInput(text, ControlledPlayer.getInstance());
                     closeChat();
                 }
             }
@@ -169,7 +167,7 @@ public class ChatUI
     {
         if (text.startsWith("/"))
         {
-            commandRegistry.executeCommand(text.substring(1), this, sender);
+            commandRegistry.executeCommand(text.substring(1), sender);
         } else
         {
             addMessage("Player: " + text);

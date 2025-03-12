@@ -5,14 +5,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.peckventure.Textures;
-import at.peckventure.inventory.item.Item;
+import at.peckventure.inventory.item.Sword;
 
 public class ItemRegistry
 {
 
     public interface ItemFactory
     {
-        Item create();
+        Sword create();
     }
 
     private static final Map<String, ItemFactory> registry = new HashMap<>();
@@ -22,7 +22,7 @@ public class ItemRegistry
         registry.put(id, factory);
     }
 
-    public static Item createItem(String id)
+    public static Sword createItem(String id)
     {
         ItemFactory factory = registry.get(id);
         return (factory != null) ? factory.create() : null;
@@ -36,7 +36,7 @@ public class ItemRegistry
     static
     {
         ItemRegistry.register("sword", () ->
-            new Item("sword", "Schwert", Textures.TEST_ITEM.getTexture())
+            new Sword("sword", "Schwert", Textures.TEST_ITEM.getTexture())
         );
     }
 

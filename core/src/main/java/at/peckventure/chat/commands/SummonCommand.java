@@ -1,16 +1,8 @@
 package at.peckventure.chat.commands;
 
 import at.peckventure.Globals;
-import at.peckventure.chat.ChatUI;
 import at.peckventure.entities.Player;
-import at.peckventure.entities.mob.Mob;
-import at.peckventure.entities.mob.MobRegistration;
 import at.peckventure.entities.mob.MobRegistry;
-import at.peckventure.inventory.ItemRegistry;
-import at.peckventure.inventory.item.Item;
-
-import static at.peckventure.Globals.inventoryUI;
-import static at.peckventure.Globals.player;
 
 public class SummonCommand extends Command
 {
@@ -20,12 +12,11 @@ public class SummonCommand extends Command
     }
 
     @Override
-    public void execute(String[] args, ChatUI chatUI, Player executor)
+    public String execute(String[] args,  Player executor)
     {
         if (args.length < 1 || args.length > 4)
         {
-            chatUI.addMessage("Usage: /summon <entity> <x> <y> <amount> ");
-            return;
+           return "Usage: /summon <entity> <x> <y> <amount> ";
         }
 
         // Erstes Argument als String
@@ -42,8 +33,7 @@ public class SummonCommand extends Command
                 position_y = Float.parseFloat(args[2]);
             } catch (NumberFormatException e)
             {
-                chatUI.addMessage("Invalid position: " + args[1] + " " + args[2]);
-                return;
+                return "Invalid position: " + args[1] + " " + args[2];
             }
         } else
         {
@@ -51,11 +41,7 @@ public class SummonCommand extends Command
             position_y = executor.getY();
         }
 
-        // Beispielausgabe
-        chatUI.addMessage("Summoning " + entityName + " at " + position_x + " " + position_y);
 
-        // Hier kannst du dann deine Logik zum Hinzufügen des Items implementieren
-        // Nutze das 'sword'-Item aus der Registry
         if (MobRegistry.isRegistered(entityName))
         {
             if (args.length == 2 || args.length == 4)
@@ -77,10 +63,11 @@ public class SummonCommand extends Command
             {
                 MobRegistry.createMob(entityName, Globals.physicsWorld, position_x, position_y);
             }
+            return "Summoning " + entityName + " at " + position_x + " " + position_y;
 
         } else
         {
-            chatUI.addMessage("Mob " + entityName + " not found");
+            return "Mob " + entityName + " not found";
         }
     }
 
