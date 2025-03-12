@@ -112,20 +112,23 @@ public class Player extends Actor
             sprite.setFlip(true, false);
         }
 
+        // Rotation passend setzen: Rechts = 0°, Links = 180°
+        if (direction != 0) {
+            setRotation(direction == 1 ? 0 : 180);
+        }
+
         // Aktuelle Geschwindigkeiten ermitteln
         Vector2 vel = body.getLinearVelocity();
         // Horizontal setzen (Umrechnung: Pixel/s -> m/s)
         body.setLinearVelocity(direction * speed / Block.BLOCK_SIZE, vel.y);
 
         // --- Vertikale Steuerung (Space) ---
-        // Berechne die aktuelle Y-Position des Bodies in Pixeln
         float bodyYPixels = body.getPosition().y * Block.BLOCK_SIZE;
         float relativeHeight = startY - bodyYPixels;
         if (InputManager.getInstance().isJumpPressed())
         {
             if (relativeHeight < maxHeight)
             {
-                // Setze die vertikale Geschwindigkeit (in m/s)
                 body.setLinearVelocity(body.getLinearVelocity().x, flyForce / Block.BLOCK_SIZE);
             } else
             {
@@ -133,13 +136,12 @@ public class Player extends Actor
             }
         }
 
-        // --- Synchronisiere den Actor mit der Body-Position ---
-        // Da der Body in Box2D seinen Schwerpunkt angibt, müssen wir zum Zeichnen
-        // die Position so setzen, dass der Actor mittig zum Body liegt.
+        // Synchronisiere den Actor mit der Body-Position
         Vector2 bodyPos = body.getPosition();
-        setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
-
+        setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2,
+            bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
     }
+
 
     public int getChunkX()
     {

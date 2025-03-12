@@ -1,5 +1,9 @@
 package at.peckventure.inventory;
 
+import at.peckventure.Globals;
+import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobRegistry;
+import at.peckventure.world.Box2DOperationManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
@@ -25,19 +29,17 @@ public class InventoryUI
     // Ein Image, das das gehaltene Item anzeigt (folgt dem Mauszeiger)
     private final Image heldItemImage = new Image();
 
-    public InventoryUI(Stage stage)
-    {
+    public InventoryUI(Stage stage) {
         this.stage = stage;
-        // z.B. Slot-Hintergrund
         Texture slotTexture = new Texture(Gdx.files.internal("textures/inventory_slot.png"));
         this.inventory = new Inventory(slotTexture);
-
         dragAndDrop = new DragAndDrop();
-
+        setupGlobalDropTarget();
         createUI();
         setupDragAndDrop();
         setupInputListener();
     }
+
 
     private void createUI()
     {
@@ -94,116 +96,64 @@ public class InventoryUI
         }
     }
 
-    private void addDragAndDropForSlot(final InventorySlot slot)
-    {
-        // Quelle
-        dragAndDrop.addSource(new DragAndDrop.Source(slot)
-        {
+    private void addDragAndDropForSlot(final InventorySlot slot) {
+        dragAndDrop.addSource(new DragAndDrop.Source(slot) {
             @Override
-            public DragAndDrop.Payload dragStart(InputEvent event, float x, float y, int pointer)
-            {
+            public DragAndDrop.Payload dragStart(InputEvent event, float x, float y, int pointer) {
                 if (slot.getItem() == null)
-                {
                     return null;
-                }
-
-                // Linksklick = pointer 0, Rechtsklick = pointer 1
-                // (Achtung: je nach Betriebssystem/Einstellung kann pointer abweichen)
-                // Evtl. musst du Input.Buttons.LEFT/RIGHT abfragen.
                 int button = pointer;
-
                 Item slotItem = slot.getItem();
                 DragAndDrop.Payload payload = new DragAndDrop.Payload();
-
-                if (button == 0)
-                { // Linksklick -> gesamter Stack
+                if (button == 0) {
                     payload.setObject(slotItem);
-                    // Slot leeren
                     slot.setItem(null);
-                } else if (button == 1)
-                { // Rechtsklick -> nur 1 Item
-                    if (slotItem.getStackSize() > 1)
-                    {
-                        // Neues Item mit stackSize=1
+                } else if (button == 1) {
+                    if (slotItem.getStackSize() > 1) {
                         Item single = new Item(slotItem.getId(), slotItem.getName(), slotItem.getTexture());
                         single.setStackSize(1);
-
                         payload.setObject(single);
-                        // Reduziere Original-Stack
                         slotItem.setStackSize(slotItem.getStackSize() - 1);
-                    } else
-                    {
-                        // Stackgröße = 1, also gesamter Stack
+                    } else {
                         payload.setObject(slotItem);
                         slot.setItem(null);
                     }
-                } else
-                {
-                    // Wenn mittlere Maustaste oder was anderes -> kein Drag
+                } else {
                     return null;
                 }
-
-                // Erstelle den DragActor (z. B. ein Image des Items)
                 Item draggedItem = (Item) payload.getObject();
                 Image dragActor = new Image(draggedItem.getTexture());
                 dragActor.setSize(slot.getWidth(), slot.getHeight());
                 payload.setDragActor(dragActor);
-
-                // Center the actor on the mouse
                 dragAndDrop.setDragActorPosition(-dragActor.getWidth() / 2f, -dragActor.getHeight() / 2f);
-
                 return payload;
             }
         });
-
-        // Ziel
-        dragAndDrop.addTarget(new DragAndDrop.Target(slot)
-        {
+        dragAndDrop.addTarget(new DragAndDrop.Target(slot) {
             @Override
-            public boolean drag(DragAndDrop.Source source, DragAndDrop.Payload payload,
-                                float x, float y, int pointer)
-            {
-                return true; // immer akzeptieren
+            public boolean drag(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+                return true;
             }
-
             @Override
-            public void drop(DragAndDrop.Source source, DragAndDrop.Payload payload,
-                             float x, float y, int pointer)
-            {
+            public void drop(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
                 Item draggedItem = (Item) payload.getObject();
                 InventorySlot sourceSlot = (InventorySlot) source.getActor();
                 Item targetItem = slot.getItem();
-
-                // 1) Wenn kein Item im Zielslot, Item einfach reinlegen
-                if (targetItem == null)
-                {
+                if (targetItem == null) {
                     slot.setItem(draggedItem);
-                } else
-                {
-                    // 2) Wenn selbe ID -> versuchen zu mergen
-                    if (targetItem.getId().equals(draggedItem.getId()))
-                    {
+                } else {
+                    if (targetItem.getId().equals(draggedItem.getId())) {
                         int canAdd = Item.MAX_STACK_SIZE - targetItem.getStackSize();
-                        if (canAdd > 0)
-                        {
+                        if (canAdd > 0) {
                             int toAdd = Math.min(canAdd, draggedItem.getStackSize());
                             targetItem.setStackSize(targetItem.getStackSize() + toAdd);
                             draggedItem.setStackSize(draggedItem.getStackSize() - toAdd);
                         }
-                        // Falls noch Reste im draggedItem übrig bleiben, könnte man
-                        // sie zurück in den Source-Slot legen oder wegwerfen etc.
-                        if (draggedItem.getStackSize() > 0)
-                        {
-                            // z.B. zurücklegen in den Quellslot (wenn leer)
+                        if (draggedItem.getStackSize() > 0) {
                             if (sourceSlot.getItem() == null)
-                            {
                                 sourceSlot.setItem(draggedItem);
-                            }
-                            // sonst Item verwerfen oder extra Logik
                         }
-                    } else
-                    {
-                        // 3) Andere ID -> swap
+                    } else {
                         slot.setItem(draggedItem);
                         sourceSlot.setItem(targetItem);
                     }
@@ -215,22 +165,39 @@ public class InventoryUI
     /**
      * InputListener für Taste E -> Hauptinventar ein-/ausblenden
      */
-    private void setupInputListener()
-    {
-        stage.addListener(new InputListener()
-        {
+    private void setupInputListener() {
+        stage.addListener(new InputListener() {
             @Override
-            public boolean keyDown(InputEvent event, int keycode)
-            {
-                if (keycode == Input.Keys.E)
-                {
+            public boolean keyDown(InputEvent event, int keycode) {
+                if(keycode == Input.Keys.E) {
                     toggleMainInventory();
                     return true;
+                } else if(keycode == Input.Keys.Q) {
+                    float x = Gdx.input.getX();
+                    float y = stage.getViewport().getScreenHeight() - Gdx.input.getY();
+                    Actor actor = stage.hit(x, y, true);
+                    InventorySlot slot = getInventorySlot(actor);
+                    if(slot != null && slot.getItem() != null) {
+                        dropItemOutside(slot.getItem(), slot.getItem().getStackSize());
+                        slot.setItem(null);
+                        return true;
+                    }
                 }
                 return false;
             }
         });
     }
+
+    private InventorySlot getInventorySlot(Actor actor) {
+        while(actor != null) {
+            if(actor instanceof InventorySlot) {
+                return (InventorySlot) actor;
+            }
+            actor = actor.getParent();
+        }
+        return null;
+    }
+
 
     public void toggleMainInventory()
     {
@@ -530,4 +497,40 @@ public class InventoryUI
             heldItemImage.setVisible(false);
         }
     }
+
+    private void setupGlobalDropTarget() {
+        Actor backgroundDropArea = new Actor();
+        backgroundDropArea.setBounds(0, 0, stage.getWidth(), stage.getHeight());
+        backgroundDropArea.setTouchable(Touchable.enabled);
+        stage.addActor(backgroundDropArea);
+        dragAndDrop.addTarget(new DragAndDrop.Target(backgroundDropArea) {
+            @Override
+            public boolean drag(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+                return true;
+            }
+            @Override
+            public void drop(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+                Item draggedItem = (Item) payload.getObject();
+                dropItemOutside(draggedItem, draggedItem.getStackSize());
+            }
+        });
+    }
+
+
+    public void dropItemOutside(Item item, int amount) {
+        System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
+        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, Globals.player.getX(), Globals.player.getY()+40, item);
+        float dropSpeed = 20f;
+        float angle = Globals.player.getRotation();
+        float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;
+        float vy = com.badlogic.gdx.math.MathUtils.sinDeg(angle) * dropSpeed;
+        Box2DOperationManager.queueOperation(() -> {
+            if (mob.getBody() != null)
+                mob.getBody().setLinearVelocity(vx, vy);
+        });
+    }
+
+
+
+
 }

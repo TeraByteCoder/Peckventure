@@ -26,6 +26,10 @@ public abstract class Mob extends Actor
     @Override
     public abstract void draw(Batch batch, float parentAlpha);
 
+    public Body getBody()
+    {
+        return body;
+    }
 
     public void dispose() {
         if (!disposed && body != null) {

@@ -20,6 +20,8 @@ public class Globals
     public static Stage gamestage;
     public static InfiniteTilemap infiniteTilemap;
 
+    public static Player playedPlayer;
+
     public static List<Mob> mobs = Collections.synchronizedList(new LinkedList<>());
 
 }

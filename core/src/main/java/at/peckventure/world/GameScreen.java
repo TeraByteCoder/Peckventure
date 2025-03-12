@@ -92,6 +92,7 @@ public class GameScreen implements Screen
             spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
         }
         player = new Player(physicsWorld, spawnX, spawnY);
+        Globals.player = player;
         stage.addActor(player);
 
         inventoryUI = new InventoryUI(uiStage);
@@ -113,7 +114,7 @@ public class GameScreen implements Screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 6.0f;
+        camera.zoom = 2.0f;
         camera.update();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);

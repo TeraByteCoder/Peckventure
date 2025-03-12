@@ -2,6 +2,7 @@ package at.peckventure.entities.mob;
 
 import at.peckventure.Globals;
 import at.peckventure.entities.Player;
+import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import at.peckventure.inventory.item.Item;
@@ -20,9 +21,8 @@ public class ItemActor extends Mob {
     public ItemActor(World world, float x, float y, Item inventoryItem) {
         super(world, x, y);
         this.inventoryItem = inventoryItem;
-        texture = inventoryItem.getTexture();
+        this.texture = inventoryItem.getTexture();
         setSize(32, 32);
-
         Box2DOperationManager.queueOperation(() -> {
             BodyDef bodyDef = new BodyDef();
             bodyDef.type = BodyDef.BodyType.DynamicBody;
@@ -44,7 +44,18 @@ public class ItemActor extends Mob {
         });
     }
 
-    @Override
+    // Optionaler Fallback-Konstruktor für Abwärtskompatibilität:
+    public ItemActor(World world, float x, float y)
+    {
+        this(world, x, y, ItemRegistry.createItem("sword"));
+        System.out.println("fallback construcktor used");
+    }
+
+    public Item getInventoryItem() {
+        return inventoryItem;
+    }
+
+        @Override
     public void act(float delta) {
         super.act(delta);
         if (body != null) {
