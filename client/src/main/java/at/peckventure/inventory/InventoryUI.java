@@ -8,13 +8,20 @@ import at.peckventure.world.Box2DOperationManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import at.peckventure.inventory.item.Sword;
+import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop.Payload;
+import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop.Source;
+import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop.Target;
 
 public class InventoryUI {
     private final Stage stage;
@@ -24,10 +31,11 @@ public class InventoryUI {
     private boolean mainVisible = false;
     private Sword heldItem = null;
     private final Image heldItemImage = new Image();
+    private final Texture slotTexture;
 
     public InventoryUI(Stage stage) {
         this.stage = stage;
-        Texture slotTexture = new Texture(Gdx.files.internal("textures/inventory_slot.png"));
+        slotTexture = new Texture(Gdx.files.internal("textures/inventory_slot.png"));
         dragAndDrop = new DragAndDrop();
         setupGlobalDropTarget();
         createUI();
@@ -38,7 +46,14 @@ public class InventoryUI {
     private void createUI() {
         hotbarTable = new Table();
         for (InventorySlot slot : ControlledPlayer.getInstance().getInventory().getHotbar()) {
-            hotbarTable.add(slot).pad(5).size(64, 64);
+            Group slotGroup = new Group();
+            slotGroup.setSize(64, 64);
+            Image background = new Image(new TextureRegionDrawable(slotTexture));
+            background.setSize(64, 64);
+            slotGroup.addActor(background);
+            slot.setPosition(0, 0);
+            slotGroup.addActor(slot);
+            hotbarTable.add(slotGroup).pad(5).size(64, 64);
         }
         hotbarTable.pack();
         float hotbarX = (stage.getWidth() - hotbarTable.getWidth()) / 2f;
@@ -46,9 +61,18 @@ public class InventoryUI {
         hotbarTable.setPosition(hotbarX, hotbarY);
         stage.addActor(hotbarTable);
         mainTable = new Table();
+        InventorySlot[][] mainInv = ControlledPlayer.getInstance().getInventory().getMainInventory();
         for (int row = 0; row < Inventory.MAIN_ROWS; row++) {
             for (int col = 0; col < Inventory.MAIN_COLUMNS; col++) {
-                mainTable.add(ControlledPlayer.getInstance().getInventory().getMainInventory()[row][col]).pad(5).size(64, 64);
+                InventorySlot slot = mainInv[row][col];
+                Group slotGroup = new Group();
+                slotGroup.setSize(64, 64);
+                Image background = new Image(new TextureRegionDrawable(slotTexture));
+                background.setSize(64, 64);
+                slotGroup.addActor(background);
+                slot.setPosition(0, 0);
+                slotGroup.addActor(slot);
+                mainTable.add(slotGroup).pad(5).size(64, 64);
             }
             mainTable.row();
         }
@@ -64,21 +88,22 @@ public class InventoryUI {
         for (InventorySlot slot : ControlledPlayer.getInstance().getInventory().getHotbar()) {
             addDragAndDropForSlot(slot);
         }
+        InventorySlot[][] mainInv = ControlledPlayer.getInstance().getInventory().getMainInventory();
         for (int row = 0; row < Inventory.MAIN_ROWS; row++) {
             for (int col = 0; col < Inventory.MAIN_COLUMNS; col++) {
-                addDragAndDropForSlot(ControlledPlayer.getInstance().getInventory().getMainInventory()[row][col]);
+                addDragAndDropForSlot(mainInv[row][col]);
             }
         }
     }
 
     private void addDragAndDropForSlot(final InventorySlot slot) {
-        dragAndDrop.addSource(new DragAndDrop.Source(slot) {
+        dragAndDrop.addSource(new Source(slot) {
             @Override
-            public DragAndDrop.Payload dragStart(InputEvent event, float x, float y, int pointer) {
+            public Payload dragStart(InputEvent event, float x, float y, int pointer) {
                 if (slot.getItem() == null) return null;
                 int button = pointer;
                 Sword slotItem = slot.getItem();
-                DragAndDrop.Payload payload = new DragAndDrop.Payload();
+                Payload payload = new Payload();
                 if (button == 0) {
                     payload.setObject(slotItem);
                     slot.setItem(null);
@@ -101,13 +126,13 @@ public class InventoryUI {
                 return payload;
             }
         });
-        dragAndDrop.addTarget(new DragAndDrop.Target(slot) {
+        dragAndDrop.addTarget(new Target(slot) {
             @Override
-            public boolean drag(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+            public boolean drag(Source source, Payload payload, float x, float y, int pointer) {
                 return true;
             }
             @Override
-            public void drop(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+            public void drop(Source source, Payload payload, float x, float y, int pointer) {
                 Sword draggedItem = (Sword) payload.getObject();
                 InventorySlot sourceSlot = (InventorySlot) source.getActor();
                 Sword targetItem = slot.getItem();
@@ -133,24 +158,24 @@ public class InventoryUI {
             }
         });
     }
+
     private void setupGlobalDropTarget() {
         Actor backgroundDropArea = new Actor();
         backgroundDropArea.setBounds(0, 0, stage.getWidth(), stage.getHeight());
-        backgroundDropArea.setTouchable(Touchable.enabled);
+        backgroundDropArea.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
         stage.addActor(backgroundDropArea);
-        dragAndDrop.addTarget(new DragAndDrop.Target(backgroundDropArea) {
+        dragAndDrop.addTarget(new Target(backgroundDropArea) {
             @Override
-            public boolean drag(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+            public boolean drag(Source source, Payload payload, float x, float y, int pointer) {
                 return true;
             }
             @Override
-            public void drop(DragAndDrop.Source source, DragAndDrop.Payload payload, float x, float y, int pointer) {
+            public void drop(Source source, Payload payload, float x, float y, int pointer) {
                 Sword draggedItem = (Sword) payload.getObject();
                 dropItemOutside(draggedItem, draggedItem.getStackSize());
             }
         });
     }
-
 
     private void setupInputListener() {
         stage.addListener(new InputListener() {

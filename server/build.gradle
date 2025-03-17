@@ -7,12 +7,31 @@ if (JavaVersion.current().isJava9Compatible()) {
         compileJava.options.release.set(8)
 }
 
-mainClassName = 'at.peckventure.server.ServerLauncher'
+mainClassName = 'at.peckventure.ServerLauncher'
 application.setMainClass(mainClassName)
 eclipse.project.name = appName + '-server'
 
-dependencies {
+run {
+  workingDir = rootProject.file('assets').path
+}
+sourceSets {
+  main {
+    resources {
+      srcDirs += [rootProject.file('assets').path]
+    }
+  }
+}
 
+dependencies {
+  implementation project(':core')
+  implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+  // Für Headless ohne Grafik/Rendering:
+  implementation "com.badlogicgames.gdx:gdx-backend-headless:$gdxVersion"
+
+  // Natives, damit die DLLs/SOs auch beim Server verfügbar sind:
+  runtimeOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+  runtimeOnly "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
 }
 
 jar {

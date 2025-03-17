@@ -1,6 +1,7 @@
 package at.peckventure.world.block;
 
 import at.peckventure.Textures;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
@@ -24,16 +25,18 @@ public class GrassRamp extends Block
      * @param gridY Y-Position im Blockraster (in Einheiten)
      * @param left  true, wenn es sich um eine linke Rampe handeln soll, false für eine rechte Rampe
      */
-    public GrassRamp(World world, int gridX, int gridY, boolean left)
-    {
-        // Wähle das entsprechende Texture abhängig vom Boolean.
-        super(world,
-            left ? Textures.GRASSRAMPLEFT.getTexture()
-                : Textures.GRASSRAMPRIGHT.getTexture(),
+    public GrassRamp(World world, int gridX, int gridY, boolean left) {
+        super(
+            world,
+            Gdx.gl != null
+                ? (left ? Textures.GRASSRAMPLEFT.getTexture() : Textures.GRASSRAMPRIGHT.getTexture())
+                : null,
             gridX,
-            gridY);
+            gridY
+        );
         this.leftRamp = left;
     }
+
 
     /**
      * Überschreibt die Kollisionsform, um eine dreieckige Form (45° Rampe) zu erstellen.

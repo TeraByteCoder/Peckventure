@@ -1,19 +1,20 @@
 package at.peckventure.entities;
 
-import at.peckventure.Textures;
 import at.peckventure.inventory.Inventory;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import java.util.UUID;
 
-public abstract class Player extends Actor
-{
+public abstract class Player extends Actor {
     protected World world;
+
     protected Body body;
     protected Sprite sprite;
     protected final float speed = 400;
@@ -23,17 +24,18 @@ public abstract class Player extends Actor
     protected final float startY;
     Inventory inventory;
 
-
-    public Inventory getInventory()
-    {
+    public Inventory getInventory() {
         return inventory;
     }
 
-    public Player(World world, float x, float y)
-    {
-        this.inventory = new Inventory(Textures.INVENTORY_SLOT.getTexture());
+
+    public Player(World world, float x, float y) {
+        this.inventory = new Inventory();
         this.world = world;
-        this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
+        // Generiere eine eindeutige ID, z. B. mit UUID
+        if (Gdx.gl != null) {
+            this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
+        }
         this.startY = y;
         setSize(64, 64);
         BodyDef bodyDef = new BodyDef();
@@ -49,8 +51,7 @@ public abstract class Player extends Actor
         fixtureDef.density = 1f;
         fixtureDef.friction = 0.5f;
         fixtureDef.restitution = 0f;
-        if (rectHeight > 0)
-        {
+        if (rectHeight > 0) {
             PolygonShape rectShape = new PolygonShape();
             rectShape.setAsBox(radius, rectHeight / 2f, new Vector2(0, 0), 0);
             fixtureDef.shape = rectShape;
@@ -75,30 +76,27 @@ public abstract class Player extends Actor
     protected abstract void handleInput(float delta);
 
     @Override
-    public void act(float delta)
-    {
+    public void act(float delta) {
         handleInput(delta);
         Vector2 bodyPos = body.getPosition();
         setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
     }
 
-    public void draw(Batch batch)
-    {
-        batch.draw(sprite, getX(), getY(), getWidth(), getHeight());
+    public void draw(Batch batch) {
+        if (sprite != null)
+            batch.draw(sprite, getX(), getY(), getWidth(), getHeight());
     }
 
-    public Body getBody()
-    {
+    public Body getBody() {
         return body;
     }
 
-    public int getChunkX()
-    {
+    public int getChunkX() {
         return (int) getX() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
-    public int getChunkY()
-    {
+    public int getChunkY() {
         return (int) getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
+
 }

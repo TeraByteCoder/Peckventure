@@ -1,7 +1,6 @@
 package at.peckventure.inventory;
 
 import at.peckventure.inventory.item.Sword;
-import com.badlogic.gdx.graphics.Texture;
 
 public class Inventory {
     private final InventorySlot[] hotbar;
@@ -10,15 +9,15 @@ public class Inventory {
     public static final int MAIN_ROWS = 3;
     public static final int MAIN_COLUMNS = 5;
 
-    public Inventory(Texture slotTexture) {
+    public Inventory() {
         hotbar = new InventorySlot[HOTBAR_SIZE];
         for (int i = 0; i < HOTBAR_SIZE; i++) {
-            hotbar[i] = new InventorySlot(slotTexture);
+            hotbar[i] = new InventorySlot();
         }
         mainInventory = new InventorySlot[MAIN_ROWS][MAIN_COLUMNS];
         for (int r = 0; r < MAIN_ROWS; r++) {
             for (int c = 0; c < MAIN_COLUMNS; c++) {
-                mainInventory[r][c] = new InventorySlot(slotTexture);
+                mainInventory[r][c] = new InventorySlot();
             }
         }
     }

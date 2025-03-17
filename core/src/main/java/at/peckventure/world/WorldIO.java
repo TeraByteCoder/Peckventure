@@ -12,7 +12,10 @@ import com.badlogic.gdx.physics.box2d.World;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
+
+import static at.peckventure.Const.savesDir;
 import static at.peckventure.Globals.mobs;
 
 public class WorldIO {
@@ -60,10 +63,9 @@ public class WorldIO {
         mobRegionManager.closeAll();
     }
 
-    public static LoadedWorld loadWorld(String worldName, World physicsWorld) {
-        FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
+    public static LoadedWorld loadWorld(FileHandle worldDir, World physicsWorld) {
         if (!worldDir.exists()) {
-            throw new RuntimeException("World does not exist: " + worldName);
+            createWorld(worldDir,new Random().nextInt());
         }
         FileHandle configFile = worldDir.child("worldconfig.txt");
         WorldConfig config = WorldConfig.load(configFile);
@@ -132,6 +134,31 @@ public class WorldIO {
         }
         mobs.addAll(loadedMobs);
         return new LoadedWorld(config, loadedChunks, loadedMobs);
+    }
+
+    public static void createWorld(String worldName, FileHandle path, long seed)
+    {
+        if (worldName == null || worldName.trim().isEmpty()) {
+            worldName = "New World";
+        }
+        FileHandle newWorldDir = Gdx.files.absolute(path + "/" + worldName);
+        while (newWorldDir.exists()) {
+            worldName += "_";
+            newWorldDir = Gdx.files.absolute(path + "/" + worldName);
+        }
+        newWorldDir.mkdirs();
+        WorldConfig config = new WorldConfig(seed);
+        FileHandle configFile = newWorldDir.child("worldconfig.txt");
+        config.save(configFile);
+    }
+
+    public static void createWorld(FileHandle path, long seed)
+    {
+
+        path.mkdirs();
+        WorldConfig config = new WorldConfig(seed);
+        FileHandle configFile = path.child("worldconfig.txt");
+        config.save(configFile);
     }
 
     public static class LoadedWorld {

@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
+import at.peckventure.world.MultiPlayerGameScreen;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -116,7 +117,7 @@ public class MultiPlayer implements Screen {
         serverButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // todo: game.setScreen(new GameScreen(game, serverName, serverAddress));
+                game.setScreen(new MultiPlayerGameScreen(game, serverName, serverAddress));
             }
         });
         serverTable.add(serverButton).size(400, 80).padBottom(10).row();

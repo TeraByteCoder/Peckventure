@@ -70,8 +70,7 @@ public class GameScreen implements Screen
         multiplexer.addProcessor(uiStage);
         multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
-
-        WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldName, physicsWorld);
+        WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldDir, physicsWorld);
         worldConfig = loaded.getConfig();
         WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
         RegionManager regionManager = new RegionManager(worldDir);
