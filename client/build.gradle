@@ -1,0 +1,65 @@
+plugins {
+  id 'java'
+  id 'application'
+}
+
+def appName = 'PeckventureClient'
+group = 'at.peckventure'
+version = 'unspecified'
+
+java.sourceCompatibility = 8
+java.targetCompatibility = 8
+if (JavaVersion.current().isJava9Compatible()) {
+  compileJava.options.release.set(8)
+}
+
+mainClassName = 'at.peckventure.Main'
+application.setMainClass(mainClassName)
+eclipse.project.name = appName + '-client'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  // LibGDX – passe die Version an deine gewünschte LibGDX-Version an
+  implementation "com.badlogicgames.gdx:gdx:1.13.1"
+  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.13.1"
+  implementation "com.badlogicgames.gdx:gdx-platform:1.13.1:natives-desktop"
+
+  // Falls du Box2D nutzt:
+  implementation "com.badlogicgames.gdx:gdx-box2d:1.13.1"
+  implementation "com.badlogicgames.gdx:gdx-box2d-platform:1.13.1:natives-desktop"
+
+  // Falls dein Client auf das core-Projekt zugreifen muss:
+  // implementation project(':core')
+
+  testImplementation platform('org.junit:junit-bom:5.10.0')
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+
+  implementation project(':core')
+}
+
+jar {
+  archiveBaseName.set(appName)
+  duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+  dependsOn configurations.runtimeClasspath
+  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  dependencies {
+    exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
+  }
+  manifest {
+    attributes 'Main-Class': project.mainClassName
+  }
+  doLast {
+    file(archiveFile).setExecutable(true, false)
+  }
+}
+
+task dist(dependsOn: [jar]) {
+}
+
+test {
+  useJUnitPlatform()
+}
