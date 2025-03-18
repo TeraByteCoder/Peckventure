@@ -1,7 +1,5 @@
 package at.peckventure.multiplayer;
 
-import at.peckventure.entities.Player;
-
 import java.util.*;
 
 public class NetworkPackets
@@ -14,8 +12,6 @@ public class NetworkPackets
 
     public static class ChunkDataPacket
     {
-        public int chunkX;
-        public int chunkY;
         public byte[] data;
     }
 

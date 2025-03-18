@@ -37,6 +37,11 @@ public class BlockRegistry
     public static Block createBlock(int id, World world, int worldX, int worldY, Object... args)
     {
         BlockCreator creator = registry.get(id);
+        if(id != 0)
+        {
+            System.out.println(id);
+
+        }
         return (creator != null) ? creator.create(world, worldX, worldY, args) : null;
     }
 

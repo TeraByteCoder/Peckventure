@@ -1,5 +1,6 @@
 package at.peckventure.menu;
 
+import at.peckventure.SettingsManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -24,6 +25,7 @@ public class MainMenu implements Screen
     public MainMenu(Game game)
     {
         this.game = game;
+        SettingsManager.init();
     }
 
     @Override

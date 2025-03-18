@@ -1,21 +1,21 @@
-package at.peckventure.world;
+package at.peckventure.menu;
 
 import at.peckventure.Globals;
 import at.peckventure.NetworkClient;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
-import at.peckventure.entities.ServerPlayer;
 import at.peckventure.inventory.InventoryUI;
-import at.peckventure.menu.MultiPlayer;
 import at.peckventure.multiplayer.NetworkPackets;
-import at.peckventure.world.block.Block;
-import at.peckventure.world.generator.WorldGenerator;
+import at.peckventure.world.Box2DOperationManager;
+import at.peckventure.world.MultiPlayerMap;
+import at.peckventure.world.WorldConfig;
+import at.peckventure.world.chunk.Chunk;
+import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -29,12 +29,14 @@ import at.peckventure.InputManager;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class MultiPlayerGameScreen implements Screen
 {
     private ChatUI chatUI;
-
     private Map<String, RemotePlayer> players = new HashMap<>();
     private final Game game;
     private final String worldName;
@@ -43,14 +45,13 @@ public class MultiPlayerGameScreen implements Screen
     private Player player;
     private Stage stage;
     private Stage uiStage;
-    private InfiniteTilemap tilemap;
+    private MultiPlayerMap tilemap;
     private final World physicsWorld;
     private WorldConfig worldConfig;
     private InventoryUI inventoryUI;
     private String serverHost;
     private int serverPort;
-
-    private String uuid = UUID.randomUUID().toString();
+    private boolean chunksLoaded = false;
     private static final int DEFAULT_PORT = 4242;
 
     public MultiPlayerGameScreen(Game game, String worldName, String serverAddress)
@@ -78,7 +79,6 @@ public class MultiPlayerGameScreen implements Screen
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
         uiStage = new Stage(new ScreenViewport());
-        FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         chatUI = new ChatUI(uiStage);
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
         {
@@ -102,33 +102,11 @@ public class MultiPlayerGameScreen implements Screen
         multiplexer.addProcessor(uiStage);
         multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
-
-        WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldDir, physicsWorld);
-        worldConfig = loaded.getConfig();
-        WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
-        RegionManager regionManager = new RegionManager(worldDir);
-        MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
-        tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobRegionManager);
-        float spawnX = worldConfig.getPlayerX();
-        float spawnY = worldConfig.getPlayerY();
-        if (spawnX == 0 && spawnY == 0)
-        {
-            spawnX = 0;
-            int terrainHeight = generator.getHeight((int) spawnX);
-            spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
-        }
-        player = ControlledPlayer.getInstance(physicsWorld, spawnX, spawnY);
+        tilemap = new MultiPlayerMap(physicsWorld);
+        player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
         stage.addActor(player);
         inventoryUI = new InventoryUI(uiStage);
-        if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty())
-        {
-            ControlledPlayer.getInstance().getInventory().deserialize(worldConfig.getInventoryHotbar(), worldConfig.getInventoryMain());
-        }
         Globals.physicsWorld = physicsWorld;
-        tilemap.startChunkUpdateThread(player);
-
-        // Initialisiere den NetworkClient als Singleton
-        // Hier gehen wir davon aus, dass TCP und UDP den gleichen Port verwenden.
         NetworkClient.init(serverHost, serverPort, serverPort + 222);
         NetworkClient.getInstance().addListener(new Listener()
         {
@@ -136,7 +114,7 @@ public class MultiPlayerGameScreen implements Screen
             public void connected(Connection connection)
             {
                 NetworkPackets.ServerConnectPacket packet = new NetworkPackets.ServerConnectPacket();
-                packet.uuid = uuid;
+                packet.uuid = Globals.uuid;
                 NetworkClient.getInstance().sendTCP(packet);
             }
 
@@ -152,33 +130,21 @@ public class MultiPlayerGameScreen implements Screen
                 if (object instanceof NetworkPackets.PlayerListPacket)
                 {
                     final NetworkPackets.PlayerListPacket listPacket = (NetworkPackets.PlayerListPacket) object;
-                    Gdx.app.postRunnable(new Runnable()
+                    Gdx.app.postRunnable(() ->
                     {
-                        @Override
-                        public void run()
+                        for (NetworkPackets.PlayerUpdatePacket updatePacket : listPacket.players)
                         {
-                            System.out.println("Received PlayerListPacket with " + listPacket.players.size() + " players.");
-                            for (NetworkPackets.PlayerUpdatePacket updatePacket : listPacket.players)
+                            if (!updatePacket.uuid.equals(Globals.uuid))
                             {
-                                System.out.println("ListPacket: player uuid=" + updatePacket.uuid + ", x=" + updatePacket.x + ", y=" + updatePacket.y);
-                                if (!updatePacket.uuid.equals(uuid))
+                                if (!players.containsKey(updatePacket.uuid))
                                 {
-                                    if (!players.containsKey(updatePacket.uuid))
-                                    {
-                                        System.out.println("Creating new remote player for uuid: " + updatePacket.uuid);
-                                        RemotePlayer remotePlayer = new RemotePlayer(physicsWorld, updatePacket.x, updatePacket.y);
-                                        players.put(updatePacket.uuid, remotePlayer);
-                                        stage.addActor(remotePlayer);
-                                    } else
-                                    {
-                                        System.out.println("Updating existing remote player for uuid: " + updatePacket.uuid);
-                                        Player remotePlayer = players.get(updatePacket.uuid);
-                                        remotePlayer.setX(updatePacket.x);
-                                        remotePlayer.setY(updatePacket.y);
-                                    }
+                                    RemotePlayer remotePlayer = new RemotePlayer(physicsWorld, updatePacket.x, updatePacket.y);
+                                    players.put(updatePacket.uuid, remotePlayer);
+                                    stage.addActor(remotePlayer);
                                 } else
                                 {
-                                    System.out.println("Ignoring own update in list for uuid: " + updatePacket.uuid);
+                                    players.get(updatePacket.uuid).setX(updatePacket.x);
+                                    players.get(updatePacket.uuid).setY(updatePacket.y);
                                 }
                             }
                         }
@@ -186,54 +152,45 @@ public class MultiPlayerGameScreen implements Screen
                 } else if (object instanceof NetworkPackets.PlayerUpdatePacket)
                 {
                     final NetworkPackets.PlayerUpdatePacket packet = (NetworkPackets.PlayerUpdatePacket) object;
-                    Gdx.app.postRunnable(new Runnable()
+                    Gdx.app.postRunnable(() ->
                     {
-                        @Override
-                        public void run()
+                        if (!packet.uuid.equals(Globals.uuid))
                         {
-                            final NetworkPackets.PlayerUpdatePacket packet = (NetworkPackets.PlayerUpdatePacket) object;
-                            if (!packet.uuid.equals(uuid))
+                            if (!players.containsKey(packet.uuid))
                             {
-                                if (!players.containsKey(packet.uuid))
-                                {
-                                    System.out.println("Creating new remote player for uuid: " + packet.uuid);
-                                    RemotePlayer remotePlayer = new RemotePlayer(physicsWorld, packet.x, packet.y);
-                                    players.put(packet.uuid, remotePlayer);
-                                    stage.addActor(remotePlayer);
-                                } else
-                                {
-                                    System.out.println("Updating existing remote player for uuid: " + packet.uuid + "   " + packet.x);
-                                    players.get(packet.uuid).updateFromPacket(packet);
-                                }
+                                RemotePlayer remotePlayer = new RemotePlayer(physicsWorld, packet.x, packet.y);
+                                players.put(packet.uuid, remotePlayer);
+                                stage.addActor(remotePlayer);
+                            } else
+                            {
+                                players.get(packet.uuid).updateFromPacket(packet);
                             }
                         }
                     });
                 } else if (object instanceof NetworkPackets.ClientConnectPacket)
                 {
                     final NetworkPackets.ClientConnectPacket packet = (NetworkPackets.ClientConnectPacket) object;
-                    Gdx.app.postRunnable(new Runnable()
+                    Gdx.app.postRunnable(() ->
                     {
-                        @Override
-                        public void run()
-                        {
-                            // Aktualisiere den lokalen Spieler, falls nötig
-                            player.setX(packet.posx);
-                            player.setY(packet.posy);
-                        }
+                        ControlledPlayer.getInstance().setX(packet.posx);
+                        ControlledPlayer.getInstance().setY(packet.posy);
+                        ControlledPlayer.getInstance().getBody().setTransform(packet.posx, packet.posy, 0);
                     });
-                }
-                else if (object instanceof NetworkPackets.ClientDisconnectPacket)
+                } else if (object instanceof NetworkPackets.ClientDisconnectPacket)
                 {
                     NetworkPackets.ClientDisconnectPacket packet = (NetworkPackets.ClientDisconnectPacket) object;
-                    Gdx.app.postRunnable(new Runnable()
+                    Gdx.app.postRunnable(() ->
                     {
-                        @Override
-                        public void run()
-                        {
-                            Player  player = players.get(packet.uuid);
-                            player.remove();
-                            players.remove(packet.uuid);
-                        }
+                        Player p = players.get(packet.uuid);
+                        p.remove();
+                        players.remove(packet.uuid);
+                    });
+                } else if (object instanceof NetworkPackets.ChunkDataPacket)
+                {
+                    NetworkPackets.ChunkDataPacket packet = (NetworkPackets.ChunkDataPacket) object;
+                    Gdx.app.postRunnable(() ->
+                    {
+                        tilemap.addLoadedChunk(ChunkIO.deserialize(packet.data, physicsWorld));
                     });
                 }
             }
@@ -241,11 +198,11 @@ public class MultiPlayerGameScreen implements Screen
             @Override
             public void idle(Connection connection)
             {
-
             }
         });
+        NetworkClient.getInstance().connect(5000);
 
-        NetworkClient.getInstance().connect(5000); // Timeout z. B. 5000 ms
+        tilemap.startChunkUpdateThread(player);
     }
 
     @Override
@@ -253,10 +210,9 @@ public class MultiPlayerGameScreen implements Screen
     {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         Box2DOperationManager.processOperations();
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 2.0f;
+        camera.zoom = 10.0f;
         camera.update();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);
@@ -269,10 +225,10 @@ public class MultiPlayerGameScreen implements Screen
         uiStage.draw();
 
         NetworkPackets.PlayerUpdatePacket packet = new NetworkPackets.PlayerUpdatePacket();
-        packet.uuid = uuid;
+        packet.uuid = Globals.uuid;
         packet.x = player.getX();
         packet.y = player.getY();
-        NetworkClient.getInstance().sendTCP(packet);
+        NetworkClient.getInstance().sendUDP(packet);
     }
 
     @Override
@@ -285,7 +241,6 @@ public class MultiPlayerGameScreen implements Screen
     @Override
     public void pause()
     {
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, ControlledPlayer.getInstance().getInventory());
     }
 
     @Override
@@ -305,7 +260,6 @@ public class MultiPlayerGameScreen implements Screen
         stage.dispose();
         uiStage.dispose();
         physicsWorld.dispose();
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, ControlledPlayer.getInstance().getInventory());
         tilemap.dispose();
     }
 }

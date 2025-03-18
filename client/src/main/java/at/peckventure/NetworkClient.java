@@ -16,7 +16,7 @@ public class NetworkClient {
         this.host = host;
         this.tcpPort = tcpPort;
         this.udpPort = udpPort;
-        client = new Client();
+        client = new Client(65536, 65536);
 
         Network.register(client.getKryo());
     }

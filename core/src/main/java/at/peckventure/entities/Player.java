@@ -1,6 +1,7 @@
 package at.peckventure.entities;
 
 import at.peckventure.inventory.Inventory;
+import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
 import com.badlogic.gdx.Gdx;
@@ -87,6 +88,12 @@ public abstract class Player extends Actor {
             batch.draw(sprite, getX(), getY(), getWidth(), getHeight());
     }
 
+    // Wird vom PlayerManager aufgerufen, wenn ein Update-Paket eintrifft.
+    public void updateFromPacket(NetworkPackets.PlayerUpdatePacket packet) {
+        setPosition(packet.x, packet.y);
+        body.setTransform(packet.x / Block.BLOCK_SIZE, packet.y / Block.BLOCK_SIZE, body.getAngle());
+    }
+
     public Body getBody() {
         return body;
     }
@@ -98,5 +105,4 @@ public abstract class Player extends Actor {
     public int getChunkY() {
         return (int) getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
-
 }

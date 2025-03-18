@@ -1,6 +1,5 @@
 package at.peckventure.menu;
 
-import at.peckventure.world.GameScreen;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -155,7 +154,7 @@ public class SinglePlayer implements Screen
             @Override
             public void clicked(InputEvent event, float x, float y)
             {
-                game.setScreen(new GameScreen(game, worldName)); // Wechselt zur Spielwelt
+                game.setScreen(new SinglePlayerGameScreen(game, worldName)); // Wechselt zur Spielwelt
             }
         });
 

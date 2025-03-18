@@ -1,7 +1,6 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
-import at.peckventure.world.MultiPlayerGameScreen;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;

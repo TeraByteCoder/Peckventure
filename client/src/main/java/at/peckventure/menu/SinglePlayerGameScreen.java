@@ -1,9 +1,10 @@
-package at.peckventure.world;
+package at.peckventure.menu;
 
 import at.peckventure.Globals;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
+import at.peckventure.world.*;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.*;
@@ -19,7 +20,7 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.InputManager;
 
-public class GameScreen implements Screen
+public class SinglePlayerGameScreen implements Screen
 {
 
     private ChatUI chatUI;
@@ -30,14 +31,15 @@ public class GameScreen implements Screen
     private Player player;
     private Stage stage;
     private Stage uiStage;
-    private InfiniteTilemap tilemap;
+    private SinglePlayerMap tilemap;
     private final World physicsWorld;
     private WorldConfig worldConfig;
 
+    private PlayerData playerData;
     // Inventar-UI (arbeitet auf der separaten UI-Stage)
     private InventoryUI inventoryUI;
 
-    public GameScreen(Game game, String worldName)
+    public SinglePlayerGameScreen(Game game, String worldName)
     {
         this.game = game;
         this.worldName = worldName;
@@ -45,7 +47,8 @@ public class GameScreen implements Screen
     }
 
     @Override
-    public void show() {
+    public void show()
+    {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
@@ -54,14 +57,20 @@ public class GameScreen implements Screen
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
 
         chatUI = new ChatUI(uiStage);
-        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle() {
-            public void toggleChat() {
+        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
+        {
+            public void toggleChat()
+            {
                 chatUI.toggleChat();
             }
-            public void cancelChat() {
+
+            public void cancelChat()
+            {
                 chatUI.cancelChat();
             }
-            public boolean isChatActive() {
+
+            public boolean isChatActive()
+            {
                 return chatUI.isChatActive();
             }
         });
@@ -72,14 +81,16 @@ public class GameScreen implements Screen
         Gdx.input.setInputProcessor(multiplexer);
         WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldDir, physicsWorld);
         worldConfig = loaded.getConfig();
+        playerData = PlayerData.load(worldDir,Globals.uuid); //todo
         WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
         RegionManager regionManager = new RegionManager(worldDir);
         MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
-        tilemap = new InfiniteTilemap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobRegionManager);
+        tilemap = new SinglePlayerMap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobRegionManager);
 
-        float spawnX = worldConfig.getPlayerX();
-        float spawnY = worldConfig.getPlayerY();
-        if (spawnX == 0 && spawnY == 0) {
+        float spawnX = playerData.getPlayerX();
+        float spawnY = playerData.getPlayerY();
+        if (spawnX == 0 && spawnY == 0)
+        {
             spawnX = 0;
             int terrainHeight = generator.getHeight((int) spawnX);
             spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
@@ -88,8 +99,9 @@ public class GameScreen implements Screen
         stage.addActor(player);
 
         inventoryUI = new InventoryUI(uiStage);
-        if (!worldConfig.getInventoryHotbar().isEmpty() && !worldConfig.getInventoryMain().isEmpty()) {
-            ControlledPlayer.getInstance().getInventory().deserialize(worldConfig.getInventoryHotbar(), worldConfig.getInventoryMain());
+        if (!playerData.getInventoryHotbar().isEmpty() && !playerData.getInventoryMain().isEmpty())
+        {
+            ControlledPlayer.getInstance().getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
         }
         Globals.physicsWorld = physicsWorld;
         tilemap.startChunkUpdateThread(player);
@@ -127,7 +139,7 @@ public class GameScreen implements Screen
     @Override
     public void pause()
     {
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, ControlledPlayer.getInstance().getInventory());
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
     }
 
     @Override
@@ -147,7 +159,7 @@ public class GameScreen implements Screen
         stage.dispose();
         uiStage.dispose();
         physicsWorld.dispose();
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), player, ControlledPlayer.getInstance().getInventory());
+        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
         tilemap.dispose();
     }
 }

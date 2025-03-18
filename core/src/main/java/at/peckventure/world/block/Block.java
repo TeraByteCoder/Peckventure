@@ -105,5 +105,9 @@ public abstract class Block extends Actor
         }
     }
 
-
+    @Override
+    public String toString()
+    {
+        return(this.getClass().getSimpleName());
+    }
 }

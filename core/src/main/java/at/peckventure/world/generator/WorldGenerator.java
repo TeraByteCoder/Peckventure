@@ -22,7 +22,7 @@ public class WorldGenerator
      * Erzeugt einen Chunk anhand seiner Chunk-Koordinaten.
      * Die Blockpositionen werden anhand der absoluten Weltkoordinaten bestimmt.
      */
-    public Chunk generateChunk(Chunk chunk)
+    public Chunk generateChunk1(Chunk chunk)
     {
         for (int x = 0; x < Chunk.CHUNK_SIZE; x++)
         {
@@ -82,6 +82,23 @@ public class WorldGenerator
                     }
                 }
                 // Oberhalb der Oberfläche bleibt der Block leer (Luft)
+            }
+        }
+        return chunk;
+    }
+    public Chunk generateChunk(Chunk chunk)
+    {
+        for (int x = 0; x < Chunk.CHUNK_SIZE; x++)
+        {
+            int worldX = chunk.getChunkX() * Chunk.CHUNK_SIZE + x;
+            int currentHeight = getHeight(worldX);    // Terrainhöhe an der aktuellen Spalte
+            int leftHeight = getHeight(worldX - 1);     // Terrainhöhe in der linken Nachbarspalte
+            int rightHeight = getHeight(worldX + 1);    // Terrainhöhe in der rechten Nachbarspalte
+
+            for (int y = 0; y < Chunk.CHUNK_SIZE; y++)
+            {
+                int worldY = chunk.getChunkY() * Chunk.CHUNK_SIZE + y;
+                chunk.setBlock(x,y, new GrassBlock(world, worldX, worldY));
             }
         }
         return chunk;

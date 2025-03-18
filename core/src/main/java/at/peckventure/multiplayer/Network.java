@@ -12,5 +12,6 @@ public class Network {
         kryo.register(NetworkPackets.ServerConnectPacket.class);
         kryo.register(java.util.HashSet.class);
         kryo.register(NetworkPackets.ClientDisconnectPacket.class);
+        kryo.register(byte[].class);
     }
 }

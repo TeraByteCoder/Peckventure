@@ -5,6 +5,7 @@ import at.peckventure.entities.mob.Mob;
 import at.peckventure.world.block.Block;
 import com.badlogic.gdx.graphics.g2d.Batch;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -139,5 +140,13 @@ public class Chunk
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Chunk{" +
+            "blocks=" + Arrays.toString(blocks) +
+            '}';
     }
 }

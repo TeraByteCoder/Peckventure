@@ -5,23 +5,13 @@ import com.badlogic.gdx.files.FileHandle;
 public class WorldConfig
 {
     private long seed;
-    private float playerX;
-    private float playerY;
-    private String inventoryHotbar = "";
-    private String inventoryMain = "";
+    private int spawnX;
+    private int spawnY;
 
-    public WorldConfig(long seed, float playerX, float playerY, String inventoryHotbar, String inventoryMain)
-    {
-        this.seed = seed;
-        this.playerX = playerX;
-        this.playerY = playerY;
-        this.inventoryHotbar = inventoryHotbar;
-        this.inventoryMain = inventoryMain;
-    }
 
     public WorldConfig(long seed)
     {
-        this(seed, 0, 0, "", "");
+        this.seed = seed;
     }
 
     public long getSeed()
@@ -34,55 +24,15 @@ public class WorldConfig
         this.seed = seed;
     }
 
-    public float getPlayerX()
-    {
-        return playerX;
-    }
-
-    public void setPlayerX(float playerX)
-    {
-        this.playerX = playerX;
-    }
-
-    public float getPlayerY()
-    {
-        return playerY;
-    }
-
-    public void setPlayerY(float playerY)
-    {
-        this.playerY = playerY;
-    }
-
-    public String getInventoryHotbar()
-    {
-        return inventoryHotbar;
-    }
-
-    public void setInventoryHotbar(String inventoryHotbar)
-    {
-        this.inventoryHotbar = inventoryHotbar;
-    }
-
-    public String getInventoryMain()
-    {
-        return inventoryMain;
-    }
-
-    public void setInventoryMain(String inventoryMain)
-    {
-        this.inventoryMain = inventoryMain;
-    }
-
     // Laden aus der Datei – es werden zusätzlich die Inventardaten geparst
     public static WorldConfig load(FileHandle configFile)
     {
         String config = configFile.readString();
+
         long seed = System.currentTimeMillis();
-        float playerX = 0;
-        float playerY = 0;
-        String inventoryHotbar = "";
-        String inventoryMain = "";
+        int spawnX = 0;
+        int spawnY = 0;
+
         String[] lines = config.split("\n");
         for (String line : lines)
         {
@@ -102,44 +52,36 @@ public class WorldConfig
                             seed = System.currentTimeMillis();
                         }
                         break;
-                    case "playerX":
+                    case "spawnX":
                         try
                         {
-                            playerX = Float.parseFloat(value);
+                            spawnX = Integer.parseInt(value);
                         } catch (NumberFormatException e)
                         {
-                            playerX = 0;
+                            // todo besseren default spawnpunkt finden
+                            spawnX = 0;
                         }
                         break;
-                    case "playerY":
+                    case "spawnY":
                         try
                         {
-                            playerY = Float.parseFloat(value);
+                            spawnY = Integer.parseInt(value);
                         } catch (NumberFormatException e)
                         {
-                            playerY = 0;
+                            spawnY = 0;
                         }
-                        break;
-                    case "inventoryHotbar":
-                        inventoryHotbar = value;
-                        break;
-                    case "inventoryMain":
-                        inventoryMain = value;
-                        break;
                 }
             }
         }
-        return new WorldConfig(seed, playerX, playerY, inventoryHotbar, inventoryMain);
+        return new WorldConfig(seed);
     }
 
     // Speichern – es werden alle Felder (einschließlich Inventardaten) in die Datei geschrieben
     public void save(FileHandle configFile)
     {
         String content = "seed=" + seed + "\n" +
-            "playerX=" + playerX + "\n" +
-            "playerY=" + playerY + "\n" +
-            "inventoryHotbar=" + inventoryHotbar + "\n" +
-            "inventoryMain=" + inventoryMain;
+            "spawnX=" + spawnX + "\n" +
+            "spawnY=" + spawnY;
         configFile.writeString(content, false);
     }
 }

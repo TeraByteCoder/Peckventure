@@ -1,6 +1,5 @@
 package at.peckventure.menu;
 
-import at.peckventure.world.GameScreen;
 import at.peckventure.world.WorldConfig;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -121,7 +120,7 @@ public class CreateWorld implements Screen {
                 WorldConfig config = new WorldConfig(seed);
                 FileHandle configFile = newWorldDir.child("worldconfig.txt");
                 config.save(configFile);
-                game.setScreen(new GameScreen(game, worldName));
+                game.setScreen(new SinglePlayerGameScreen(game, worldName));
             }
         });
         backButton.addListener(new ClickListener() {
