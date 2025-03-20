@@ -10,6 +10,7 @@ import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.MultiPlayerMap;
 import at.peckventure.world.WorldConfig;
+import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Game;
@@ -174,7 +175,7 @@ public class MultiPlayerGameScreen implements Screen
                     {
                         ControlledPlayer.getInstance().setX(packet.posx);
                         ControlledPlayer.getInstance().setY(packet.posy);
-                        ControlledPlayer.getInstance().getBody().setTransform(packet.posx, packet.posy, 0);
+                        ControlledPlayer.getInstance().getBody().setTransform((float) packet.posx / Block.BLOCK_SIZE, (float) packet.posy / Block.BLOCK_SIZE, 0);
                     });
                 } else if (object instanceof NetworkPackets.ClientDisconnectPacket)
                 {
@@ -212,7 +213,7 @@ public class MultiPlayerGameScreen implements Screen
         Box2DOperationManager.processOperations();
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 10.0f;
+        camera.zoom = 2.0f;
         camera.update();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);

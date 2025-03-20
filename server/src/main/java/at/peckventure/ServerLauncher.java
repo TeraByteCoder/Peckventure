@@ -16,6 +16,7 @@ public class ServerLauncher {
             public void create() {
                 try {
                     GameServer server = new GameServer();
+                    OnStartCheck.checkOnStart();
                     server.start();
                 } catch (Exception e) {
                     e.printStackTrace();

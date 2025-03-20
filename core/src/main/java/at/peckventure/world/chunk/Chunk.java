@@ -145,8 +145,14 @@ public class Chunk
     @Override
     public String toString()
     {
-        return "Chunk{" +
-            "blocks=" + Arrays.toString(blocks) +
-            '}';
+        StringBuilder builder = new StringBuilder();
+        for(int i = 0; i < CHUNK_SIZE; i++)
+        {
+            for(int j = 0; j < CHUNK_SIZE; j++)
+            {
+                builder.append(blocks[i][j]);
+            }
+        }
+        return builder.toString();
     }
 }
