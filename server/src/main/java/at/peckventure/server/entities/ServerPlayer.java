@@ -5,21 +5,25 @@ import at.peckventure.server.GameServer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.esotericsoftware.kryonet.Connection;
 
-import java.util.Set;
-
 public class ServerPlayer extends Player
 {
     private String uuid;
 
     private Connection connection;
-    public ServerPlayer(World world, float x, float y, String uuid, Connection connection) {
+
+    private String username;
+
+    public ServerPlayer(World world, float x, float y, String uuid, Connection connection, String username)
+    {
         super(world, x, y);
         this.uuid = uuid;
         this.connection = connection;
+        this.username = username;
     }
 
     @Override
-    protected void handleInput(float delta) {
+    protected void handleInput(float delta)
+    {
     }
 
     public String getUuid()
@@ -32,11 +36,24 @@ public class ServerPlayer extends Player
         return connection;
     }
 
-    public static ServerPlayer findPlayer(String uuid)
+    public static ServerPlayer findPlayerUUID(String uuid)
     {
-        for(ServerPlayer player : GameServer.instance.players)
+        for (ServerPlayer player : GameServer.instance.players)
         {
+
             if (player.getUuid().equals(uuid))
+            {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    public static ServerPlayer findPlayerName(String name)
+    {
+        for (ServerPlayer player : GameServer.instance.players)
+        {
+            if (player.getName().equals(name))
             {
                 return player;
             }
@@ -46,7 +63,7 @@ public class ServerPlayer extends Player
 
     public static ServerPlayer findPlayer(Connection connection)
     {
-        for(ServerPlayer player : GameServer.instance.players)
+        for (ServerPlayer player : GameServer.instance.players)
         {
             if (player.getConnection().equals(connection))
             {
@@ -54,5 +71,10 @@ public class ServerPlayer extends Player
             }
         }
         return null;
+    }
+
+    public String getUsername()
+    {
+        return username;
     }
 }

@@ -173,4 +173,6 @@ public class Inventory {
         clone.setStackSize(item.getStackSize());
         return clone;
     }
+
+
 }

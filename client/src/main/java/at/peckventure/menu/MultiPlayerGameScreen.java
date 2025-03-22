@@ -1,7 +1,10 @@
 package at.peckventure.menu;
 
 import at.peckventure.Globals;
+import at.peckventure.InputManager;
 import at.peckventure.NetworkClient;
+import at.peckventure.chat.ChatUI;
+import at.peckventure.chat.MultiPlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
@@ -11,7 +14,6 @@ import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.MultiPlayerMap;
 import at.peckventure.world.WorldConfig;
 import at.peckventure.world.block.Block;
-import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -25,15 +27,12 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
-import at.peckventure.chat.ChatUI;
-import at.peckventure.InputManager;
 import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class MultiPlayerGameScreen implements Screen
 {
@@ -80,7 +79,7 @@ public class MultiPlayerGameScreen implements Screen
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
         uiStage = new Stage(new ScreenViewport());
-        chatUI = new ChatUI(uiStage);
+        chatUI = new ChatUI(uiStage, new MultiPlayerChatExecutor());
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
         {
             public void toggleChat()
@@ -116,6 +115,7 @@ public class MultiPlayerGameScreen implements Screen
             {
                 NetworkPackets.ServerConnectPacket packet = new NetworkPackets.ServerConnectPacket();
                 packet.uuid = Globals.uuid;
+                packet.username = Globals.username;
                 NetworkClient.getInstance().sendTCP(packet);
             }
 
@@ -193,6 +193,22 @@ public class MultiPlayerGameScreen implements Screen
                     {
                         tilemap.addLoadedChunk(ChunkIO.deserialize(packet.data, physicsWorld));
                     });
+                } else if (object instanceof NetworkPackets.ChatMessagePacket)
+                {
+                    NetworkPackets.ChatMessagePacket packet = (NetworkPackets.ChatMessagePacket) object;
+                    Gdx.app.postRunnable(() ->
+                        {
+                            chatUI.addMessage(packet.message);
+                        }
+                    );
+                }
+
+
+                // Unbekannte Pakete anzeigen
+                else if (!(object instanceof FrameworkMessage.KeepAlive))
+                {
+
+                    System.out.println("Unknown packet type: " + object.getClass().getSimpleName());
                 }
             }
 

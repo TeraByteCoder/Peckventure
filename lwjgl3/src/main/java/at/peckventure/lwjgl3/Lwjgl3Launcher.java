@@ -1,22 +1,28 @@
 package at.peckventure.lwjgl3;
 
+import at.peckventure.Main;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import at.peckventure.Main;
 
-/** Launches the desktop (LWJGL3) application. */
-public class Lwjgl3Launcher {
-    public static void main(String[] args) {
+/**
+ * Launches the desktop (LWJGL3) application.
+ */
+public class Lwjgl3Launcher
+{
+    public static void main(String[] args)
+    {
         System.out.println("Working Dir: " + System.getProperty("user.dir"));
         if (StartupHelper.startNewJvmIfRequired()) return; // This handles macOS support and helps on Windows.
         createApplication();
     }
 
-    private static Lwjgl3Application createApplication() {
-        return new Lwjgl3Application(new Main(),  getDefaultConfiguration());
+    private static Lwjgl3Application createApplication()
+    {
+        return new Lwjgl3Application(new Main(), getDefaultConfiguration());
     }
 
-    private static Lwjgl3ApplicationConfiguration getDefaultConfiguration() {
+    private static Lwjgl3ApplicationConfiguration getDefaultConfiguration()
+    {
         Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
         configuration.setTitle("Peckventure");
         //// Vsync limits the frames per second to what your hardware can display, and helps eliminate

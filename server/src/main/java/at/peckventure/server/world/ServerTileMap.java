@@ -226,7 +226,6 @@ public class ServerTileMap extends AbstractTileMap
         // Iteriere über alle ServerPlayer aus der GameServer-Player-Menge
         for (ServerPlayer player : GameServer.instance.players)
         {
-            System.out.println(player.getX()+ "  " + player.getY());
             // Hole die Position des Spielers (Chunk-Koordinaten)
             for (int x_offset = -RENDER_DISTANCE - 1; x_offset <= RENDER_DISTANCE; x_offset++)
             {
@@ -251,14 +250,14 @@ public class ServerTileMap extends AbstractTileMap
                             e.printStackTrace();
                         }
                         Chunk chunk;
-                        //if (data != null)
-                        //{
-                            //chunk = ChunkIO.deserialize(data, physicsWorld);
-                        //} else
-                        //{
+                        if (data != null)
+                        {
+                            chunk = ChunkIO.deserialize(data, physicsWorld);
+                        } else
+                        {
                             chunk = new Chunk(targetChunkX, targetChunkY);
                             worldGenerator.generateChunk(chunk);
-                        //}
+                        }
                         loadedChunks.add(chunk);
                         NetworkPackets.ChunkDataPacket dataPacket = new NetworkPackets.ChunkDataPacket();
                         dataPacket.data = ChunkIO.serialize(chunk);

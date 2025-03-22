@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.Globals;
+import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
@@ -56,7 +57,7 @@ public class SinglePlayerGameScreen implements Screen
         uiStage = new Stage(new ScreenViewport());
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
 
-        chatUI = new ChatUI(uiStage);
+        chatUI = new ChatUI(uiStage, new SinglePlayerChatExecutor());
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
         {
             public void toggleChat()

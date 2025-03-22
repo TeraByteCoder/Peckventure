@@ -58,4 +58,6 @@ public class Sword
         stackSize = Math.min(stackSize + amount, MAX_STACK_SIZE);
         return stackSize - oldSize; // tatsächlich hinzugefügt
     }
+
+
 }

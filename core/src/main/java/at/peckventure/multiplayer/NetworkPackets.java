@@ -1,6 +1,7 @@
 package at.peckventure.multiplayer;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NetworkPackets
 {
@@ -18,7 +19,6 @@ public class NetworkPackets
     public static class ChatMessagePacket
     {
         public String message;
-        public String uuid;
     }
 
     public static class InventoryUpdatePacket
@@ -49,7 +49,7 @@ public class NetworkPackets
     public static class ServerConnectPacket
     {
         public String uuid;
-
+        public String username;
 
     }
 

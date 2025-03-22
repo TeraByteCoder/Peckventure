@@ -28,10 +28,10 @@ public class ChatUI
     private final ScrollPane scrollPane;
     private final Table containerTable;
 
+    private ChatExecutor executor;
+
     private static final int MAX_MESSAGES = 1000;
     private final float visibleLinesHeight;
-    private final CommandRegistry commandRegistry;
-
     private final LinkedList<String> messageHistory = new LinkedList<>();
     private int historyIndex = 0;
 
@@ -42,10 +42,11 @@ public class ChatUI
         return instance;
     }
 
-    public ChatUI(Stage stage)
+    public ChatUI(Stage stage, ChatExecutor executor)
     {
         instance = this;
         this.stage = stage;
+        this.executor = executor;
         font = new BitmapFont();
         font.getData().setScale(1.5f);
 
@@ -66,7 +67,6 @@ public class ChatUI
         TextField.TextFieldStyle tfs = new TextField.TextFieldStyle();
         tfs.font = font;
         tfs.fontColor = Color.WHITE;
-        commandRegistry = new CommandRegistry();
         chatInput = new TextField("", tfs);
         chatInput.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener()
         {
@@ -83,9 +83,8 @@ public class ChatUI
                     cancelChat();
                     return true;
                 }
-                if (keycode == Input.Keys.L)
+                if (keycode == Input.Keys.UP)
                 {
-                    System.out.println("up");
                     if (!messageHistory.isEmpty())
                     {
                         if (historyIndex > 0)
@@ -165,13 +164,7 @@ public class ChatUI
 
     private void processChatInput(String text, Player sender)
     {
-        if (text.startsWith("/"))
-        {
-            commandRegistry.executeCommand(text.substring(1), sender);
-        } else
-        {
-            addMessage("Player: " + text);
-        }
+        executor.processChatInput(text, sender);
         addToHistory(text);
         historyIndex = messageHistory.size();
     }
@@ -184,21 +177,6 @@ public class ChatUI
             messageHistory.removeFirst();
         }
     }
-
-
-    private void executeCommand(String command)
-    {
-        String[] args = command.split(" ");
-        if (args.length == 0) return;
-        if (args[0].equalsIgnoreCase("text"))
-        {
-            addMessage("Console: " + command.substring(5));
-        } else
-        {
-            addMessage("Unknown command: " + args[0]);
-        }
-    }
-
     public void addMessage(String message)
     {
         Label.LabelStyle ls = new Label.LabelStyle(font, Color.WHITE);

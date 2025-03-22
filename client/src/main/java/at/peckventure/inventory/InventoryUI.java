@@ -172,7 +172,7 @@ public class InventoryUI {
             @Override
             public void drop(Source source, Payload payload, float x, float y, int pointer) {
                 Sword draggedItem = (Sword) payload.getObject();
-                dropItemOutside(draggedItem, draggedItem.getStackSize());
+                ControlledPlayer.getInstance().dropItemOutside(draggedItem, draggedItem.getStackSize());
             }
         });
     }
@@ -190,7 +190,7 @@ public class InventoryUI {
                     Actor actor = stage.hit(x, y, true);
                     InventorySlot slot = getInventorySlot(actor);
                     if (slot != null && slot.getItem() != null) {
-                        dropItemOutside(slot.getItem(), slot.getItem().getStackSize());
+                        ControlledPlayer.getInstance().dropItemOutside(slot.getItem(), slot.getItem().getStackSize());
                         slot.setItem(null);
                         return true;
                     }
@@ -230,16 +230,4 @@ public class InventoryUI {
         return stage;
     }
 
-    public void dropItemOutside(Sword item, int amount) {
-        System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
-        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, ControlledPlayer.getInstance().getX(), ControlledPlayer.getInstance().getY() + 40, item);
-        float dropSpeed = 20f;
-        float angle = ControlledPlayer.getInstance().getRotation();
-        float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;
-        float vy = com.badlogic.gdx.math.MathUtils.sinDeg(angle) * dropSpeed;
-        Box2DOperationManager.queueOperation(() -> {
-            if (mob.getBody() != null)
-                mob.getBody().setLinearVelocity(vx, vy);
-        });
-    }
 }
