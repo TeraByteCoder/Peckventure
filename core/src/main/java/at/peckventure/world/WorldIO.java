@@ -88,7 +88,7 @@ public class WorldIO
             worldDir.mkdirs();
         }
 
-        PlayerData playerData = new PlayerData(uuid, player.getX(), player.getY(), "", "", false);
+        PlayerData playerData = new PlayerData(uuid, player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false);
         playerData.save(worldDir);
 
         FileHandle configFile = worldDir.child("worldconfig.txt");

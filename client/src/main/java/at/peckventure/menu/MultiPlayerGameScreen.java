@@ -9,6 +9,7 @@ import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
 import at.peckventure.inventory.InventoryUI;
+import at.peckventure.inventory.MultiplayerInventoryManager;
 import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.MultiPlayerMap;
@@ -31,6 +32,7 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -105,9 +107,10 @@ public class MultiPlayerGameScreen implements Screen
         tilemap = new MultiPlayerMap(physicsWorld);
         player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
         stage.addActor(player);
-        inventoryUI = new InventoryUI(uiStage);
+        inventoryUI = new InventoryUI(uiStage, new MultiplayerInventoryManager());
         Globals.physicsWorld = physicsWorld;
         NetworkClient.init(serverHost, serverPort, serverPort + 222);
+
         NetworkClient.getInstance().addListener(new Listener()
         {
             @Override
@@ -176,6 +179,7 @@ public class MultiPlayerGameScreen implements Screen
                         ControlledPlayer.getInstance().setX(packet.posx);
                         ControlledPlayer.getInstance().setY(packet.posy);
                         ControlledPlayer.getInstance().getBody().setTransform((float) packet.posx / Block.BLOCK_SIZE, (float) packet.posy / Block.BLOCK_SIZE, 0);
+                        ControlledPlayer.getInstance().getInventory().deserialize(packet.inventoryHotbar, packet.inventoryMain);
                     });
                 } else if (object instanceof NetworkPackets.ClientDisconnectPacket)
                 {
@@ -200,6 +204,15 @@ public class MultiPlayerGameScreen implements Screen
                         {
                             chatUI.addMessage(packet.message);
                         }
+                    );
+                } else if (object instanceof NetworkPackets.InventoryUpdatePacket)
+                {
+                    NetworkPackets.InventoryUpdatePacket packet = (NetworkPackets.InventoryUpdatePacket) object;
+                    Gdx.app.postRunnable(() ->
+                        {
+                            ControlledPlayer.getInstance().getInventory().deserialize(packet.hotbarData, packet.mainInventoryData);
+                        }
+
                     );
                 }
 

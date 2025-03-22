@@ -23,8 +23,8 @@ public class NetworkPackets
 
     public static class InventoryUpdatePacket
     {
-        public String uuid;
-        public String inventoryData;
+        public String mainInventoryData;
+        public String hotbarData;
     }
 
     public static class PlayerUpdatePacket
@@ -44,6 +44,9 @@ public class NetworkPackets
         public int posx;
         public int posy;
 
+        public String inventoryMain;
+        public String inventoryHotbar;
+
     }
 
     public static class ServerConnectPacket
@@ -57,4 +60,18 @@ public class NetworkPackets
     {
         public String uuid;
     }
+
+    public static class ItemDropPacket
+    {
+        public int slot;
+        public int count;
+    }
+
+    public static class InventoryMovePacket {
+        public int fromSlot;   // Quell-Slot (z. B. linearer Index oder kombiniert: Inventartyp + Index)
+        public int toSlot;     // Ziel-Slot
+        public int count;      // Anzahl der Items, die verschoben werden sollen
+    }
+
+
 }

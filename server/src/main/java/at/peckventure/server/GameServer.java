@@ -1,5 +1,10 @@
 package at.peckventure.server;
 
+import at.peckventure.Globals;
+import at.peckventure.entities.Player;
+import at.peckventure.inventory.Inventory;
+import at.peckventure.inventory.InventorySlot;
+import at.peckventure.inventory.item.Item;
 import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.server.chat.ChatExecutor;
 import at.peckventure.server.entities.ServerPlayer;
@@ -10,7 +15,6 @@ import at.peckventure.world.WorldConfig;
 import at.peckventure.world.WorldIO;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
@@ -46,6 +50,7 @@ public class GameServer
         instance = this;
         this.executor = new ChatExecutor();
         physicsWorld = new World(new Vector2(0, -19.81f), true);
+        Globals.physicsWorld = physicsWorld;
         worldFolder = new FileHandle(new File(SERVER_FOLDER + "/world"));
         WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldFolder, physicsWorld);
         worldConfig = loaded.getConfig();
@@ -86,7 +91,7 @@ public class GameServer
             {
 
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
-                PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), "", "", false);
+                PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false);
                 playerData.save(worldFolder);
                 players.remove(player);
 
@@ -107,18 +112,18 @@ public class GameServer
                 {
                     NetworkPackets.PlayerUpdatePacket packet = (NetworkPackets.PlayerUpdatePacket) object;
 
-                        ServerPlayer player = ServerPlayer.findPlayerUUID(packet.uuid);
-                        if (player != null)
+                    ServerPlayer player = ServerPlayer.findPlayerUUID(packet.uuid);
+                    if (player != null)
+                    {
+                        Box2DOperationManager.queueOperation(() ->
                         {
-                            Box2DOperationManager.queueOperation(() ->
-                            {
-                                player.updateFromPacket(packet);
-                            });
-                            server.sendToAllExceptUDP(connection.getID(), packet);
-                        } else
-                        {
-                            connection.close();
-                        }
+                            player.updateFromPacket(packet);
+                        });
+                        server.sendToAllExceptUDP(connection.getID(), packet);
+                    } else
+                    {
+                        connection.close();
+                    }
                 } else if (object instanceof NetworkPackets.ServerConnectPacket)
                 {
 
@@ -130,41 +135,136 @@ public class GameServer
                     //connectpacket erstellen
                     NetworkPackets.ClientConnectPacket connectPacket = new NetworkPackets.ClientConnectPacket();
 
-                        if (playerData.getPlayerX() == 0.0 && playerData.getPlayerY() == 0.0)
-                        {
+                    if (playerData.getPlayerX() == 0.0 && playerData.getPlayerY() == 0.0 && playerData.getInventoryHotbar().isEmpty() && playerData.getInventoryMain().isEmpty())
+                    {
 
-                            players.add(new ServerPlayer(physicsWorld, spawnX, spawnY, packet.uuid, connection, packet.username));
-                            connectPacket.posx = spawnX;
-                            connectPacket.posy = spawnY;
+                        players.add(new ServerPlayer(physicsWorld, spawnX, spawnY, packet.uuid, connection, packet.username));
+                        connectPacket.posx = spawnX;
+                        connectPacket.posy = spawnY;
+                        connectPacket.inventoryHotbar = "";
+                        connectPacket.inventoryMain = "";
+                    } else
+                    {
+                        ServerPlayer player = new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username);
+                        player.getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
+                        players.add(player);
+                        connectPacket.posx = (int) playerData.getPlayerX();
+                        connectPacket.posy = (int) playerData.getPlayerY();
+                        connectPacket.inventoryHotbar = playerData.getInventoryHotbar();
+                        connectPacket.inventoryMain = playerData.getInventoryMain();
 
-                        } else
-                        {
-
-                            players.add(new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username));
-                            connectPacket.posx = (int) playerData.getPlayerX();
-                            connectPacket.posy = (int) playerData.getPlayerY();
-
-                        }
-                        connection.sendTCP(connectPacket);
-                        NetworkPackets.PlayerListPacket listPacket = new NetworkPackets.PlayerListPacket();
-                        for (ServerPlayer player : players)
-                        {
-                            NetworkPackets.PlayerUpdatePacket updatePacket = new NetworkPackets.PlayerUpdatePacket();
-                            updatePacket.uuid = player.getUuid();
-                            updatePacket.x = player.getX();
-                            updatePacket.y = player.getY();
-                            listPacket.players.add(updatePacket);
-                        }
-                        connection.sendTCP(listPacket);
+                    }
+                    connection.sendTCP(connectPacket);
+                    NetworkPackets.PlayerListPacket listPacket = new NetworkPackets.PlayerListPacket();
+                    for (ServerPlayer player : players)
+                    {
+                        NetworkPackets.PlayerUpdatePacket updatePacket = new NetworkPackets.PlayerUpdatePacket();
+                        updatePacket.uuid = player.getUuid();
+                        updatePacket.x = player.getX();
+                        updatePacket.y = player.getY();
+                        listPacket.players.add(updatePacket);
+                    }
+                    connection.sendTCP(listPacket);
 
 
-                        NetworkPackets.ChatMessagePacket chatMessagePacket = new NetworkPackets.ChatMessagePacket();
-                        chatMessagePacket.message = packet.username+" Joined";
-                        server.sendToAllTCP(chatMessagePacket);
+                    NetworkPackets.ChatMessagePacket chatMessagePacket = new NetworkPackets.ChatMessagePacket();
+                    chatMessagePacket.message = packet.username + " Joined";
+                    server.sendToAllTCP(chatMessagePacket);
                 } else if (object instanceof NetworkPackets.ChatMessagePacket)
                 {
                     NetworkPackets.ChatMessagePacket packet = (NetworkPackets.ChatMessagePacket) object;
                     executor.processChatInput(packet.message, ServerPlayer.findPlayer(connection));
+
+                    ServerPlayer player = ServerPlayer.findPlayer(connection);
+                    NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
+                    updatePacket.hotbarData = player.getInventory().serializeHotbar();
+                    updatePacket.mainInventoryData = player.getInventory().serializeMain();
+                    connection.sendTCP(updatePacket);
+                } else if (object instanceof NetworkPackets.InventoryMovePacket)
+                {
+                    NetworkPackets.InventoryMovePacket movePacket = (NetworkPackets.InventoryMovePacket) object;
+                    ServerPlayer player = ServerPlayer.findPlayer(connection);
+
+                    Inventory inventory = player.getInventory();
+                    InventorySlot sourceSlot = inventory.getSlotByIndex(movePacket.fromSlot);
+                    InventorySlot targetSlot = inventory.getSlotByIndex(movePacket.toSlot);
+                    if (sourceSlot != null || targetSlot != null)
+                    {
+                        if (sourceSlot.getItem() != null)
+                        {
+                            Item sourceItem = sourceSlot.getItem();
+                            // Wenn der Zielslot leer ist, wird das Item (oder ein Teil davon) verschoben.
+                            if (targetSlot.getItem() == null)
+                            {
+                                if (sourceItem.getStackSize() > movePacket.count)
+                                {
+                                    // Klone das Item für den Zielslot und reduziere die Anzahl im Quellslot.
+                                    Item movedItem = inventory.cloneItem(sourceItem);
+                                    movedItem.setStackSize(movePacket.count);
+                                    targetSlot.setItem(movedItem);
+                                    sourceItem.setStackSize(sourceItem.getStackSize() - movePacket.count);
+                                } else
+                                {
+                                    // Falls der ganze Stack verschoben wird.
+                                    targetSlot.setItem(sourceItem);
+                                    sourceSlot.setItem(null);
+                                }
+                                ;
+                            } else
+                            {
+                                // Falls im Zielslot bereits ein Item desselben Typs liegt, versuche die Stacks zu mergen.
+                                if (targetSlot.getItem().getId().equals(sourceItem.getId()))
+                                {
+                                    int availableSpace = Item.MAX_STACK_SIZE - targetSlot.getItem().getStackSize();
+                                    if (availableSpace >= 0)
+                                    {
+                                        int toMove = Math.min(movePacket.count, Math.min(sourceItem.getStackSize(), availableSpace));
+                                        targetSlot.getItem().setStackSize(targetSlot.getItem().getStackSize() + toMove);
+                                        sourceItem.setStackSize(sourceItem.getStackSize() - toMove);
+                                        if (sourceItem.getStackSize() <= 0)
+                                        {
+                                            sourceSlot.setItem(null);
+                                        }
+                                    }
+                                } else
+                                {
+                                    // Ansonsten tauschen.
+                                    Item temp = targetSlot.getItem();
+                                    targetSlot.setItem(sourceItem);
+                                    sourceSlot.setItem(temp);
+                                }
+                            }
+                        }
+                    }
+                    NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
+                    updatePacket.hotbarData = player.getInventory().serializeHotbar();
+                    updatePacket.mainInventoryData = player.getInventory().serializeMain();
+                    connection.sendTCP(updatePacket);
+
+                } else if (object instanceof NetworkPackets.ItemDropPacket)
+                {
+                    NetworkPackets.ItemDropPacket packet = (NetworkPackets.ItemDropPacket) object;
+                    ServerPlayer player = ServerPlayer.findPlayer(connection);
+                    assert player != null;
+                    Inventory inventory = player.getInventory();
+
+                    InventorySlot inventorySlot = inventory.getSlotByIndex(packet.slot);
+                    if (inventorySlot != null && inventorySlot.getItem() != null)
+                    {
+                        System.out.println("muss gehbn1");
+                        Item item = inventorySlot.getItem();
+                        if (inventorySlot.getItem() != null && inventorySlot.getItem().getStackSize() >= packet.count)
+                        {
+                            System.out.println("muss gehbn");
+                            inventorySlot.setItem(null);
+                            player.dropItemOutside(item, packet.count);
+                        }
+                    }
+
+                    NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
+                    updatePacket.hotbarData = player.getInventory().serializeHotbar();
+                    updatePacket.mainInventoryData = player.getInventory().serializeMain();
+                    connection.sendTCP(updatePacket);
                 }
 
             }

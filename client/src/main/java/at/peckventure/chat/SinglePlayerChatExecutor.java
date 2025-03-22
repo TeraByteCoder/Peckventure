@@ -4,7 +4,7 @@ import at.peckventure.Globals;
 import at.peckventure.entities.Player;
 import at.peckventure.menu.SinglePlayer;
 
-public class SinglePlayerChatExecutor extends ChatExecutor
+public class SinglePlayerChatExecutor implements ChatExecutor
 {
     CommandRegistry commandRegistry;
 

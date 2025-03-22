@@ -5,7 +5,7 @@ import at.peckventure.entities.Player;
 import at.peckventure.menu.MultiPlayerGameScreen;
 import at.peckventure.multiplayer.NetworkPackets;
 
-public class MultiPlayerChatExecutor extends ChatExecutor
+public class MultiPlayerChatExecutor implements ChatExecutor
 {
     @Override
     public void processChatInput(String text, Player sender)

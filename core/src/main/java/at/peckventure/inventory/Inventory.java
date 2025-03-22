@@ -1,7 +1,6 @@
 package at.peckventure.inventory;
 
-import at.peckventure.inventory.item.Sword;
-
+import at.peckventure.inventory.item.Item;
 public class Inventory {
     private final InventorySlot[] hotbar;
     private final InventorySlot[][] mainInventory;
@@ -96,7 +95,7 @@ public class Inventory {
                 stackSize = Integer.parseInt(itemData[1]);
             } catch (NumberFormatException e) {}
             if (ItemRegistry.contains(id)) {
-                Sword newItem = ItemRegistry.createItem(id);
+                Item newItem = ItemRegistry.createItem(id);
                 newItem.setStackSize(stackSize);
                 slot.setItem(newItem);
             } else {
@@ -112,7 +111,7 @@ public class Inventory {
         deserializeMain(mainData);
     }
 
-    public boolean addItem(Sword newItem, int amount) {
+    public boolean addItem(Item newItem, int amount) {
         if (newItem == null) return false;
         newItem.setStackSize(amount);
         newItem = mergeWithExistingStacks(newItem, hotbar);
@@ -132,12 +131,12 @@ public class Inventory {
         return newItem == null || newItem.getStackSize() <= 0;
     }
 
-    private Sword mergeWithExistingStacks(Sword newItem, InventorySlot[] slots) {
+    private Item mergeWithExistingStacks(Item newItem, InventorySlot[] slots) {
         for (InventorySlot slot : slots) {
             if (newItem.getStackSize() <= 0) break;
-            Sword slotItem = slot.getItem();
+            Item slotItem = slot.getItem();
             if (slotItem != null && slotItem.getId().equals(newItem.getId())) {
-                int canAdd = Sword.MAX_STACK_SIZE - slotItem.getStackSize();
+                int canAdd = Item.MAX_STACK_SIZE - slotItem.getStackSize();
                 if (canAdd > 0) {
                     int toAdd = Math.min(canAdd, newItem.getStackSize());
                     slotItem.setStackSize(slotItem.getStackSize() + toAdd);
@@ -148,17 +147,17 @@ public class Inventory {
         return newItem;
     }
 
-    private Sword placeInEmptySlots(Sword newItem, InventorySlot[] slots) {
+    private Item placeInEmptySlots(Item newItem, InventorySlot[] slots) {
         for (InventorySlot slot : slots) {
             if (newItem.getStackSize() <= 0) break;
             if (slot.getItem() == null) {
-                if (newItem.getStackSize() > Sword.MAX_STACK_SIZE) {
-                    Sword fullStack = new Sword(newItem.getId(), newItem.getName(), newItem.getTexture());
-                    fullStack.setStackSize(Sword.MAX_STACK_SIZE);
+                if (newItem.getStackSize() > Item.MAX_STACK_SIZE) {
+                    Item fullStack = ItemRegistry.createItem(newItem.getId());
+                    fullStack.setStackSize(Item.MAX_STACK_SIZE);
                     slot.setItem(fullStack);
-                    newItem.setStackSize(newItem.getStackSize() - Sword.MAX_STACK_SIZE);
+                    newItem.setStackSize(newItem.getStackSize() - Item.MAX_STACK_SIZE);
                 } else {
-                    Sword clone = cloneItem(newItem);
+                    Item clone = cloneItem(newItem);
                     slot.setItem(clone);
                     newItem.setStackSize(0);
                     return newItem;
@@ -168,11 +167,27 @@ public class Inventory {
         return newItem;
     }
 
-    public Sword cloneItem(Sword item) {
-        Sword clone = new Sword(item.getId(), item.getName(), item.getTexture());
+    public Item cloneItem(Item item) {
+        Item clone = ItemRegistry.createItem(item.getId());;
         clone.setStackSize(item.getStackSize());
         return clone;
     }
 
+    /**
+     * Ermittelt anhand eines linearen Index den richtigen Slot.
+     * Dabei werden zuerst die Hotbar-Slots (0 bis HOTBAR_SIZE-1) und danach die Main-Inventar-Slots verwendet.
+     */
+    public InventorySlot getSlotByIndex(int index) {
+        if (index < Inventory.HOTBAR_SIZE) {
+            return this.getHotbar()[index];
+        }
+        int mainIndex = index - Inventory.HOTBAR_SIZE;
+        int rows = Inventory.MAIN_ROWS;
+        int cols = Inventory.MAIN_COLUMNS;
+        if (mainIndex < 0 || mainIndex >= rows * cols) return null;
+        int row = mainIndex / cols;
+        int col = mainIndex % cols;
+        return this.getMainInventory()[row][col];
+    }
 
 }

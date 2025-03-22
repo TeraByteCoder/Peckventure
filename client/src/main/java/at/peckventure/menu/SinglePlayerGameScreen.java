@@ -5,6 +5,7 @@ import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
+import at.peckventure.inventory.SinglePlayerInventoryManager;
 import at.peckventure.world.*;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
@@ -20,6 +21,8 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.InputManager;
+
+import java.io.PrintStream;
 
 public class SinglePlayerGameScreen implements Screen
 {
@@ -99,7 +102,7 @@ public class SinglePlayerGameScreen implements Screen
         player = ControlledPlayer.getInstance(physicsWorld, spawnX, spawnY);
         stage.addActor(player);
 
-        inventoryUI = new InventoryUI(uiStage);
+        inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());
         if (!playerData.getInventoryHotbar().isEmpty() && !playerData.getInventoryMain().isEmpty())
         {
             ControlledPlayer.getInstance().getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());

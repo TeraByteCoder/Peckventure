@@ -4,7 +4,9 @@ import at.peckventure.Globals;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
-import at.peckventure.world.Box2DOperationManager;
+import at.peckventure.inventory.item.Item;
+import at.peckventure.inventory.item.Sword;
+import at.peckventure.multiplayer.NetworkPackets;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
@@ -16,12 +18,13 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import at.peckventure.inventory.item.Sword;
 import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop.Payload;
 import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop.Source;
 import com.badlogic.gdx.scenes.scene2d.utils.DragAndDrop.Target;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InventoryUI {
     private final Stage stage;
@@ -33,8 +36,14 @@ public class InventoryUI {
     private final Image heldItemImage = new Image();
     private final Texture slotTexture;
 
-    public InventoryUI(Stage stage) {
+    // Hier wird der korrekte InventoryManager genutzt (Singleplayer oder Multiplayer)
+    private final InventoryManager manager;
+    // Mapping von InventorySlot zu linearem Index (Hotbar gefolgt vom Main-Inventar)
+    private final Map<InventorySlot, Integer> slotIndexMap = new HashMap<>();
+
+    public InventoryUI(Stage stage, InventoryManager manager) {
         this.stage = stage;
+        this.manager = manager;
         slotTexture = new Texture(Gdx.files.internal("textures/inventory_slot.png"));
         dragAndDrop = new DragAndDrop();
         setupGlobalDropTarget();
@@ -45,7 +54,12 @@ public class InventoryUI {
 
     private void createUI() {
         hotbarTable = new Table();
-        for (InventorySlot slot : ControlledPlayer.getInstance().getInventory().getHotbar()) {
+        Inventory inventory = ControlledPlayer.getInstance().getInventory();
+        // Hotbar: Indizes 0 .. HOTBAR_SIZE - 1
+        InventorySlot[] hotbar = inventory.getHotbar();
+        for (int i = 0; i < hotbar.length; i++) {
+            InventorySlot slot = hotbar[i];
+            slotIndexMap.put(slot, i);
             Group slotGroup = new Group();
             slotGroup.setSize(64, 64);
             Image background = new Image(new TextureRegionDrawable(slotTexture));
@@ -60,11 +74,15 @@ public class InventoryUI {
         float hotbarY = 20;
         hotbarTable.setPosition(hotbarX, hotbarY);
         stage.addActor(hotbarTable);
+
         mainTable = new Table();
-        InventorySlot[][] mainInv = ControlledPlayer.getInstance().getInventory().getMainInventory();
+        InventorySlot[][] mainInv = inventory.getMainInventory();
+        int baseIndex = hotbar.length; // main-Inventar beginnt ab diesem Index
         for (int row = 0; row < Inventory.MAIN_ROWS; row++) {
             for (int col = 0; col < Inventory.MAIN_COLUMNS; col++) {
                 InventorySlot slot = mainInv[row][col];
+                int index = baseIndex + row * Inventory.MAIN_COLUMNS + col;
+                slotIndexMap.put(slot, index);
                 Group slotGroup = new Group();
                 slotGroup.setSize(64, 64);
                 Image background = new Image(new TextureRegionDrawable(slotTexture));
@@ -85,6 +103,7 @@ public class InventoryUI {
     }
 
     private void setupDragAndDrop() {
+        // Für alle Slots werden Drag-Quellen und Drop-Ziele hinzugefügt.
         for (InventorySlot slot : ControlledPlayer.getInstance().getInventory().getHotbar()) {
             addDragAndDropForSlot(slot);
         }
@@ -102,20 +121,18 @@ public class InventoryUI {
             public Payload dragStart(InputEvent event, float x, float y, int pointer) {
                 if (slot.getItem() == null) return null;
                 int button = pointer;
-                Sword slotItem = slot.getItem();
+                Item slotItem = slot.getItem();
                 Payload payload = new Payload();
                 if (button == 0) {
                     payload.setObject(slotItem);
-                    slot.setItem(null);
+                    // Im UI-Feedback kannst du hier entscheiden, ob du das Item sofort aus dem Slot entfernst.
                 } else if (button == 1) {
                     if (slotItem.getStackSize() > 1) {
-                        Sword single = ControlledPlayer.getInstance().getInventory().cloneItem(slotItem);
+                        Item single = ControlledPlayer.getInstance().getInventory().cloneItem(slotItem);
                         single.setStackSize(1);
                         payload.setObject(single);
-                        slotItem.setStackSize(slotItem.getStackSize() - 1);
                     } else {
                         payload.setObject(slotItem);
-                        slot.setItem(null);
                     }
                 } else return null;
                 Sword draggedItem = (Sword) payload.getObject();
@@ -133,27 +150,15 @@ public class InventoryUI {
             }
             @Override
             public void drop(Source source, Payload payload, float x, float y, int pointer) {
-                Sword draggedItem = (Sword) payload.getObject();
+                Item draggedItem = (Item) payload.getObject();
                 InventorySlot sourceSlot = (InventorySlot) source.getActor();
-                Sword targetItem = slot.getItem();
-                if (targetItem == null) {
-                    slot.setItem(draggedItem);
-                } else {
-                    if (targetItem.getId().equals(draggedItem.getId())) {
-                        int canAdd = Sword.MAX_STACK_SIZE - targetItem.getStackSize();
-                        if (canAdd > 0) {
-                            int toAdd = Math.min(canAdd, draggedItem.getStackSize());
-                            targetItem.setStackSize(targetItem.getStackSize() + toAdd);
-                            draggedItem.setStackSize(draggedItem.getStackSize() - toAdd);
-                        }
-                        if (draggedItem.getStackSize() > 0) {
-                            if (sourceSlot.getItem() == null)
-                                sourceSlot.setItem(draggedItem);
-                        }
-                    } else {
-                        slot.setItem(draggedItem);
-                        sourceSlot.setItem(targetItem);
-                    }
+                // Ermittle die Slot-Indizes anhand des Mappings
+                Integer sourceIndex = slotIndexMap.get(sourceSlot);
+                Integer targetIndex = slotIndexMap.get(slot);
+                if (sourceIndex != null && targetIndex != null) {
+                    int count = draggedItem.getStackSize();
+                    // Delegiere den Verschiebevorgang an den Manager
+                    manager.moveItem(sourceIndex, targetIndex, count);
                 }
             }
         });
@@ -171,8 +176,11 @@ public class InventoryUI {
             }
             @Override
             public void drop(Source source, Payload payload, float x, float y, int pointer) {
-                Sword draggedItem = (Sword) payload.getObject();
-                ControlledPlayer.getInstance().dropItemOutside(draggedItem, draggedItem.getStackSize());
+                Item draggedItem = (Item) payload.getObject();
+                InventorySlot sourceSlot = (InventorySlot) source.getActor();
+                int count = draggedItem.getStackSize();
+                // Delegiere das Droppen an den Manager
+                manager.dropItem(slotIndexMap.get(sourceSlot), count);
             }
         });
     }
@@ -190,9 +198,7 @@ public class InventoryUI {
                     Actor actor = stage.hit(x, y, true);
                     InventorySlot slot = getInventorySlot(actor);
                     if (slot != null && slot.getItem() != null) {
-                        ControlledPlayer.getInstance().dropItemOutside(slot.getItem(), slot.getItem().getStackSize());
-                        slot.setItem(null);
-                        return true;
+                        manager.dropItem(slotIndexMap.get(slot), slot.getItem().getStackSize());
                     }
                 }
                 return false;
@@ -229,5 +235,4 @@ public class InventoryUI {
     public Stage getStage() {
         return stage;
     }
-
 }

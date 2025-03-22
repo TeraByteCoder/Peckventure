@@ -4,6 +4,7 @@ import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
 import at.peckventure.inventory.Inventory;
+import at.peckventure.inventory.item.Item;
 import at.peckventure.inventory.item.Sword;
 import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.Box2DOperationManager;
@@ -123,7 +124,7 @@ public abstract class Player extends Actor
         return (int) getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
-    public void dropItemOutside(Sword item, int amount) {
+    public void dropItemOutside(Item item, int amount) {
         System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
         Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
         float dropSpeed = 20f;
