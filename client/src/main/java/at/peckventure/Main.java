@@ -1,5 +1,6 @@
 package at.peckventure;
 
+import at.peckventure.menu.FirstStartScreen;
 import at.peckventure.menu.MainMenu;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -24,6 +25,10 @@ public class Main extends Game
         OnStartCheck.checkOnStart();
 
         // Starte das Hauptmenü
-        this.setScreen(new MainMenu(this));
+        if (SettingsManager.init()) {
+            setScreen(new MainMenu(this));
+        } else {
+            setScreen(new FirstStartScreen(this));
+        }
     }
 }

@@ -25,7 +25,6 @@ public class MainMenu implements Screen
     public MainMenu(Game game)
     {
         this.game = game;
-        SettingsManager.init();
     }
 
     @Override
