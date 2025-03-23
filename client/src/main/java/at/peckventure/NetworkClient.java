@@ -56,4 +56,9 @@ public class NetworkClient {
     public void addListener(Listener listener) {
         client.addListener(listener);
     }
+
+    public boolean isConnected() {
+        return client.isConnected();
+    }
+
 }

@@ -26,6 +26,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.esotericsoftware.kryonet.Connection;
@@ -41,7 +42,6 @@ public class MultiPlayerGameScreen implements Screen
     private ChatUI chatUI;
     private Map<String, RemotePlayer> players = new HashMap<>();
     private final Game game;
-    private final String worldName;
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private Player player;
@@ -56,10 +56,9 @@ public class MultiPlayerGameScreen implements Screen
     private boolean chunksLoaded = false;
     private static final int DEFAULT_PORT = 4242;
 
-    public MultiPlayerGameScreen(Game game, String worldName, String serverAddress)
+    public MultiPlayerGameScreen(Game game, String serverAddress)
     {
         this.game = game;
-        this.worldName = worldName;
         if (serverAddress.contains(":"))
         {
             int index = serverAddress.indexOf(":");
@@ -125,8 +124,9 @@ public class MultiPlayerGameScreen implements Screen
             @Override
             public void disconnected(Connection connection)
             {
-                game.setScreen(new MultiPlayer(game));
+                Gdx.app.postRunnable(() -> game.setScreen(new MainMenu(game)));
             }
+
 
             @Override
             public void received(Connection connection, Object object)
@@ -229,8 +229,18 @@ public class MultiPlayerGameScreen implements Screen
             public void idle(Connection connection)
             {
             }
+
         });
         NetworkClient.getInstance().connect(5000);
+
+        Timer.schedule(new Timer.Task(){
+            @Override
+            public void run() {
+                if (!NetworkClient.getInstance().isConnected()) {
+                    Gdx.app.postRunnable(() -> game.setScreen(new MainMenu(game)));
+                }
+            }
+        }, 6f); // 6 Sekunden Verzögerung
 
         tilemap.startChunkUpdateThread(player);
     }
@@ -254,11 +264,14 @@ public class MultiPlayerGameScreen implements Screen
         uiStage.act(delta);
         uiStage.draw();
 
-        NetworkPackets.PlayerUpdatePacket packet = new NetworkPackets.PlayerUpdatePacket();
-        packet.uuid = Globals.uuid;
-        packet.x = player.getX();
-        packet.y = player.getY();
-        NetworkClient.getInstance().sendUDP(packet);
+        if (NetworkClient.getInstance() != null && NetworkClient.getInstance().isConnected()) {
+            NetworkPackets.PlayerUpdatePacket packet = new NetworkPackets.PlayerUpdatePacket();
+            packet.uuid = Globals.uuid;
+            packet.x = player.getX();
+            packet.y = player.getY();
+            NetworkClient.getInstance().sendUDP(packet);
+        }
+
     }
 
     @Override

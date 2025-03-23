@@ -11,6 +11,11 @@ buildscript {
   }
 }
 
+plugins {
+  id 'java'
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
 allprojects {
   apply plugin: 'eclipse'
   apply plugin: 'idea'
@@ -69,5 +74,6 @@ subprojects {
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'com.github.crykn:kryonet:2.22'  }
 }
+
 
 eclipse.project.name = 'Peckventure' + '-parent'
