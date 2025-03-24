@@ -5,12 +5,21 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
 
 public class Settings implements Screen {
     private final Game game;
@@ -32,6 +41,52 @@ public class Settings implements Screen {
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
+
+        // -----------------------------------------
+        // DRAG-BEREICH, UM DAS FENSTER ZU VERSCHIEBEN
+        // -----------------------------------------
+        final Label dragBar = new Label("Fenster ziehen", new Label.LabelStyle(new BitmapFont(), null));
+        dragBar.setSize(Gdx.graphics.getWidth(), 30);
+        dragBar.setPosition(0, Gdx.graphics.getHeight() - 30);
+        stage.addActor(dragBar);
+
+        dragBar.addListener(new DragListener() {
+            float startX, startY;
+            int initialWindowX, initialWindowY;
+            Lwjgl3Window window = null;
+
+            @Override
+            public void dragStart(InputEvent event, float x, float y, int pointer) {
+                super.dragStart(event, x, y, pointer);
+                startX = x;
+                startY = y;
+
+                // Prüfen, ob wir überhaupt im Lwjgl3-Modus laufen
+                if (Gdx.graphics instanceof Lwjgl3Graphics) {
+                    Lwjgl3Graphics graphics = (Lwjgl3Graphics) Gdx.graphics;
+                    window = graphics.getWindow();
+                    // Aktuelle Fensterposition abfragen
+                    initialWindowX = window.getPositionX();
+                    initialWindowY = window.getPositionY();
+                }
+            }
+
+            @Override
+            public void drag(InputEvent event, float x, float y, int pointer) {
+                super.drag(event, x, y, pointer);
+                // Nur verschieben, wenn wir ein Lwjgl3Window haben (Fenstermodus)
+                if (window != null && !Gdx.graphics.isFullscreen()) {
+                    float deltaX = x - startX;
+                    float deltaY = y - startY;
+                    int newWindowX = initialWindowX + (int) deltaX;
+                    // Beachte: Die Y-Achse in der Stage wächst nach oben,
+                    // während die Fensterposition "von oben" gemessen wird.
+                    int newWindowY = initialWindowY - (int) deltaY;
+                    window.setPosition(newWindowX, newWindowY);
+                }
+            }
+        });
+        // -----------------------------------------
 
         // Button-Stil
         Texture buttonTexture = new Texture("textures/gui/button1.png");
@@ -70,7 +125,7 @@ public class Settings implements Screen {
 
         stage.addActor(rootTable);
 
-        // Event-Handler
+        // Event-Handler für Musiklautstärke
         musicSlider.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -78,6 +133,7 @@ public class Settings implements Screen {
             }
         });
 
+        // Event-Handler für Soundlautstärke
         soundSlider.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -85,18 +141,28 @@ public class Settings implements Screen {
             }
         });
 
+        // Event-Handler für Vollbild-/Fenstermoduswechsel
         fullscreenCheckbox.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                GameSettings.setFullscreen(fullscreenCheckbox.isChecked());
-                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+                boolean isFullscreen = fullscreenCheckbox.isChecked();
+                GameSettings.setFullscreen(isFullscreen);
+                if (isFullscreen) {
+                    // Vollbildmodus aktivieren
+                    Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+                } else {
+                    // Fenstermodus aktivieren (z.B. 640x480)
+                    Gdx.graphics.setWindowedMode(640, 480);
+                }
             }
         });
 
+        // Event-Handler für den Zurück-Button
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new MainMenu(game)); // Zurück zum Hauptmenü
+                // Zurück zum Hauptmenü (oder zu einem anderen Screen)
+                game.setScreen(new MainMenu(game));
             }
         });
     }
