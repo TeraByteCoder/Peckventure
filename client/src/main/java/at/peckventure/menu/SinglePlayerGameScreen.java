@@ -109,6 +109,7 @@ public class SinglePlayerGameScreen implements Screen
         }
         Globals.physicsWorld = physicsWorld;
         tilemap.startChunkUpdateThread(player);
+        Box2DOperationManager.processOperations();
     }
 
 

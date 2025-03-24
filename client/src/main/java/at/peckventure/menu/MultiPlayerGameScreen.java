@@ -232,6 +232,7 @@ public class MultiPlayerGameScreen implements Screen
         NetworkClient.getInstance().connect(5000);
 
         tilemap.startChunkUpdateThread(player);
+        Box2DOperationManager.processOperations();
     }
 
     @Override
