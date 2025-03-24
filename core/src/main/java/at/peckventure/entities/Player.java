@@ -30,6 +30,7 @@ public abstract class Player extends Actor
     protected final float hoverDampening = 200;
     protected final float startY;
     Inventory inventory;
+    protected boolean rotation;
 
     public Inventory getInventory()
     {

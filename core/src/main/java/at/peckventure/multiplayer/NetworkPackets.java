@@ -33,6 +33,7 @@ public class NetworkPackets
         public float x;
         public float y;
         public long time;
+        public boolean rotation;
     }
 
     public static class PlayerListPacket
