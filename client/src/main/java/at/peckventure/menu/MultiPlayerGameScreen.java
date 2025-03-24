@@ -26,7 +26,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.esotericsoftware.kryonet.Connection;
@@ -105,6 +104,7 @@ public class MultiPlayerGameScreen implements Screen
         Gdx.input.setInputProcessor(multiplexer);
         tilemap = new MultiPlayerMap(physicsWorld);
         player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
+        Box2DOperationManager.processOperations();
         stage.addActor(player);
         inventoryUI = new InventoryUI(uiStage, new MultiplayerInventoryManager());
         Globals.physicsWorld = physicsWorld;
@@ -124,9 +124,8 @@ public class MultiPlayerGameScreen implements Screen
             @Override
             public void disconnected(Connection connection)
             {
-                Gdx.app.postRunnable(() -> game.setScreen(new MainMenu(game)));
+                game.setScreen(new MultiPlayer(game));
             }
-
 
             @Override
             public void received(Connection connection, Object object)
@@ -229,18 +228,8 @@ public class MultiPlayerGameScreen implements Screen
             public void idle(Connection connection)
             {
             }
-
         });
         NetworkClient.getInstance().connect(5000);
-
-        Timer.schedule(new Timer.Task(){
-            @Override
-            public void run() {
-                if (!NetworkClient.getInstance().isConnected()) {
-                    Gdx.app.postRunnable(() -> game.setScreen(new MainMenu(game)));
-                }
-            }
-        }, 6f); // 6 Sekunden Verzögerung
 
         tilemap.startChunkUpdateThread(player);
     }
@@ -264,14 +253,11 @@ public class MultiPlayerGameScreen implements Screen
         uiStage.act(delta);
         uiStage.draw();
 
-        if (NetworkClient.getInstance() != null && NetworkClient.getInstance().isConnected()) {
-            NetworkPackets.PlayerUpdatePacket packet = new NetworkPackets.PlayerUpdatePacket();
-            packet.uuid = Globals.uuid;
-            packet.x = player.getX();
-            packet.y = player.getY();
-            NetworkClient.getInstance().sendUDP(packet);
-        }
-
+        NetworkPackets.PlayerUpdatePacket packet = new NetworkPackets.PlayerUpdatePacket();
+        packet.uuid = Globals.uuid;
+        packet.x = player.getX();
+        packet.y = player.getY();
+        NetworkClient.getInstance().sendUDP(packet);
     }
 
     @Override

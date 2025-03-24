@@ -73,5 +73,17 @@ public class NetworkPackets
         public int count;      // Anzahl der Items, die verschoben werden sollen
     }
 
+    public static class PingPacket
+    {
+        public int connectedPlayers;
+        public long pingTime;
+        public String modt;
+    }
+
+    public static class PingRequestPacket
+    {
+
+    }
+
 
 }
