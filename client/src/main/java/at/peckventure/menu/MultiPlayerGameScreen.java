@@ -257,6 +257,7 @@ public class MultiPlayerGameScreen implements Screen
         packet.uuid = Globals.uuid;
         packet.x = player.getX();
         packet.y = player.getY();
+        packet.rotation = ControlledPlayer.getInstance().isFacingRight();
         packet.time = System.currentTimeMillis();
         NetworkClient.getInstance().sendUDP(packet);
     }

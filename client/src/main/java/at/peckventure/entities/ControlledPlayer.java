@@ -10,6 +10,9 @@ import at.peckventure.InputManager;
 public class ControlledPlayer extends Player {
     private static ControlledPlayer instance;
 
+    private boolean facingRight = true;
+
+
     private ControlledPlayer(World world, float x, float y) {
         super(world, x, y);
         this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
@@ -34,15 +37,20 @@ public class ControlledPlayer extends Player {
         float direction = 0;
         if (InputManager.getInstance().isLeftPressed()) {
             direction = -1;
+            facingRight = false;
             sprite.setFlip(false, false);
         }
         if (InputManager.getInstance().isRightPressed()) {
             direction = 1;
+            facingRight = true;
             sprite.setFlip(true, false);
         }
-        setRotation(direction == 1 ? 0 : 180);
+
+        setRotation(facingRight ? 0 : 180);
+
         Vector2 vel = body.getLinearVelocity();
         body.setLinearVelocity(direction * speed / Block.BLOCK_SIZE, vel.y);
+
         float bodyYPixels = body.getPosition().y * Block.BLOCK_SIZE;
         float relativeHeight = startY - bodyYPixels;
         if (InputManager.getInstance().isJumpPressed()) {
@@ -53,4 +61,9 @@ public class ControlledPlayer extends Player {
             }
         }
     }
+
+    public boolean isFacingRight() {
+        return facingRight;
+    }
+
 }
