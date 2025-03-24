@@ -12,7 +12,7 @@ public class GameSettings {
     private static Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
 
     public static float getMusicVolume() {
-        return prefs.getFloat(MUSIC_VOLUME_KEY, 0.5f); // Standardwert: 0.5
+        return prefs.getFloat(MUSIC_VOLUME_KEY, 0.5f);
     }
 
     public static void setMusicVolume(float volume) {
@@ -21,7 +21,7 @@ public class GameSettings {
     }
 
     public static float getSoundVolume() {
-        return prefs.getFloat(SOUND_VOLUME_KEY, 0.5f); // Standardwert: 0.5
+        return prefs.getFloat(SOUND_VOLUME_KEY, 0.5f);
     }
 
     public static void setSoundVolume(float volume) {
@@ -30,11 +30,22 @@ public class GameSettings {
     }
 
     public static boolean isFullscreen() {
-        return prefs.getBoolean(FULLSCREEN_KEY, false); // Standardwert: false
+        return prefs.getBoolean(FULLSCREEN_KEY, false);
     }
 
     public static void setFullscreen(boolean fullscreen) {
         prefs.putBoolean(FULLSCREEN_KEY, fullscreen);
         prefs.flush();
+
+        if (fullscreen) {
+            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+        } else {
+            int windowWidth = 1280;
+            int windowHeight = 720;
+            Gdx.graphics.setWindowedMode(windowWidth, windowHeight);
+            // Fenster zentrieren
+            Gdx.graphics.setUndecorated(false);
+            Gdx.graphics.setWindowedMode(720, 1020);
+        }
     }
 }

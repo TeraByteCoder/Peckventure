@@ -32,6 +32,7 @@ public class NetworkPackets
         public String uuid;
         public float x;
         public float y;
+        public long time;
     }
 
     public static class PlayerListPacket
