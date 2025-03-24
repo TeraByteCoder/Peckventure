@@ -91,17 +91,21 @@ public class GameServer
             {
 
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
-                PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false);
-                playerData.save(worldFolder);
-                players.remove(player);
+                if(player != null)
+                {
+                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false);
+                    playerData.save(worldFolder);
+                    players.remove(player);
 
-                NetworkPackets.ChatMessagePacket leavemessage = new NetworkPackets.ChatMessagePacket();
-                leavemessage.message = player.getUsername() + "left the Game";
-                server.sendToAllTCP(leavemessage);
+                    NetworkPackets.ChatMessagePacket leavemessage = new NetworkPackets.ChatMessagePacket();
+                    leavemessage.message = player.getUsername() + "left the Game";
+                    server.sendToAllTCP(leavemessage);
 
-                NetworkPackets.ClientDisconnectPacket packet = new NetworkPackets.ClientDisconnectPacket();
-                packet.uuid = player.getUuid();
-                server.sendToAllUDP(packet);
+                    NetworkPackets.ClientDisconnectPacket packet = new NetworkPackets.ClientDisconnectPacket();
+                    packet.uuid = player.getUuid();
+                    server.sendToAllUDP(packet);
+
+                }
 
             }
 
@@ -265,6 +269,9 @@ public class GameServer
                     updatePacket.hotbarData = player.getInventory().serializeHotbar();
                     updatePacket.mainInventoryData = player.getInventory().serializeMain();
                     connection.sendTCP(updatePacket);
+                } else if (object instanceof NetworkPackets.PingRequestPacket)
+                {
+                    connection.sendTCP(new NetworkPackets.PingPacket());
                 }
 
             }

@@ -25,5 +25,9 @@ public class Network {
         kryo.register(NetworkPackets.ClientConnectPacket.class);
         kryo.register(NetworkPackets.ServerConnectPacket.class);
         kryo.register(NetworkPackets.ClientDisconnectPacket.class);
+
+        //ping
+        kryo.register(NetworkPackets.PingPacket.class);
+        kryo.register(NetworkPackets.PingRequestPacket.class);
     }
 }

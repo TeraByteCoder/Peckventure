@@ -116,7 +116,7 @@ public class MultiPlayer implements Screen {
         serverButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new MultiPlayerGameScreen(game, serverAddress));
+                game.setScreen(new LoadingScreen(game, serverAddress));
             }
         });
         serverTable.add(serverButton).size(400, 80).padBottom(10).row();
