@@ -132,6 +132,9 @@ public class SinglePlayerGameScreen implements Screen
         stage.draw();
         uiStage.act(delta);
         uiStage.draw();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            game.setScreen(new PauseMenu(game, this));
+        }
     }
 
     @Override
