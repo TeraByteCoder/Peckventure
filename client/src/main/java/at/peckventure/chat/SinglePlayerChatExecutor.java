@@ -23,4 +23,5 @@ public class SinglePlayerChatExecutor implements ChatExecutor
             ChatUI.getInstance().addMessage(Globals.username +": " + text);
         }
     }
+
 }

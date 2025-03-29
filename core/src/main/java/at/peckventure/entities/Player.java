@@ -125,16 +125,5 @@ public abstract class Player extends Actor
         return (int) getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
-    public void dropItemOutside(Item item, int amount) {
-        System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
-        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
-        float dropSpeed = 20f;
-        float angle = this.getRotation();
-        float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;
-        float vy = com.badlogic.gdx.math.MathUtils.sinDeg(angle) * dropSpeed;
-        Box2DOperationManager.queueOperation(() -> {
-            if (mob.getBody() != null)
-                mob.getBody().setLinearVelocity(vx, vy);
-        });
-    }
+    public abstract void dropItemOutside(Item item, int amount);
 }

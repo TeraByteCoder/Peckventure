@@ -1,17 +1,20 @@
 package at.peckventure.world;
 
-import at.peckventure.NetworkClient;
+import at.peckventure.Globals;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobRegistry;
+import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.chunk.Chunk;
 import com.badlogic.gdx.physics.box2d.World;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
-public class MultiPlayerMap extends AbstractTileMap {
-    public MultiPlayerMap(World world) {
+import java.util.*;
+
+public class MultiPlayerMap extends AbstractTileMap
+{
+    public MultiPlayerMap(World world)
+    {
         super(world);
     }
 
@@ -22,94 +25,92 @@ public class MultiPlayerMap extends AbstractTileMap {
     }
 
     @Override
-    public void unloadChunksOutsideRenderDistance(Player player) {
+    public void unloadChunksOutsideRenderDistance(Player player)
+    {
         Iterator<Chunk> iterator = loadedChunks.iterator();
-        while (iterator.hasNext()) {
+        while (iterator.hasNext())
+        {
             Chunk chunk = iterator.next();
             if (Math.abs(chunk.getChunkX() - player.getChunkX()) > RENDER_DISTANCE + 2 ||
-                Math.abs(chunk.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2) {
+                Math.abs(chunk.getChunkY() - player.getChunkY()) > RENDER_DISTANCE + 2)
+            {
                 chunk.dispose();
                 iterator.remove();
             }
         }
     }
 
-    @Override
-    public void loadMobsAroundPlayer(Player player) {
-        for (int x_offset = -MOB_DISTANCE - 1; x_offset <= MOB_DISTANCE; x_offset++) {
-            for (int y_offset = -MOB_DISTANCE; y_offset <= MOB_DISTANCE; y_offset++) {
-                int targetChunkX = player.getChunkX() + x_offset;
-                int targetChunkY = player.getChunkY() + y_offset;
-                boolean mobExists = false;
-                for (Mob m : at.peckventure.Globals.mobs) {
-                    if (m.getChunkX() == targetChunkX && m.getChunkY() == targetChunkY) {
-                        mobExists = true;
-                        break;
-                    }
+    public void updateMobs(NetworkPackets.MobUpdatePacket packet)
+    {
+        // Erstelle ein Set, um die IDs der im Paket vorhandenen Mobs zu verfolgen
+        Set<Integer> updatedMobIds = new HashSet<>();
+        ArrayList<NetworkPackets.SingleMobUpdatePacket> mobUpdates = packet.mobUpdates;
+
+        for (NetworkPackets.SingleMobUpdatePacket mobUpdate : mobUpdates)
+        {
+            updatedMobIds.add(mobUpdate.umid);
+            if (Globals.mobs.containsKey(mobUpdate.umid))
+            {
+                // Mob existiert bereits, daher aktualisiere seine Position
+                Mob mob = Globals.mobs.get(mobUpdate.umid);
+                Box2DOperationManager.queueOperation(() ->
+                {
+                    mob.setTargetPosition(mobUpdate.x, mobUpdate.y);
+                    mob.setDirection(mobUpdate.direction);
+                });
+
+            } else
+            {
+                // Codeabschnitt 1: Mob ist noch nicht im Set, also erstellen und hinzufügen
+                Mob mob = MobRegistry.createMobObject(mobUpdate.mobid, Globals.physicsWorld, mobUpdate.x, mobUpdate.y, ItemRegistry.createItem(mobUpdate.extraItem));
+                if (mob != null)
+                {
+                    mob.setMovementDisabled(true);
+                    mob.setPosition(mobUpdate.x, mobUpdate.y);
+                    mob.setTargetPosition(mobUpdate.x, mobUpdate.y);
+                    mob.setDirection(mobUpdate.direction);
                 }
-                if (!mobExists) return;
+
+                Globals.mobs.put(mobUpdate.umid, mob);
             }
         }
-    }
 
-    @Override
-    public void unloadMobsOutsideRenderDistance(Player player) {
-        Iterator<Mob> iterator = at.peckventure.Globals.mobs.iterator();
-        while (iterator.hasNext()) {
-            Mob mob = iterator.next();
-            if (Math.abs(mob.getChunkX() - player.getChunkX()) > MOB_DISTANCE + 2 ||
-                Math.abs(mob.getChunkY() - player.getChunkY()) > MOB_DISTANCE + 2) {
-                mob.dispose();
-                mob.remove();
+        // Codeabschnitt 2: Mobs, die im Set sind, aber nicht im Paket enthalten waren
+        // Beispiel: Entferne Mobs, die nicht aktualisiert wurden
+        Iterator<Map.Entry<Integer, Mob>> iterator = Globals.mobs.entrySet().iterator();
+        while (iterator.hasNext())
+        {
+            Map.Entry<Integer, Mob> entry = iterator.next();
+            if (!updatedMobIds.contains(entry.getKey()))
+            {
+                entry.getValue().remove();
+                entry.getValue().dispose();
                 iterator.remove();
             }
         }
     }
 
+
     @Override
-    public void updateChunks(Player player) {
+    public void updateChunks(Player player)
+    {
         loadChunksAroundPlayer(player);
         unloadChunksOutsideRenderDistance(player);
-        loadMobsAroundPlayer(player);
-        unloadMobsOutsideRenderDistance(player);
     }
 
     @Override
-    public void dispose() {
+    public void dispose()
+    {
         stopChunkUpdateThread();
-        for (Chunk chunk : loadedChunks) {
+        for (Chunk chunk : loadedChunks)
+        {
             chunk.dispose();
         }
         loadedChunks.clear();
     }
 
-    public void loadChunksAroundPlayers(List<Player> players) {
-        for (Player player : players) {
-            loadChunksAroundPlayer(player);
-        }
-    }
-
-    public void unloadChunksOutsideRenderDistance(List<Player> players) {
-        Iterator<Chunk> iterator = loadedChunks.iterator();
-        while (iterator.hasNext()) {
-            Chunk chunk = iterator.next();
-            boolean keep = false;
-            for (Player player : players) {
-                if (Math.abs(chunk.getChunkX() - player.getChunkX()) <= RENDER_DISTANCE + 2 &&
-                    Math.abs(chunk.getChunkY() - player.getChunkY()) <= RENDER_DISTANCE + 2) {
-                    keep = true;
-                    break;
-                }
-            }
-            if (!keep) {
-                chunk.dispose();
-                iterator.remove();
-            }
-        }
-    }
-
-
-    public void addLoadedChunk(Chunk chunk) {
+    public void addLoadedChunk(Chunk chunk)
+    {
         loadedChunks.add(chunk);
     }
 }

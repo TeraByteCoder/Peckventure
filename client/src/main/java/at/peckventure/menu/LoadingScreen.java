@@ -167,7 +167,7 @@ public class LoadingScreen implements Screen {
 
             @Override
             public void received(Connection connection, Object object) {
-                if (object instanceof NetworkPackets.PingPacket) {
+                if (object instanceof NetworkPackets.PingResponsePacket) {
                     if (!connected) {
                         Gdx.app.postRunnable(() -> {
                             connected = true;

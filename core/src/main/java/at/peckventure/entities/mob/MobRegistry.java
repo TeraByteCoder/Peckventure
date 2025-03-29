@@ -25,13 +25,25 @@ public class MobRegistry {
 
     public static Mob createMob(int id, World world, float x, float y, Object... args) {
         Mob mob = createMobObject(id, world, x, y, args);
-        Globals.mobs.add(mob);
+        Globals.mobs.put(MobMap.getNextId() , mob);
         return mob;
     }
 
     public static Mob createMob(String stringId, World world, float x, float y, Object... args) {
         Mob mob = createMobObject(stringId, world, x, y, args);
-        Globals.mobs.add(mob);
+        Globals.mobs.put(MobMap.getNextId() , mob);
+        return mob;
+    }
+
+    public static Mob createMob(int id, World world, float x, float y, int umid, Object... args) {
+        Mob mob = createMobObject(id, world, x, y, args);
+        Globals.mobs.put(umid , mob);
+        return mob;
+    }
+
+    public static Mob createMob(String stringId, World world, float x, float y, int umid, Object... args) {
+        Mob mob = createMobObject(stringId, world, x, y, args);
+        Globals.mobs.put(umid , mob);
         return mob;
     }
 

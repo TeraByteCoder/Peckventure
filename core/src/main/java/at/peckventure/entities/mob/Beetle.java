@@ -77,7 +77,25 @@ public class Beetle extends Mob {
             // Richtung → Ausrichtung des Sprites
             facingRight = direction > 0;
         }
+        super.direction = facingRight;
     }
+
+    @Override
+    public void setDirection(boolean facingRight)
+    {
+        // Setze den internen Richtungswert basierend auf dem Boolean:
+        // true → nach rechts (1), false → nach links (-1)
+        this.direction = facingRight ? 1f : -1f;
+        this.facingRight = facingRight;
+
+        // Optional: Falls der Body bereits existiert, aktualisiere sofort auch seine Geschwindigkeit
+        if (body != null)
+        {
+            Vector2 v = body.getLinearVelocity();
+            body.setLinearVelocity(this.direction * speed, v.y);
+        }
+    }
+
 
     @Override
     public void draw(Batch batch, float parentAlpha) {

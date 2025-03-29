@@ -1,7 +1,8 @@
 package at.peckventure.server;
 
 import at.peckventure.Globals;
-import at.peckventure.entities.Player;
+import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.Inventory;
 import at.peckventure.inventory.InventorySlot;
 import at.peckventure.inventory.item.Item;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -75,6 +77,7 @@ public class GameServer
     public void start() throws IOException
     {
         running = true;
+        Globals.mobs = Collections.synchronizedMap(new MobMap());
         server = new Server(65536, 65536);
         at.peckventure.multiplayer.Network.register(server.getKryo());
         server.start();
@@ -255,11 +258,9 @@ public class GameServer
                     InventorySlot inventorySlot = inventory.getSlotByIndex(packet.slot);
                     if (inventorySlot != null && inventorySlot.getItem() != null)
                     {
-                        System.out.println("muss gehbn1");
                         Item item = inventorySlot.getItem();
                         if (inventorySlot.getItem() != null && inventorySlot.getItem().getStackSize() >= packet.count)
                         {
-                            System.out.println("muss gehbn");
                             inventorySlot.setItem(null);
                             player.dropItemOutside(item, packet.count);
                         }
@@ -271,7 +272,7 @@ public class GameServer
                     connection.sendTCP(updatePacket);
                 } else if (object instanceof NetworkPackets.PingRequestPacket)
                 {
-                    connection.sendTCP(new NetworkPackets.PingPacket());
+                    connection.sendTCP(new NetworkPackets.PingResponsePacket());
                 }
 
             }
@@ -281,18 +282,28 @@ public class GameServer
             {
             }
         });
-        gameLoopThread = new Thread(() ->
-        {
-            while (running)
-            {
+        gameLoopThread = new Thread(() -> {
+            long lastTime = System.nanoTime();
+            while (running) {
+                long now = System.nanoTime();
+                float delta = (now - lastTime) / 1_000_000_000f; // delta in Sekunden
+                lastTime = now;
+
                 Box2DOperationManager.processOperations();
                 physicsWorld.step(1f / 60f, 6, 2);
                 tilemap.updateChunksForAllPlayers();
-                try
-                {
+                for (Mob mob : at.peckventure.Globals.mobs.values()) {
+                    mob.act(delta);
+                }
+
+                // Update der Mobs für alle Spieler
+                for (ServerPlayer player : players) {
+                    tilemap.updateMobsForPlayer(player);
+                }
+
+                try {
                     Thread.sleep(16);
-                } catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }

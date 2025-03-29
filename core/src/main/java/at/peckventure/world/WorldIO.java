@@ -4,6 +4,7 @@ import at.peckventure.Globals;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobIO;
+import at.peckventure.entities.mob.MobMap;
 import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Gdx;
@@ -60,7 +61,7 @@ public class WorldIO
         }
         regionManager.closeAll();
         MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
-        for (Mob mob : mobs)
+        for (Mob mob : mobs.values())
         {
             int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
             int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
@@ -112,7 +113,7 @@ public class WorldIO
         }
         regionManager.closeAll();
         MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
-        for (Mob mob : mobs)
+        for (Mob mob : mobs.values())
         {
             int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
             int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
@@ -264,7 +265,10 @@ public class WorldIO
                 }
             }
         }
-        mobs.addAll(loadedMobs);
+        for (Mob mob : loadedMobs) {
+            int newId = MobMap.getNextId();
+            mobs.put(newId, mob);
+        }
         return new LoadedWorld(config, loadedChunks, loadedMobs, players);
     }
 

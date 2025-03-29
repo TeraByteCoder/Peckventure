@@ -8,6 +8,7 @@ import at.peckventure.chat.MultiPlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
+import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.MultiplayerInventoryManager;
 import at.peckventure.multiplayer.NetworkPackets;
@@ -33,7 +34,9 @@ import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class MultiPlayerGameScreen implements Screen
@@ -69,6 +72,7 @@ public class MultiPlayerGameScreen implements Screen
             serverPort = DEFAULT_PORT;
         }
         physicsWorld = new World(new Vector2(0, -19.81f), true);
+
     }
 
     @Override
@@ -78,6 +82,7 @@ public class MultiPlayerGameScreen implements Screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
+        Globals.mobs = Collections.synchronizedMap(new MobMap(stage));
         uiStage = new Stage(new ScreenViewport());
         chatUI = new ChatUI(uiStage, new MultiPlayerChatExecutor());
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
@@ -213,6 +218,9 @@ public class MultiPlayerGameScreen implements Screen
                         }
 
                     );
+                } else if (object instanceof  NetworkPackets.MobUpdatePacket)
+                {
+                    tilemap.updateMobs((NetworkPackets.MobUpdatePacket) object);
                 }
 
 

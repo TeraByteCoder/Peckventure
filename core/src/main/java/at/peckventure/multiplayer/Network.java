@@ -27,7 +27,12 @@ public class Network {
         kryo.register(NetworkPackets.ClientDisconnectPacket.class);
 
         //ping
-        kryo.register(NetworkPackets.PingPacket.class);
+        kryo.register(NetworkPackets.PingResponsePacket.class);
         kryo.register(NetworkPackets.PingRequestPacket.class);
+
+        //mobs
+        kryo.register(java.util.ArrayList.class);
+        kryo.register(NetworkPackets.MobUpdatePacket.class);
+        kryo.register(NetworkPackets.SingleMobUpdatePacket.class);
     }
 }

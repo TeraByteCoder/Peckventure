@@ -1,8 +1,11 @@
 package at.peckventure.world;
 
+import at.peckventure.ClientGlobal;
+import at.peckventure.Globals;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobIO;
+import at.peckventure.entities.mob.MobMap;
 import at.peckventure.world.chunk.Chunk;
 import at.peckventure.world.chunk.ChunkIO;
 import at.peckventure.world.generator.WorldGenerator;
@@ -11,6 +14,7 @@ import com.badlogic.gdx.physics.box2d.World;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import static at.peckventure.Globals.mobs;
 
@@ -85,14 +89,14 @@ public class SinglePlayerMap extends AbstractTileMap {
         }
     }
 
-    @Override
     public void loadMobsAroundPlayer(Player player) {
         for (int x_offset = -MOB_DISTANCE - 1; x_offset <= MOB_DISTANCE; x_offset++) {
             for (int y_offset = -MOB_DISTANCE; y_offset <= MOB_DISTANCE; y_offset++) {
                 int targetChunkX = player.getChunkX() + x_offset;
                 int targetChunkY = player.getChunkY() + y_offset;
                 boolean mobExists = false;
-                for (Mob m : mobs) {
+                // Iteriere über die aktuell geladenen Mobs (aus der Map)
+                for (Mob m : mobs.values()) {
                     if (m.getChunkX() == targetChunkX && m.getChunkY() == targetChunkY) {
                         mobExists = true;
                         break;
@@ -113,18 +117,23 @@ public class SinglePlayerMap extends AbstractTileMap {
                     if (mobData != null) {
                         String mobJson = new String(mobData, StandardCharsets.UTF_8);
                         Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
-                        mobs.add(mob);
+                        // Hole die nächste freie ID und füge den Mob der Map hinzu.
+                        int newId = MobMap.getNextId();
+                        mobs.put(newId, mob);
+                        // Der CustomMobMap.put() fügt den Mob bereits automatisch zur Stage hinzu,
+                        // falls diese nicht null ist.
                     }
                 }
             }
         }
     }
 
-    @Override
     public void unloadMobsOutsideRenderDistance(Player player) {
-        Iterator<Mob> iterator = mobs.iterator();
+        // Da mobs jetzt eine Map ist, iterieren wir über die Entry-Set
+        Iterator<Map.Entry<Integer, Mob>> iterator = mobs.entrySet().iterator();
         while (iterator.hasNext()) {
-            Mob mob = iterator.next();
+            Map.Entry<Integer, Mob> entry = iterator.next();
+            Mob mob = entry.getValue();
             if (Math.abs(mob.getChunkX() - player.getChunkX()) > MOB_DISTANCE + 2 ||
                 Math.abs(mob.getChunkY() - player.getChunkY()) > MOB_DISTANCE + 2) {
                 int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
@@ -139,12 +148,14 @@ public class SinglePlayerMap extends AbstractTileMap {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                // Vor dem Entfernen: Mob entsorgen und aus der Stage entfernen
                 mob.dispose();
-                mob.remove();
+                mob.remove(); // entfernt den Mob aus der Stage, falls vorhanden
                 iterator.remove();
             }
         }
     }
+
 
     @Override
     public void updateChunks(Player player) {

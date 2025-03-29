@@ -1,8 +1,10 @@
 package at.peckventure.server.world;
 
 import at.peckventure.entities.Player;
+import at.peckventure.entities.mob.ItemActor;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobIO;
+import at.peckventure.entities.mob.MobRegistry;
 import at.peckventure.server.GameServer;
 import at.peckventure.server.entities.ServerPlayer;
 import at.peckventure.multiplayer.NetworkPackets;
@@ -18,16 +20,15 @@ import com.badlogic.gdx.physics.box2d.World;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ServerTileMap extends AbstractTileMap {
     private final WorldGenerator worldGenerator;
     private final RegionManager regionManager;
     private final MobRegionManager mobRegionManager;
+
+    public static final float MOB_UPDATE_RADIUS = 5000f; // z. B. 500 Pixel oder passe den Wert an
+
 
     // Globaler Chunk-Pool (wird z. B. zum Caching genutzt – stammt aus der Oberklasse)
     // protected Set<Chunk> loadedChunks;
@@ -57,64 +58,45 @@ public class ServerTileMap extends AbstractTileMap {
         // Wird jetzt im per-Spieler-Update (updateChunksForPlayer) gehandhabt.
     }
 
-    @Override
-    public void loadMobsAroundPlayer(Player player) {
-        for (int x_offset = -MOB_DISTANCE - 1; x_offset <= MOB_DISTANCE; x_offset++) {
-            for (int y_offset = -MOB_DISTANCE; y_offset <= MOB_DISTANCE; y_offset++) {
-                int targetChunkX = player.getChunkX() + x_offset;
-                int targetChunkY = player.getChunkY() + y_offset;
-                boolean mobExists = false;
-                for (Mob m : at.peckventure.Globals.mobs) {
-                    if (m.getChunkX() == targetChunkX && m.getChunkY() == targetChunkY) {
-                        mobExists = true;
-                        break;
-                    }
+    public void updateMobsForPlayer(ServerPlayer player) {
+        // Erstelle ein neues MobUpdatePacket
+        NetworkPackets.MobUpdatePacket mobPacket = new NetworkPackets.MobUpdatePacket();
+        mobPacket.mobUpdates = new ArrayList<>();
+
+        // Hole die Position des Spielers
+        float playerX = player.getX();
+        float playerY = player.getY();
+
+        // Iteriere über alle Mobs in der Globals-Mob-Map
+        for (Map.Entry<Integer, Mob> entry : at.peckventure.Globals.mobs.entrySet()) {
+            Mob mob = entry.getValue();
+            // Berechne den Abstand zum Spieler
+            float dx = mob.getX() - playerX;
+            float dy = mob.getY() - playerY;
+            if (dx * dx + dy * dy <= MOB_UPDATE_RADIUS * MOB_UPDATE_RADIUS) {
+                // Erstelle ein Update-Paket für diesen Mob
+                NetworkPackets.SingleMobUpdatePacket update = new NetworkPackets.SingleMobUpdatePacket();
+                update.umid = entry.getKey();  // Stelle sicher, dass diese Methode in der Mob-Klasse vorhanden ist.
+                update.mobid = MobRegistry.getMobId(mob);     // Ebenso: Implementiere diese Methode, falls noch nicht vorhanden.
+                update.x = mob.getX();
+                update.y = mob.getY();
+                update.direction = mob.isDirection();
+                if(mob instanceof ItemActor)
+                {
+                    ItemActor item = (ItemActor)mob;
+                    update.extraItem = item.getInventoryItem().getName();
                 }
-                if (!mobExists) {
-                    int regionX = Math.floorDiv(targetChunkX, MobRegionManager.REGION_SIZE);
-                    int regionY = Math.floorDiv(targetChunkY, MobRegionManager.REGION_SIZE);
-                    MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
-                    int localX = Math.floorMod(targetChunkX, MobRegionManager.REGION_SIZE);
-                    int localY = Math.floorMod(targetChunkY, MobRegionManager.REGION_SIZE);
-                    byte[] mobData = null;
-                    try {
-                        mobData = mobRegionFile.readMobs(localX, localY);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if (mobData != null) {
-                        String mobJson = new String(mobData, StandardCharsets.UTF_8);
-                        Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
-                        at.peckventure.Globals.mobs.add(mob);
-                    }
-                }
+                mobPacket.mobUpdates.add(update);
             }
         }
-    }
+        GameServer.instance.getServer().sendToUDP(player.getConnection().getID(), mobPacket);
 
-    @Override
-    public void unloadMobsOutsideRenderDistance(Player player) {
-        Iterator<Mob> iterator = at.peckventure.Globals.mobs.iterator();
-        while (iterator.hasNext()) {
-            Mob mob = iterator.next();
-            if (Math.abs(mob.getChunkX() - player.getChunkX()) > MOB_DISTANCE + 2 ||
-                Math.abs(mob.getChunkY() - player.getChunkY()) > MOB_DISTANCE + 2) {
-                int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
-                int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
-                MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
-                int localX = Math.floorMod(mob.getChunkX(), MobRegionManager.REGION_SIZE);
-                int localY = Math.floorMod(mob.getChunkY(), MobRegionManager.REGION_SIZE);
-                String mobJson = MobIO.serializeToJson(mob);
-                byte[] mobData = mobJson.getBytes(StandardCharsets.UTF_8);
-                try {
-                    mobRegionFile.writeMobs(localX, localY, mobData);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                mob.dispose();
-                mob.remove();
-                iterator.remove();
-            }
+        // Sende das Mob-Update-Paket an den Spieler
+        try {
+            player.getConnection().sendTCP(mobPacket);
+        } catch (Exception e) {
+            System.err.println("Fehler beim Senden der Mob-Updates an " + player.getUsername());
+            e.printStackTrace();
         }
     }
 
@@ -123,8 +105,6 @@ public class ServerTileMap extends AbstractTileMap {
         if (player instanceof ServerPlayer) {
             updateChunksForPlayer((ServerPlayer) player);
         }
-        loadMobsAroundPlayer(player);
-        unloadMobsOutsideRenderDistance(player);
     }
 
     @Override
@@ -188,6 +168,13 @@ public class ServerTileMap extends AbstractTileMap {
             }
         }
     }
+
+    public void updateMobsForAllPlayers(Set<ServerPlayer> players) {
+        for (ServerPlayer player : players) {
+            updateMobsForPlayer(player);
+        }
+    }
+
 
     /**
      * Versucht, einen Chunk aus dem globalen Pool zu holen oder lädt/generiert ihn, falls er noch nicht existiert.
