@@ -227,10 +227,19 @@ public class MultiPlayerGameScreen implements Screen
                 } else if (object instanceof NetworkPackets.MobUpdatePacket)
                 {
                     tilemap.updateMobs((NetworkPackets.MobUpdatePacket) object);
-                } else if (object instanceof NetworkPackets.PlayerStatusPacket)
+                } else if (object instanceof NetworkPackets.PlayerStatusUpdatePacket)
                 {
-                    ControlledPlayer.getInstance().getHealthStatus().setCurrent(((NetworkPackets.PlayerStatusPacket) object).health);
-                    ControlledPlayer.getInstance().getEnergyStatus().setCurrent(((NetworkPackets.PlayerStatusPacket) object).energy);
+                    ControlledPlayer.getInstance().getHealthStatus().setCurrent(((NetworkPackets.PlayerStatusUpdatePacket) object).health);
+                    ControlledPlayer.getInstance().getEnergyStatus().setCurrent(((NetworkPackets.PlayerStatusUpdatePacket) object).energy);
+                } else if (object instanceof NetworkPackets.ServerPositionChangePacket)
+                {
+                    NetworkPackets.ServerPositionChangePacket packet = (NetworkPackets.ServerPositionChangePacket) object;
+
+                    Box2DOperationManager.queueOperation(() ->
+                    {
+                        float angle = ControlledPlayer.getInstance().getBody().getAngle();
+                        ControlledPlayer.getInstance().getBody().setTransform((packet.x / Block.BLOCK_SIZE), (packet.y / Block.BLOCK_SIZE), angle);
+                    });
                 }
 
 

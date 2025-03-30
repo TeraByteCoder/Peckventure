@@ -2,7 +2,6 @@ package at.peckventure.multiplayer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class NetworkPackets
@@ -52,7 +51,7 @@ public class NetworkPackets
         public String inventoryHotbar;
 
         public PlayerListPacket playerList;
-        public PlayerStatusPacket playerStatus;
+        public PlayerStatusUpdatePacket playerStatus;
 
     }
 
@@ -111,10 +110,16 @@ public class NetworkPackets
         public ArrayList<SingleMobUpdatePacket> mobUpdates;
     }
 
-    public static class PlayerStatusPacket
+    public static class PlayerStatusUpdatePacket
     {
         public int energy;
         public int health;
+    }
+
+    public static class ServerPositionChangePacket
+    {
+        public float x;
+        public float y;
     }
 
 }

@@ -3,6 +3,8 @@ package at.peckventure.chat.commands;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.inventory.item.Sword;
+import at.peckventure.multiplayer.NetworkManager;
+import at.peckventure.multiplayer.NetworkPackets;
 
 public class GiveCommand extends Command
 {
@@ -39,6 +41,18 @@ public class GiveCommand extends Command
             Sword item = ItemRegistry.createItem(itemName);
             executor.getInventory().addItem(item, amount);
         }
+
+        try{
+            NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
+            updatePacket.hotbarData = executor.getInventory().serializeHotbar();
+            updatePacket.mainInventoryData = executor.getInventory().serializeMain();
+            NetworkManager.getInstance().sendToPlayerTCP(updatePacket, executor);
+        }
+        catch (IllegalStateException e)
+        {
+
+        }
+
         return "Giving " + amount + " of item: " + itemName;
     }
 

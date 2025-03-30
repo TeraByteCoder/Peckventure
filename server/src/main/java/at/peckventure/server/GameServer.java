@@ -145,7 +145,7 @@ public class GameServer
 
                     //connectpacket erstellen
                     NetworkPackets.ClientConnectPacket connectPacket = new NetworkPackets.ClientConnectPacket();
-                    connectPacket.playerStatus = new NetworkPackets.PlayerStatusPacket();
+                    connectPacket.playerStatus = new NetworkPackets.PlayerStatusUpdatePacket();
 
                     if (playerData.getPlayerX() == 0.0 && playerData.getPlayerY() == 0.0 && playerData.getInventoryHotbar().isEmpty() && playerData.getInventoryMain().isEmpty())
                     {
@@ -189,12 +189,6 @@ public class GameServer
                 {
                     NetworkPackets.ChatMessagePacket packet = (NetworkPackets.ChatMessagePacket) object;
                     executor.processChatInput(packet.message, ServerPlayer.findPlayer(connection));
-
-                    ServerPlayer player = ServerPlayer.findPlayer(connection);
-                    NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
-                    updatePacket.hotbarData = player.getInventory().serializeHotbar();
-                    updatePacket.mainInventoryData = player.getInventory().serializeMain();
-                    connection.sendTCP(updatePacket);
                 } else if (object instanceof NetworkPackets.InventoryMovePacket)
                 {
                     NetworkPackets.InventoryMovePacket movePacket = (NetworkPackets.InventoryMovePacket) object;

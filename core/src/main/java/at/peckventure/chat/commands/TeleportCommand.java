@@ -1,6 +1,8 @@
 package at.peckventure.chat.commands;
 
 import at.peckventure.entities.Player;
+import at.peckventure.multiplayer.NetworkManager;
+import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.block.Block;
 
 public class TeleportCommand extends Command {
@@ -51,6 +53,17 @@ public class TeleportCommand extends Command {
         executor.setPosition((float)newX, (float)newY);
 
         // Hier könnte optional ein Netzwerk-Paket versendet werden, um den Zustand mit anderen Clients zu synchronisieren.
+
+        try{
+            NetworkPackets.ServerPositionChangePacket packet = new NetworkPackets.ServerPositionChangePacket();
+            packet.x = (float)newX;
+            packet.y = (float)newY;
+            NetworkManager.getInstance().sendToPlayerTCP(packet, executor);
+        }
+        catch (IllegalStateException e)
+        {
+
+        }
         return "Teleportiert zu (" + newX + ", " + newY + ")";
     }
 }
