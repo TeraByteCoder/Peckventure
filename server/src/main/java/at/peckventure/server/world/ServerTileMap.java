@@ -1,10 +1,8 @@
 package at.peckventure.server.world;
 
+import at.peckventure.Globals;
 import at.peckventure.entities.Player;
-import at.peckventure.entities.mob.ItemActor;
-import at.peckventure.entities.mob.Mob;
-import at.peckventure.entities.mob.MobIO;
-import at.peckventure.entities.mob.MobRegistry;
+import at.peckventure.entities.mob.*;
 import at.peckventure.server.GameServer;
 import at.peckventure.server.entities.ServerPlayer;
 import at.peckventure.multiplayer.NetworkPackets;
@@ -27,7 +25,9 @@ public class ServerTileMap extends AbstractTileMap {
     private final RegionManager regionManager;
     private final MobRegionManager mobRegionManager;
 
-    public static final float MOB_UPDATE_RADIUS = 5000f; // z. B. 500 Pixel oder passe den Wert an
+    public static final float MOB_UPDATE_RADIUS = 10000f; // z. B. 500 Pixel oder passe den Wert an
+    public static final int MOB_UNLOAD_DISTANCE = MOB_DISTANCE + 2;
+
 
 
     // Globaler Chunk-Pool (wird z. B. zum Caching genutzt – stammt aus der Oberklasse)
@@ -100,16 +100,111 @@ public class ServerTileMap extends AbstractTileMap {
         }
     }
 
+    public void loadMobsAroundPlayer(Player player) {
+        for (int x_offset = -MOB_DISTANCE - 1; x_offset <= MOB_DISTANCE; x_offset++) {
+            for (int y_offset = -MOB_DISTANCE; y_offset <= MOB_DISTANCE; y_offset++) {
+                int targetChunkX = player.getChunkX() + x_offset;
+                int targetChunkY = player.getChunkY() + y_offset;
+                boolean mobExists = false;
+                for (Mob m : Globals.mobs.values()) {
+                    if (m.getChunkX() == targetChunkX && m.getChunkY() == targetChunkY) {
+                        mobExists = true;
+                        break;
+                    }
+                }
+                if (!mobExists) {
+                    int regionX = Math.floorDiv(targetChunkX, MobRegionManager.REGION_SIZE);
+                    int regionY = Math.floorDiv(targetChunkY, MobRegionManager.REGION_SIZE);
+                    MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
+                    int localX = Math.floorMod(targetChunkX, MobRegionManager.REGION_SIZE);
+                    int localY = Math.floorMod(targetChunkY, MobRegionManager.REGION_SIZE);
+                    byte[] mobData = null;
+                    try {
+                        mobData = mobRegionFile.readMobs(localX, localY);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (mobData != null) {
+                        System.out.println("Lade Mob-Daten aus Region (" + localX + ", " + localY + ")");
+                        String mobJson = new String(mobData, StandardCharsets.UTF_8);
+                        Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
+                        int newId = MobMap.getNextId();
+                        Globals.mobs.put(newId, mob);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void unloadMobsOutsideRenderDistance() {
+        Iterator<Map.Entry<Integer, Mob>> iterator = Globals.mobs.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, Mob> entry = iterator.next();
+            Mob mob = entry.getValue();
+            boolean shouldUnload = true;
+
+            // Prüfe alle Spieler, ob sie den Mob-Chunk laden
+            for (ServerPlayer player : GameServer.instance.players) {
+                if (Math.abs(mob.getChunkX() - player.getChunkX()) <= MOB_UNLOAD_DISTANCE &&
+                    Math.abs(mob.getChunkY() - player.getChunkY()) <= MOB_UNLOAD_DISTANCE) {
+                    shouldUnload = false;
+                    break;
+                }
+            }
+
+            if (shouldUnload) {
+                // Speichern und Entfernen des Mobs
+                int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
+                int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
+                MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
+                int localX = Math.floorMod(mob.getChunkX(), MobRegionManager.REGION_SIZE);
+                int localY = Math.floorMod(mob.getChunkY(), MobRegionManager.REGION_SIZE);
+                String mobJson = MobIO.serializeToJson(mob);
+                byte[] mobData = mobJson.getBytes(StandardCharsets.UTF_8);
+                try {
+                    mobRegionFile.writeMobs(localX, localY, mobData);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                mob.dispose();
+                mob.remove();
+                iterator.remove();
+            }
+        }
+    }
+
     @Override
     public void updateChunks(Player player) {
         if (player instanceof ServerPlayer) {
             updateChunksForPlayer((ServerPlayer) player);
         }
+        loadMobsAroundPlayer(player);
     }
+
 
     @Override
     public void dispose() {
         stopChunkUpdateThread();
+        // Speichere alle noch geladenen Mobs
+        for (Mob mob : at.peckventure.Globals.mobs.values()) {
+            int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
+            int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
+            MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
+            int localX = Math.floorMod(mob.getChunkX(), MobRegionManager.REGION_SIZE);
+            int localY = Math.floorMod(mob.getChunkY(), MobRegionManager.REGION_SIZE);
+            String mobJson = MobIO.serializeToJson(mob);
+            byte[] mobData = mobJson.getBytes(StandardCharsets.UTF_8);
+            try {
+                mobRegionFile.writeMobs(localX, localY, mobData);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mob.dispose();
+            mob.remove(); // Entfernt den Mob aus der Stage, falls vorhanden
+        }
+        at.peckventure.Globals.mobs.clear();
+
         for (Chunk chunk : loadedChunks) {
             int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
             int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
@@ -166,12 +261,6 @@ public class ServerTileMap extends AbstractTileMap {
             if (!requiredChunks.contains(chunk)) {
                 it.remove();
             }
-        }
-    }
-
-    public void updateMobsForAllPlayers(Set<ServerPlayer> players) {
-        for (ServerPlayer player : players) {
-            updateMobsForPlayer(player);
         }
     }
 

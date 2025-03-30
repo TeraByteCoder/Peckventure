@@ -1,14 +1,17 @@
 package at.peckventure.server;
 
+import at.peckventure.Const;
 import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.Inventory;
 import at.peckventure.inventory.InventorySlot;
 import at.peckventure.inventory.item.Item;
+import at.peckventure.multiplayer.NetworkManager;
 import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.server.chat.ChatExecutor;
 import at.peckventure.server.entities.ServerPlayer;
+import at.peckventure.server.network.NetworkServer;
 import at.peckventure.server.world.ServerTileMap;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.PlayerData;
@@ -78,10 +81,10 @@ public class GameServer
     {
         running = true;
         Globals.mobs = Collections.synchronizedMap(new MobMap());
-        server = new Server(65536, 65536);
-        at.peckventure.multiplayer.Network.register(server.getKryo());
-        server.start();
-        server.bind(54555, 54777);
+
+        server = NetworkServer.init(54555, 54777);
+        NetworkManager network = at.peckventure.multiplayer.NetworkManager.getInstance();
+        network.connect(5000);
         server.addListener(new Listener()
         {
             @Override
@@ -96,8 +99,9 @@ public class GameServer
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
                 if(player != null)
                 {
-                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false);
+                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false, player.getEnergyStatus().getCurrent(), player.getHealthStatus().getCurrent());
                     playerData.save(worldFolder);
+                    tilemap.removePlayer(player);
                     players.remove(player);
 
                     NetworkPackets.ChatMessagePacket leavemessage = new NetworkPackets.ChatMessagePacket();
@@ -141,6 +145,7 @@ public class GameServer
 
                     //connectpacket erstellen
                     NetworkPackets.ClientConnectPacket connectPacket = new NetworkPackets.ClientConnectPacket();
+                    connectPacket.playerStatus = new NetworkPackets.PlayerStatusPacket();
 
                     if (playerData.getPlayerX() == 0.0 && playerData.getPlayerY() == 0.0 && playerData.getInventoryHotbar().isEmpty() && playerData.getInventoryMain().isEmpty())
                     {
@@ -150,18 +155,20 @@ public class GameServer
                         connectPacket.posy = spawnY;
                         connectPacket.inventoryHotbar = "";
                         connectPacket.inventoryMain = "";
+                        connectPacket.playerStatus.energy = Const.MAXENERGY;
+                        connectPacket.playerStatus.health = Const.MAXHEALTH;
                     } else
                     {
-                        ServerPlayer player = new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username);
+                        ServerPlayer player = new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username, playerData.getEnergy(), playerData.getHealth());
                         player.getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
                         players.add(player);
                         connectPacket.posx = (int) playerData.getPlayerX();
                         connectPacket.posy = (int) playerData.getPlayerY();
                         connectPacket.inventoryHotbar = playerData.getInventoryHotbar();
                         connectPacket.inventoryMain = playerData.getInventoryMain();
-
+                        connectPacket.playerStatus.energy = playerData.getEnergy();
+                        connectPacket.playerStatus.health = playerData.getHealth();
                     }
-                    connection.sendTCP(connectPacket);
                     NetworkPackets.PlayerListPacket listPacket = new NetworkPackets.PlayerListPacket();
                     for (ServerPlayer player : players)
                     {
@@ -171,7 +178,8 @@ public class GameServer
                         updatePacket.y = player.getY();
                         listPacket.players.add(updatePacket);
                     }
-                    connection.sendTCP(listPacket);
+                    connectPacket.playerList = listPacket;
+                    connection.sendTCP(connectPacket);
 
 
                     NetworkPackets.ChatMessagePacket chatMessagePacket = new NetworkPackets.ChatMessagePacket();
@@ -292,6 +300,7 @@ public class GameServer
                 Box2DOperationManager.processOperations();
                 physicsWorld.step(1f / 60f, 6, 2);
                 tilemap.updateChunksForAllPlayers();
+                tilemap.unloadMobsOutsideRenderDistance();
                 for (Mob mob : at.peckventure.Globals.mobs.values()) {
                     mob.act(delta);
                 }

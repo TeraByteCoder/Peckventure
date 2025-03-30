@@ -10,18 +10,24 @@ public class PlayerData {
     private String inventoryHotbar = "";
     private String inventoryMain = "";
     private boolean operator;
+    private int energy;
+    private int health;
 
-    public PlayerData(String uuid, float playerX, float playerY, String inventoryHotbar, String inventoryMain, boolean operator) {
+    // Vollständiger Konstruktor inklusive energy und health
+    public PlayerData(String uuid, float playerX, float playerY, String inventoryHotbar, String inventoryMain, boolean operator, int energy, int health) {
+        this.uuid = uuid;
         this.playerX = playerX;
         this.playerY = playerY;
         this.inventoryHotbar = inventoryHotbar;
         this.inventoryMain = inventoryMain;
         this.operator = operator;
-        this.uuid = uuid;
+        this.energy = energy;
+        this.health = health;
     }
 
+    // Minimaler Konstruktor mit Standardwerten (100 für energy und health)
     public PlayerData(String uuid) {
-        this(uuid, 0, 0, "", "", false);
+        this(uuid, 0, 0, "", "", false, 100, 100);
     }
 
     public float getPlayerX() {
@@ -64,6 +70,22 @@ public class PlayerData {
         this.operator = operator;
     }
 
+    public int getEnergy() {
+        return energy;
+    }
+
+    public void setEnergy(int energy) {
+        this.energy = energy;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public void setHealth(int health) {
+        this.health = health;
+    }
+
     public static PlayerData load(FileHandle worldFolder, String uuid) {
         FileHandle playerFolder = worldFolder.child("playerData");
         FileHandle file = playerFolder.child(uuid + ".dat");
@@ -79,6 +101,8 @@ public class PlayerData {
         String inventoryHotbar = "";
         String inventoryMain = "";
         boolean operator = false;
+        int energy = 100;
+        int health = 100;
         String[] lines = config.split("\n");
         for (String line : lines) {
             String[] parts = line.split("=");
@@ -109,10 +133,24 @@ public class PlayerData {
                     case "operator":
                         operator = Boolean.parseBoolean(value);
                         break;
+                    case "energy":
+                        try {
+                            energy = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            energy = 100;
+                        }
+                        break;
+                    case "health":
+                        try {
+                            health = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            health = 100;
+                        }
+                        break;
                 }
             }
         }
-        return new PlayerData(uuid, playerX, playerY, inventoryHotbar, inventoryMain, operator);
+        return new PlayerData(uuid, playerX, playerY, inventoryHotbar, inventoryMain, operator, energy, health);
     }
 
     public void save(FileHandle worldFolder) {
@@ -123,14 +161,16 @@ public class PlayerData {
             "playerY=" + playerY + "\n" +
             "inventoryHotbar=" + inventoryHotbar + "\n" +
             "inventoryMain=" + inventoryMain + "\n" +
-            "operator=" + operator;
+            "operator=" + operator + "\n" +
+            "energy=" + energy + "\n" +
+            "health=" + health;
         file.writeString(content, false);
     }
 
     public static HashSet<String> getPlayerUUIDs(FileHandle worldFolder) {
         FileHandle playerFolder = worldFolder.child("playerData");
         HashSet<String> uuids = new HashSet<>();
-        for (FileHandle file : worldFolder.list()) {
+        for (FileHandle file : playerFolder.list()) {
             if (file.name().endsWith(".dat")) {
                 uuids.add(file.name().substring(0, file.name().length() - 4));
             }

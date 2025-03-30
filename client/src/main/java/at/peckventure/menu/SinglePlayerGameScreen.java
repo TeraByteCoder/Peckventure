@@ -8,6 +8,8 @@ import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.SinglePlayerInventoryManager;
+import at.peckventure.ui.EnergyUI;
+import at.peckventure.ui.HealthUI;
 import at.peckventure.world.*;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
@@ -35,6 +37,10 @@ public class SinglePlayerGameScreen implements Screen
     private final String worldName;
     private OrthographicCamera camera;
     private SpriteBatch batch;
+
+    private HealthUI healthUI;
+    private EnergyUI energyUI;
+
     private Player player;
     private Stage stage;
     private Stage uiStage;
@@ -108,6 +114,11 @@ public class SinglePlayerGameScreen implements Screen
         stage.addActor(player);
 
         inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());
+        healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
+        energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
+
+        ControlledPlayer.getInstance().getHealthStatus().setCurrent(playerData.getHealth());
+        ControlledPlayer.getInstance().getEnergyStatus().setCurrent(playerData.getEnergy());
         if (!playerData.getInventoryHotbar().isEmpty() && !playerData.getInventoryMain().isEmpty())
         {
             ControlledPlayer.getInstance().getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
@@ -137,6 +148,7 @@ public class SinglePlayerGameScreen implements Screen
         stage.draw();
         uiStage.act(delta);
         uiStage.draw();
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(new PauseMenu(game, this));
         }

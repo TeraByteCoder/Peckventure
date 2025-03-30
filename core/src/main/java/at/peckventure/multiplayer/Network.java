@@ -34,5 +34,8 @@ public class Network {
         kryo.register(java.util.ArrayList.class);
         kryo.register(NetworkPackets.MobUpdatePacket.class);
         kryo.register(NetworkPackets.SingleMobUpdatePacket.class);
+
+        //status
+        kryo.register(NetworkPackets.PlayerStatusPacket.class);
     }
 }

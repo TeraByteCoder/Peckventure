@@ -1,5 +1,6 @@
 package at.peckventure.entities;
 
+import at.peckventure.Const;
 import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
@@ -7,6 +8,7 @@ import at.peckventure.inventory.Inventory;
 import at.peckventure.inventory.item.Item;
 import at.peckventure.inventory.item.Sword;
 import at.peckventure.multiplayer.NetworkPackets;
+import at.peckventure.status.Status;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
@@ -21,6 +23,9 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 public abstract class Player extends Actor
 {
     protected World world;
+
+    private Status health;
+    private Status energy;
 
     protected Body body;
     protected Sprite sprite;
@@ -47,6 +52,10 @@ public abstract class Player extends Actor
             this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
         }
         this.startY = y;
+
+        health = new Status("Health", Const.MAXHEALTH);
+        energy = new Status("Energy", Const.MAXENERGY);
+
         setSize(64, 64);
         Box2DOperationManager.queueOperation(() ->
         {
@@ -126,4 +135,12 @@ public abstract class Player extends Actor
     }
 
     public abstract void dropItemOutside(Item item, int amount);
+
+    public Status getHealthStatus() {
+        return health;
+    }
+
+    public Status getEnergyStatus() {
+        return energy;
+    }
 }

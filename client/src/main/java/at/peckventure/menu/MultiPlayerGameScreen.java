@@ -12,6 +12,8 @@ import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.MultiplayerInventoryManager;
 import at.peckventure.multiplayer.NetworkPackets;
+import at.peckventure.ui.EnergyUI;
+import at.peckventure.ui.HealthUI;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.MultiPlayerMap;
 import at.peckventure.world.WorldConfig;
@@ -33,10 +35,8 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
-import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class MultiPlayerGameScreen implements Screen
@@ -53,6 +53,9 @@ public class MultiPlayerGameScreen implements Screen
     private final World physicsWorld;
     private WorldConfig worldConfig;
     private InventoryUI inventoryUI;
+
+    private HealthUI healthUI;
+    private EnergyUI energyUI;
     private String serverHost;
     private int serverPort;
     private boolean chunksLoaded = false;
@@ -111,6 +114,10 @@ public class MultiPlayerGameScreen implements Screen
         player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
         Box2DOperationManager.processOperations();
         stage.addActor(player);
+
+        healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
+        energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
+
         inventoryUI = new InventoryUI(uiStage, new MultiplayerInventoryManager());
         Globals.physicsWorld = physicsWorld;
         NetworkClient.init(serverHost, serverPort, serverPort + 222);
@@ -135,29 +142,7 @@ public class MultiPlayerGameScreen implements Screen
             @Override
             public void received(Connection connection, Object object)
             {
-                if (object instanceof NetworkPackets.PlayerListPacket)
-                {
-                    final NetworkPackets.PlayerListPacket listPacket = (NetworkPackets.PlayerListPacket) object;
-                    Gdx.app.postRunnable(() ->
-                    {
-                        for (NetworkPackets.PlayerUpdatePacket updatePacket : listPacket.players)
-                        {
-                            if (!updatePacket.uuid.equals(Globals.uuid))
-                            {
-                                if (!players.containsKey(updatePacket.uuid))
-                                {
-                                    RemotePlayer remotePlayer = new RemotePlayer(physicsWorld, updatePacket.x, updatePacket.y);
-                                    players.put(updatePacket.uuid, remotePlayer);
-                                    stage.addActor(remotePlayer);
-                                } else
-                                {
-                                    players.get(updatePacket.uuid).setX(updatePacket.x);
-                                    players.get(updatePacket.uuid).setY(updatePacket.y);
-                                }
-                            }
-                        }
-                    });
-                } else if (object instanceof NetworkPackets.PlayerUpdatePacket)
+                if (object instanceof NetworkPackets.PlayerUpdatePacket)
                 {
                     final NetworkPackets.PlayerUpdatePacket packet = (NetworkPackets.PlayerUpdatePacket) object;
                     Gdx.app.postRunnable(() ->
@@ -178,12 +163,33 @@ public class MultiPlayerGameScreen implements Screen
                 } else if (object instanceof NetworkPackets.ClientConnectPacket)
                 {
                     final NetworkPackets.ClientConnectPacket packet = (NetworkPackets.ClientConnectPacket) object;
+                    final NetworkPackets.PlayerListPacket listPacket = packet.playerList;
                     Gdx.app.postRunnable(() ->
                     {
                         ControlledPlayer.getInstance().setX(packet.posx);
                         ControlledPlayer.getInstance().setY(packet.posy);
                         ControlledPlayer.getInstance().getBody().setTransform((float) packet.posx / Block.BLOCK_SIZE, (float) packet.posy / Block.BLOCK_SIZE, 0);
                         ControlledPlayer.getInstance().getInventory().deserialize(packet.inventoryHotbar, packet.inventoryMain);
+                        ControlledPlayer.getInstance().getHealthStatus().setCurrent(packet.playerStatus.health);
+                        ControlledPlayer.getInstance().getEnergyStatus().setCurrent(packet.playerStatus.energy);
+
+
+                        for (NetworkPackets.PlayerUpdatePacket updatePacket : listPacket.players)
+                        {
+                            if (!updatePacket.uuid.equals(Globals.uuid))
+                            {
+                                if (!players.containsKey(updatePacket.uuid))
+                                {
+                                    RemotePlayer remotePlayer = new RemotePlayer(physicsWorld, updatePacket.x, updatePacket.y);
+                                    players.put(updatePacket.uuid, remotePlayer);
+                                    stage.addActor(remotePlayer);
+                                } else
+                                {
+                                    players.get(updatePacket.uuid).setX(updatePacket.x);
+                                    players.get(updatePacket.uuid).setY(updatePacket.y);
+                                }
+                            }
+                        }
                     });
                 } else if (object instanceof NetworkPackets.ClientDisconnectPacket)
                 {
@@ -218,9 +224,13 @@ public class MultiPlayerGameScreen implements Screen
                         }
 
                     );
-                } else if (object instanceof  NetworkPackets.MobUpdatePacket)
+                } else if (object instanceof NetworkPackets.MobUpdatePacket)
                 {
                     tilemap.updateMobs((NetworkPackets.MobUpdatePacket) object);
+                } else if (object instanceof NetworkPackets.PlayerStatusPacket)
+                {
+                    ControlledPlayer.getInstance().getHealthStatus().setCurrent(((NetworkPackets.PlayerStatusPacket) object).health);
+                    ControlledPlayer.getInstance().getEnergyStatus().setCurrent(((NetworkPackets.PlayerStatusPacket) object).energy);
                 }
 
 

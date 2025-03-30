@@ -51,6 +51,9 @@ public class NetworkPackets
         public String inventoryMain;
         public String inventoryHotbar;
 
+        public PlayerListPacket playerList;
+        public PlayerStatusPacket playerStatus;
+
     }
 
     public static class ServerConnectPacket
@@ -106,6 +109,12 @@ public class NetworkPackets
     public static class MobUpdatePacket
     {
         public ArrayList<SingleMobUpdatePacket> mobUpdates;
+    }
+
+    public static class PlayerStatusPacket
+    {
+        public int energy;
+        public int health;
     }
 
 }
