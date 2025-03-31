@@ -16,12 +16,12 @@ public class MobMap extends HashMap<Integer, Mob> {
         this.stage = stage;
     }
 
-    public static int getNextId() {
+    public static synchronized int getNextId() {
         return nextId++;
     }
 
     @Override
-    public Mob put(Integer id, Mob mob) {
+    public synchronized Mob put(Integer id, Mob mob) {
         Mob previous = super.put(id, mob);
         if (stage != null && mob != null) {
             stage.addActor(mob);
@@ -30,7 +30,7 @@ public class MobMap extends HashMap<Integer, Mob> {
     }
 
     @Override
-    public Mob remove(Object key) {
+    public synchronized Mob remove(Object key) {
         Mob removed = super.remove(key);
         if (stage != null && removed != null) {
             removed.remove();
@@ -39,12 +39,25 @@ public class MobMap extends HashMap<Integer, Mob> {
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         if (stage != null) {
             for (Mob mob : values()) {
                 mob.remove();
             }
         }
         super.clear();
+    }
+
+    public synchronized void removeMob(Mob mob) {
+        Integer keyToRemove = null;
+        for (Map.Entry<Integer, Mob> entry : this.entrySet()) {
+            if (entry.getValue().equals(mob)) {
+                keyToRemove = entry.getKey();
+                break;
+            }
+        }
+        if (keyToRemove != null) {
+            remove(keyToRemove);
+        }
     }
 }

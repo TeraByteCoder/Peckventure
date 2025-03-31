@@ -85,7 +85,7 @@ public class MultiPlayerGameScreen implements Screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
-        Globals.mobs = Collections.synchronizedMap(new MobMap(stage));
+        Globals.mobs = new MobMap(stage);
         uiStage = new Stage(new ScreenViewport());
         chatUI = new ChatUI(uiStage, new MultiPlayerChatExecutor());
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()

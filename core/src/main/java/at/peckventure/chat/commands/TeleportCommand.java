@@ -3,6 +3,7 @@ package at.peckventure.chat.commands;
 import at.peckventure.entities.Player;
 import at.peckventure.multiplayer.NetworkManager;
 import at.peckventure.multiplayer.NetworkPackets;
+import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 
 public class TeleportCommand extends Command {
@@ -47,12 +48,13 @@ public class TeleportCommand extends Command {
 
         // Aktualisiere die Position des Spielers:
         // Da Box2D mit Metern rechnet, wird die neue Position in Meter umgerechnet.
-        float angle = executor.getBody().getAngle();
-        executor.getBody().setTransform((float)(newX / Block.BLOCK_SIZE), (float)(newY / Block.BLOCK_SIZE), angle);
-        // Setze auch direkt die Actor-Position (in Pixeln), damit der Effekt sofort sichtbar wird.
-        executor.setPosition((float)newX, (float)newY);
-
-        // Hier könnte optional ein Netzwerk-Paket versendet werden, um den Zustand mit anderen Clients zu synchronisieren.
+        Box2DOperationManager.queueOperation(() ->
+        {
+            float angle = executor.getBody().getAngle();
+            executor.getBody().setTransform((float)(newX / Block.BLOCK_SIZE), (float)(newY / Block.BLOCK_SIZE), angle);
+            // Setze auch direkt die Actor-Position (in Pixeln), damit der Effekt sofort sichtbar wird.
+            executor.setPosition((float)newX, (float)newY);
+        });
 
         try{
             NetworkPackets.ServerPositionChangePacket packet = new NetworkPackets.ServerPositionChangePacket();

@@ -25,7 +25,7 @@ public class ServerTileMap extends AbstractTileMap {
     private final RegionManager regionManager;
     private final MobRegionManager mobRegionManager;
 
-    public static final float MOB_UPDATE_RADIUS = 10000f; // z. B. 500 Pixel oder passe den Wert an
+    public static final float MOB_UPDATE_RADIUS = 1000f; // z. B. 500 Pixel oder passe den Wert an
     public static final int MOB_UNLOAD_DISTANCE = MOB_DISTANCE + 2;
 
 
