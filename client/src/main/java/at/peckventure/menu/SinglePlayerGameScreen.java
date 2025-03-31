@@ -9,6 +9,7 @@ import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.SinglePlayerInventoryManager;
+import at.peckventure.ui.DebugOverlay;
 import at.peckventure.ui.EnergyUI;
 import at.peckventure.ui.HealthUI;
 import at.peckventure.world.*;
@@ -41,6 +42,8 @@ public class SinglePlayerGameScreen implements Screen
 
     private HealthUI healthUI;
     private EnergyUI energyUI;
+
+    private DebugOverlay debugOverlay;
 
     private Player player;
     private Stage stage;
@@ -117,6 +120,7 @@ public class SinglePlayerGameScreen implements Screen
         inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());
         healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
         energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
+        debugOverlay = new DebugOverlay(uiStage);
 
         ControlledPlayer.getInstance().getHealthStatus().setCurrent(playerData.getHealth());
         ControlledPlayer.getInstance().getEnergyStatus().setCurrent(playerData.getEnergy());
