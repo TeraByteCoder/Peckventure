@@ -1,11 +1,15 @@
 package at.peckventure.menu;
 
+import at.peckventure.ClientGlobal;
 import at.peckventure.Globals;
 import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
+import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.SinglePlayerInventoryManager;
+import at.peckventure.ui.EnergyUI;
+import at.peckventure.ui.HealthUI;
 import at.peckventure.world.*;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.generator.WorldGenerator;
@@ -23,6 +27,7 @@ import at.peckventure.chat.ChatUI;
 import at.peckventure.InputManager;
 
 import java.io.PrintStream;
+import java.util.Collections;
 
 public class SinglePlayerGameScreen implements Screen
 {
@@ -32,6 +37,10 @@ public class SinglePlayerGameScreen implements Screen
     private final String worldName;
     private OrthographicCamera camera;
     private SpriteBatch batch;
+
+    private HealthUI healthUI;
+    private EnergyUI energyUI;
+
     private Player player;
     private Stage stage;
     private Stage uiStage;
@@ -57,6 +66,8 @@ public class SinglePlayerGameScreen implements Screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
+        Globals.mobs = Collections.synchronizedMap(new MobMap(stage));
+        ClientGlobal.stage = stage;
         uiStage = new Stage(new ScreenViewport());
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
 
@@ -103,6 +114,11 @@ public class SinglePlayerGameScreen implements Screen
         stage.addActor(player);
 
         inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());
+        healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
+        energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
+
+        ControlledPlayer.getInstance().getHealthStatus().setCurrent(playerData.getHealth());
+        ControlledPlayer.getInstance().getEnergyStatus().setCurrent(playerData.getEnergy());
         if (!playerData.getInventoryHotbar().isEmpty() && !playerData.getInventoryMain().isEmpty())
         {
             ControlledPlayer.getInstance().getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
@@ -132,6 +148,7 @@ public class SinglePlayerGameScreen implements Screen
         stage.draw();
         uiStage.act(delta);
         uiStage.draw();
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(new PauseMenu(game, this));
         }

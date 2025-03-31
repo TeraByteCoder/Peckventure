@@ -1,5 +1,11 @@
 package at.peckventure.entities;
 
+import at.peckventure.ClientGlobal;
+import at.peckventure.Globals;
+import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobRegistry;
+import at.peckventure.inventory.item.Item;
+import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -64,6 +70,21 @@ public class ControlledPlayer extends Player {
 
     public boolean isFacingRight() {
         return facingRight;
+    }
+
+    @Override
+    public void dropItemOutside(Item item, int amount) {
+        System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
+        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
+        ClientGlobal.stage.addActor(mob);
+        float dropSpeed = 20f;
+        float angle = this.getRotation();
+        float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;
+        float vy = com.badlogic.gdx.math.MathUtils.sinDeg(angle) * dropSpeed;
+        Box2DOperationManager.queueOperation(() -> {
+            if (mob.getBody() != null)
+                mob.getBody().setLinearVelocity(vx, vy);
+        });
     }
 
 }

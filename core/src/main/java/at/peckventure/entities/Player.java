@@ -1,5 +1,6 @@
 package at.peckventure.entities;
 
+import at.peckventure.Const;
 import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
@@ -7,6 +8,7 @@ import at.peckventure.inventory.Inventory;
 import at.peckventure.inventory.item.Item;
 import at.peckventure.inventory.item.Sword;
 import at.peckventure.multiplayer.NetworkPackets;
+import at.peckventure.status.Status;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
@@ -21,6 +23,9 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 public abstract class Player extends Actor
 {
     protected World world;
+
+    private Status health;
+    private Status energy;
 
     protected Body body;
     protected Sprite sprite;
@@ -47,6 +52,10 @@ public abstract class Player extends Actor
             this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
         }
         this.startY = y;
+
+        health = new Status("Health", Const.MAXHEALTH);
+        energy = new Status("Energy", Const.MAXENERGY);
+
         setSize(64, 64);
         Box2DOperationManager.queueOperation(() ->
         {
@@ -125,16 +134,13 @@ public abstract class Player extends Actor
         return (int) getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
-    public void dropItemOutside(Item item, int amount) {
-        System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
-        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
-        float dropSpeed = 20f;
-        float angle = this.getRotation();
-        float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;
-        float vy = com.badlogic.gdx.math.MathUtils.sinDeg(angle) * dropSpeed;
-        Box2DOperationManager.queueOperation(() -> {
-            if (mob.getBody() != null)
-                mob.getBody().setLinearVelocity(vx, vy);
-        });
+    public abstract void dropItemOutside(Item item, int amount);
+
+    public Status getHealthStatus() {
+        return health;
+    }
+
+    public Status getEnergyStatus() {
+        return energy;
     }
 }

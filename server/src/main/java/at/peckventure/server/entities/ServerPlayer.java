@@ -1,7 +1,12 @@
 package at.peckventure.server.entities;
 
+import at.peckventure.Globals;
 import at.peckventure.entities.Player;
+import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobRegistry;
+import at.peckventure.inventory.item.Item;
 import at.peckventure.server.GameServer;
+import at.peckventure.world.Box2DOperationManager;
 import com.badlogic.gdx.physics.box2d.World;
 import com.esotericsoftware.kryonet.Connection;
 
@@ -21,9 +26,35 @@ public class ServerPlayer extends Player
         this.username = username;
     }
 
+    public ServerPlayer(World world, float x, float y, String uuid, Connection connection, String username, int energy, int health)
+    {
+        super(world, x, y);
+        this.uuid = uuid;
+        this.connection = connection;
+        this.username = username;
+        this.getEnergyStatus().setCurrent(energy);
+        this.getHealthStatus().setCurrent(health);
+    }
+
     @Override
     protected void handleInput(float delta)
     {
+    }
+
+    @Override
+    public void dropItemOutside(Item item, int amount)
+    {
+
+        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
+        float dropSpeed = 20f;
+        float angle = this.getRotation();
+        float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;
+        float vy = com.badlogic.gdx.math.MathUtils.sinDeg(angle) * dropSpeed;
+        Box2DOperationManager.queueOperation(() -> {
+            if (mob.getBody() != null)
+                mob.getBody().setLinearVelocity(vx, vy);
+        });
+
     }
 
     public String getUuid()

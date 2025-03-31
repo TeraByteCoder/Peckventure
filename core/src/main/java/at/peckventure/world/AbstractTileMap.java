@@ -32,8 +32,6 @@ public abstract class AbstractTileMap {
 
     public abstract void loadChunksAroundPlayer(Player player);
     public abstract void unloadChunksOutsideRenderDistance(Player player);
-    public abstract void loadMobsAroundPlayer(Player player);
-    public abstract void unloadMobsOutsideRenderDistance(Player player);
     public abstract void updateChunks(Player player);
     public abstract void dispose();
 

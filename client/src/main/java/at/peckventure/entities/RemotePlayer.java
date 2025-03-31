@@ -1,5 +1,6 @@
 package at.peckventure.entities;
 
+import at.peckventure.inventory.item.Item;
 import at.peckventure.multiplayer.NetworkPackets;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -45,6 +46,12 @@ public class RemotePlayer extends Player {
         if (positionBuffer.size > 20) {
             positionBuffer.removeFirst();
         }
+    }
+
+    @Override
+    public void dropItemOutside(Item item, int amount)
+    {
+
     }
 
     @Override

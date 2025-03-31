@@ -20,6 +20,7 @@ public class Network {
         kryo.register(NetworkPackets.PlayerUpdatePacket.class);
         kryo.register(NetworkPackets.PlayerListPacket.class);
         kryo.register(java.util.HashSet.class);
+        kryo.register(NetworkPackets.ServerPositionChangePacket.class);
 
         // connect/disconnect packets
         kryo.register(NetworkPackets.ClientConnectPacket.class);
@@ -27,7 +28,15 @@ public class Network {
         kryo.register(NetworkPackets.ClientDisconnectPacket.class);
 
         //ping
-        kryo.register(NetworkPackets.PingPacket.class);
+        kryo.register(NetworkPackets.PingResponsePacket.class);
         kryo.register(NetworkPackets.PingRequestPacket.class);
+
+        //mobs
+        kryo.register(java.util.ArrayList.class);
+        kryo.register(NetworkPackets.MobUpdatePacket.class);
+        kryo.register(NetworkPackets.SingleMobUpdatePacket.class);
+
+        //status
+        kryo.register(NetworkPackets.PlayerStatusUpdatePacket.class);
     }
 }

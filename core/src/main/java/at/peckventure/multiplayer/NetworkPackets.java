@@ -1,5 +1,6 @@
 package at.peckventure.multiplayer;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,6 +50,9 @@ public class NetworkPackets
         public String inventoryMain;
         public String inventoryHotbar;
 
+        public PlayerListPacket playerList;
+        public PlayerStatusUpdatePacket playerStatus;
+
     }
 
     public static class ServerConnectPacket
@@ -75,7 +79,7 @@ public class NetworkPackets
         public int count;      // Anzahl der Items, die verschoben werden sollen
     }
 
-    public static class PingPacket
+    public static class PingResponsePacket
     {
         public int connectedPlayers;
         public long pingTime;
@@ -87,5 +91,35 @@ public class NetworkPackets
 
     }
 
+
+    public static class SingleMobUpdatePacket
+    {
+        public int umid;
+        public int mobid;
+        public float x;
+        public float y;
+        public float velx;
+        public float vely;
+        public String extraItem;
+
+        public boolean direction;
+    }
+
+    public static class MobUpdatePacket
+    {
+        public ArrayList<SingleMobUpdatePacket> mobUpdates;
+    }
+
+    public static class PlayerStatusUpdatePacket
+    {
+        public int energy;
+        public int health;
+    }
+
+    public static class ServerPositionChangePacket
+    {
+        public float x;
+        public float y;
+    }
 
 }

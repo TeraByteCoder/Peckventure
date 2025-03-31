@@ -8,11 +8,12 @@ import com.badlogic.gdx.physics.box2d.World;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class Globals
 {
     public static World physicsWorld;
-    public static List<Mob> mobs = Collections.synchronizedList(new LinkedList<>());
+    public static Map<Integer, Mob> mobs;
 
     public static String uuid;
 

@@ -23,5 +23,10 @@ public class ServerLauncher {
                 }
             }
         }, config);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            GameServer.instance.stopServer();
+        }));
+
     }
 }

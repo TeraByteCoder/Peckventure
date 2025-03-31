@@ -1,9 +1,6 @@
 package at.peckventure.chat;
 
-import at.peckventure.chat.commands.Command;
-import at.peckventure.chat.commands.GiveCommand;
-import at.peckventure.chat.commands.PrintCommand;
-import at.peckventure.chat.commands.SummonCommand;
+import at.peckventure.chat.commands.*;
 import at.peckventure.entities.Player;
 
 import java.util.HashMap;
@@ -39,6 +36,9 @@ public class CommandRegistry
         registerCommand(new PrintCommand());
         registerCommand(new GiveCommand());
         registerCommand(new SummonCommand());
+        registerCommand(new TeleportCommand());
+        registerCommand(new HealCommand());
+        registerCommand(new DamageCommand());
     }
 
     public static void init()
