@@ -4,48 +4,97 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
 public class GameSettings {
-    private static final String PREFS_NAME = "PeckventureSettings";
-    private static final String MUSIC_VOLUME_KEY = "musicVolume";
-    private static final String SOUND_VOLUME_KEY = "soundVolume";
-    private static final String FULLSCREEN_KEY = "fullscreen";
+    private static final String PREFS_NAME = "PeckventureSettings.txt";
+    private static Preferences prefs = null;
 
-    private static Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
+    // Lazy-Initialisierung: Beim ersten Zugriff wird geprüft, ob die Preferences bereits existieren.
+    // Falls nicht, werden Standardwerte (inklusive musicVolume und vsync) in die Preferences geschrieben.
+    private static Preferences getPrefs() {
+        if (prefs == null && Gdx.app != null) {
+            prefs = Gdx.app.getPreferences(PREFS_NAME);
+            // Setze Defaultwerte, falls sie noch nicht existieren:
+            if (!prefs.contains("musicVolume")) {
+                prefs.putFloat("musicVolume", 0.5f);
+            }
+            if (!prefs.contains("soundVolume")) {
+                prefs.putFloat("soundVolume", 0.5f);
+            }
+            if (!prefs.contains("fullscreen")) {
+                prefs.putBoolean("fullscreen", false);
+            }
+            if (!prefs.contains("vsync")) {
+                prefs.putBoolean("vsync", true);
+            }
+            if (!prefs.contains("resolution")) {
+                prefs.putString("resolution", "640x480");
+            }
+            prefs.flush();
+        }
+        return prefs;
+    }
 
     public static float getMusicVolume() {
-        return prefs.getFloat(MUSIC_VOLUME_KEY, 0.5f);
+        Preferences p = getPrefs();
+        return (p != null) ? p.getFloat("musicVolume", 0.5f) : 0.5f;
     }
 
     public static void setMusicVolume(float volume) {
-        prefs.putFloat(MUSIC_VOLUME_KEY, volume);
-        prefs.flush();
+        Preferences p = getPrefs();
+        if (p != null) {
+            p.putFloat("musicVolume", volume);
+            p.flush();
+        }
     }
 
     public static float getSoundVolume() {
-        return prefs.getFloat(SOUND_VOLUME_KEY, 0.5f);
+        Preferences p = getPrefs();
+        return (p != null) ? p.getFloat("soundVolume", 0.5f) : 0.5f;
     }
 
     public static void setSoundVolume(float volume) {
-        prefs.putFloat(SOUND_VOLUME_KEY, volume);
-        prefs.flush();
+        Preferences p = getPrefs();
+        if (p != null) {
+            p.putFloat("soundVolume", volume);
+            p.flush();
+        }
     }
 
     public static boolean isFullscreen() {
-        return prefs.getBoolean(FULLSCREEN_KEY, false);
+        Preferences p = getPrefs();
+        return (p != null) ? p.getBoolean("fullscreen", false) : false;
     }
 
     public static void setFullscreen(boolean fullscreen) {
-        prefs.putBoolean(FULLSCREEN_KEY, fullscreen);
-        prefs.flush();
+        Preferences p = getPrefs();
+        if (p != null) {
+            p.putBoolean("fullscreen", fullscreen);
+            p.flush();
+        }
+    }
 
-        if (fullscreen) {
-            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
-        } else {
-            int windowWidth = 1280;
-            int windowHeight = 720;
-            Gdx.graphics.setWindowedMode(windowWidth, windowHeight);
-            // Fenster zentrieren
-            Gdx.graphics.setUndecorated(false);
-            Gdx.graphics.setWindowedMode(720, 1020);
+    public static boolean isVSync() {
+        Preferences p = getPrefs();
+        return (p != null) ? p.getBoolean("vsync", true) : true;
+    }
+
+    public static void setVSync(boolean vsync) {
+        Preferences p = getPrefs();
+        if (p != null) {
+            p.putBoolean("vsync", vsync);
+            p.flush();
+        }
+    }
+
+    public static String getResolution() {
+        Preferences p = getPrefs();
+        return (p != null) ? p.getString("resolution", "640x480") : "640x480";
+    }
+
+    public static void setResolution(String resolution) {
+        Preferences p = getPrefs();
+        if (p != null) {
+            p.putString("resolution", resolution);
+            p.flush();
         }
     }
 }
