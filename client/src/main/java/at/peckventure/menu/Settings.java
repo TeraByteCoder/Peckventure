@@ -229,19 +229,30 @@ public class Settings implements Screen {
         contentTable.add(info).pad(10);
     }
 
-    // Laden des "Video"-Tabs: VSync und evtl. weitere Videoeinstellungen
+    // Laden des "Video"-Tabs: VSync und Auflösung
     private void loadVideoTab() {
         contentTable.clear();
         Label vsyncLabel = new Label(texts.has("menu.vsync") ? texts.getString("menu.vsync") : "VSync", skin);
         final CheckBox vsyncCheckbox = new CheckBox("", skin);
         vsyncCheckbox.setChecked(GameSettings.isVSync());
 
+        // Auflösungsauswahl
+        Label resolutionLabel = new Label(texts.has("menu.resolution") ? texts.getString("menu.resolution") : "Resolution", skin);
+        final SelectBox<String> resolutionSelect = new SelectBox<>(skin);
+        // Beispielhafte Auflösungen
+        String[] resolutions = new String[] { "640x480", "800x600", "1024x768", "1280x720", "1920x1080" };
+        resolutionSelect.setItems(resolutions);
+        resolutionSelect.setSelected(GameSettings.getResolution());
+
+        // Anordnung im Content-Table
         contentTable.add(vsyncLabel).pad(10);
         contentTable.add(vsyncCheckbox).pad(10);
         contentTable.row();
+        contentTable.add(resolutionLabel).pad(10);
+        contentTable.add(resolutionSelect).width(200).pad(10);
+        contentTable.row();
 
-        // Weitere Videoeinstellungen (z. B. Auflösung) könnten hier ergänzt werden
-
+        // Listener für VSync
         vsyncCheckbox.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -249,6 +260,28 @@ public class Settings implements Screen {
                 GameSettings.setVSync(vsync);
                 Gdx.graphics.setVSync(vsync);
                 System.out.println("VSync aktualisiert auf: " + vsync);
+            }
+        });
+
+        // Listener für Auflösungsauswahl: Hier wird die Auflösung geparst und das Fenster neu gesetzt
+        resolutionSelect.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                String selectedResolution = resolutionSelect.getSelected();
+                GameSettings.setResolution(selectedResolution);
+                System.out.println("Auflösung aktualisiert auf: " + selectedResolution);
+                // Auflösung parsen und anwenden
+                String[] parts = selectedResolution.split("x");
+                if (parts.length == 2) {
+                    try {
+                        int width = Integer.parseInt(parts[0].trim());
+                        int height = Integer.parseInt(parts[1].trim());
+                        Gdx.graphics.setWindowedMode(width, height);
+                        System.out.println("Fenstergröße aktualisiert auf: " + width + "x" + height);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Fehler beim Parsen der Auflösung: " + selectedResolution);
+                    }
+                }
             }
         });
     }
