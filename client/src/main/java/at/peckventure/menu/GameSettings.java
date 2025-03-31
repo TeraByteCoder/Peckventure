@@ -7,12 +7,10 @@ public class GameSettings {
     private static final String PREFS_NAME = "PeckventureSettings.txt";
     private static Preferences prefs = null;
 
-    // Lazy-Initialisierung: Beim ersten Zugriff wird geprüft, ob die Preferences bereits existieren.
-    // Falls nicht, werden Standardwerte (inklusive musicVolume und vsync) in die Preferences geschrieben.
     private static Preferences getPrefs() {
         if (prefs == null && Gdx.app != null) {
             prefs = Gdx.app.getPreferences(PREFS_NAME);
-            // Setze Defaultwerte, falls sie noch nicht existieren:
+            // Standardwerte setzen, falls sie noch nicht existieren:
             if (!prefs.contains("musicVolume")) {
                 prefs.putFloat("musicVolume", 0.5f);
             }
@@ -27,6 +25,10 @@ public class GameSettings {
             }
             if (!prefs.contains("resolution")) {
                 prefs.putString("resolution", "640x480");
+            }
+            // Standard-Sprache (z.B. en_us als Default, kann auch de_de o.ä. sein)
+            if (!prefs.contains("language")) {
+                prefs.putString("language", "en_us");
             }
             prefs.flush();
         }
@@ -94,6 +96,20 @@ public class GameSettings {
         Preferences p = getPrefs();
         if (p != null) {
             p.putString("resolution", resolution);
+            p.flush();
+        }
+    }
+
+    // Spracheinstellungen
+    public static String getLanguage() {
+        Preferences p = getPrefs();
+        return (p != null) ? p.getString("language", "en_us") : "en_us";
+    }
+
+    public static void setLanguage(String language) {
+        Preferences p = getPrefs();
+        if (p != null) {
+            p.putString("language", language);
             p.flush();
         }
     }

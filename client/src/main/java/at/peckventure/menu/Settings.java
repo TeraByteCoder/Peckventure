@@ -14,11 +14,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 
 public class Settings implements com.badlogic.gdx.Screen {
     private final Game game;
@@ -44,34 +47,59 @@ public class Settings implements com.badlogic.gdx.Screen {
         // Skin laden (sollte alle nötigen Drawables enthalten)
         Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
-        // Erstelle Slider für Musik- und Soundlautstärke und CheckBox für VSync.
+        // Sprachdatei laden: Es wird der in den Preferences gesetzte Sprachcode verwendet.
+        String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
+        JsonReader reader = new JsonReader();
+        JsonValue texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
+
+        // Erstelle Slider für Musik- und Soundlautstärke sowie Checkbox für VSync.
         final Slider musicSlider = new Slider(0f, 1f, 0.1f, false, skin);
         final Slider soundSlider = new Slider(0f, 1f, 0.1f, false, skin);
-        final CheckBox vsyncCheckbox = new CheckBox("VSync", skin);
+        final CheckBox vsyncCheckbox = new CheckBox(texts.getString("menu.vsync"), skin);
 
         // Setze die initialen Werte aus den Preferences
         musicSlider.setValue(GameSettings.getMusicVolume());
         soundSlider.setValue(GameSettings.getSoundVolume());
         vsyncCheckbox.setChecked(GameSettings.isVSync());
 
-        // Tabellenlayout
+        // Tabellenlayout erstellen
         Table table = new Table();
         table.setFillParent(true);
         table.align(Align.center);
         stage.addActor(table);
 
-        table.add(new Label("Musiklautstärke", skin)).pad(10);
+        // Texte aus der Sprachdatei (Fälle, in denen ein Schlüssel fehlt, werden mit Fallback-Texten abgedeckt)
+        String musicLabelText = texts.has("menu.music_volume") ? texts.getString("menu.music_volume") : "Music Volume";
+        String soundLabelText = texts.has("menu.sound_volume") ? texts.getString("menu.sound_volume") : "Sound Volume";
+        String vsyncLabelText = texts.has("menu.vsync") ? texts.getString("menu.vsync") : "VSync";
+        String languageLabelText = texts.has("menu.language") ? texts.getString("menu.language") : "Language";
+        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
+
+        // Musiklautstärke hinzufügen
+        table.add(new Label(musicLabelText, skin)).pad(10);
         table.add(musicSlider).width(300).pad(10);
         table.row();
-        table.add(new Label("Sound Lautstärke", skin)).pad(10);
+
+        // Soundlautstärke hinzufügen
+        table.add(new Label(soundLabelText, skin)).pad(10);
         table.add(soundSlider).width(300).pad(10);
         table.row();
-        table.add(new Label("VSync", skin)).pad(10);
+
+        // VSync hinzufügen
+        table.add(new Label(vsyncLabelText, skin)).pad(10);
         table.add(vsyncCheckbox).pad(10);
         table.row();
 
-        // Back-Button
-        TextButton backButton = new TextButton("Zurück", skin);
+        // Sprache auswählen (SelectBox)
+        final SelectBox<String> languageSelect = new SelectBox<>(skin);
+        languageSelect.setItems("en_us", "de_de", "de_at", "de_ch");
+        languageSelect.setSelected(GameSettings.getLanguage());
+        table.add(new Label(languageLabelText, skin)).pad(10);
+        table.add(languageSelect).width(200).pad(10);
+        table.row();
+
+        // Back-Button hinzufügen
+        TextButton backButton = new TextButton(backButtonText, skin);
         table.add(backButton).colspan(2).padTop(20);
 
         // Listener für Musiklautstärke
@@ -105,7 +133,19 @@ public class Settings implements com.badlogic.gdx.Screen {
             }
         });
 
-        // Listener für Back-Button
+        // Listener für Sprache: Nach Änderung wird die Settings-Seite neu geladen,
+        // sodass die neuen Texte sofort sichtbar sind.
+        languageSelect.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                String selectedLang = languageSelect.getSelected();
+                GameSettings.setLanguage(selectedLang);
+                System.out.println("Sprache aktualisiert auf: " + selectedLang);
+                game.setScreen(new Settings(game));
+            }
+        });
+
+        // Listener für den Back-Button
         backButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -126,9 +166,15 @@ public class Settings implements com.badlogic.gdx.Screen {
         stage.getViewport().update(width, height, true);
     }
 
-    @Override public void pause() { }
-    @Override public void resume() { }
-    @Override public void hide() { }
+    @Override
+    public void pause() { }
+
+    @Override
+    public void resume() { }
+
+    @Override
+    public void hide() { }
+
     @Override
     public void dispose() {
         backgroundTexture.dispose();
