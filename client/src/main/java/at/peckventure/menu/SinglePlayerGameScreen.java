@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.ClientGlobal;
+import at.peckventure.GameContactListener;
 import at.peckventure.Globals;
 import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
@@ -66,11 +67,11 @@ public class SinglePlayerGameScreen implements Screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
         stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
-        Globals.mobs = Collections.synchronizedMap(new MobMap(stage));
+        Globals.mobs = new MobMap(stage);
         ClientGlobal.stage = stage;
         uiStage = new Stage(new ScreenViewport());
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
-
+        physicsWorld.setContactListener(new GameContactListener());
         chatUI = new ChatUI(uiStage, new SinglePlayerChatExecutor());
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
         {

@@ -1,6 +1,7 @@
 package at.peckventure.server;
 
 import at.peckventure.Const;
+import at.peckventure.GameContactListener;
 import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobMap;
@@ -80,11 +81,13 @@ public class GameServer
     public void start() throws IOException
     {
         running = true;
-        Globals.mobs = Collections.synchronizedMap(new MobMap());
+        Globals.mobs = new MobMap();
 
         server = NetworkServer.init(54555, 54777);
         NetworkManager network = at.peckventure.multiplayer.NetworkManager.getInstance();
         network.connect(5000);
+
+        physicsWorld.setContactListener(new GameContactListener());
         server.addListener(new Listener()
         {
             @Override
