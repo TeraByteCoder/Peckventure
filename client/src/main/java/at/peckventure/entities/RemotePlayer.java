@@ -59,6 +59,7 @@ public class RemotePlayer extends Player {
         super.act(delta);
         long renderTime = System.currentTimeMillis() - BUFFER_MS;
 
+        // Alte Updates aus dem Buffer entfernen
         while (positionBuffer.size >= 2 && positionBuffer.get(1).time <= renderTime) {
             positionBuffer.removeFirst();
         }
@@ -70,23 +71,25 @@ public class RemotePlayer extends Player {
             float t = (float) (renderTime - a.time) / (b.time - a.time);
             t = Math.max(0f, Math.min(1f, t));
 
+            // Anwendung der Smoothstep-Funktion zur Glättung
+            t = t * t * (3 - 2 * t);
+
             float interpX = a.x + (b.x - a.x) * t;
             float interpY = a.y + (b.y - a.y) * t;
 
             setPosition(interpX, interpY);
 
-            // Hier Flippen wir den Sprite basierend auf der Blickrichtung
-            if (t < 0.5f) {
-                sprite.setFlip(a.facingRight, false); // Spiegeln, wenn Richtung 'facingRight' ist
-            } else {
-                sprite.setFlip(b.facingRight, false); // Spiegeln, wenn Richtung 'facingRight' ist
-            }
+            // Flipping basierend auf interpolierter Blickrichtung
+            // Hier kannst du noch weiter optimieren, falls eine Rotation interpoliert werden soll.
+            boolean currentFacing = (t < 0.5f) ? a.facingRight : b.facingRight;
+            sprite.setFlip(currentFacing, false);
         } else if (positionBuffer.size == 1) {
             PositionUpdate a = positionBuffer.get(0);
             setPosition(a.x, a.y);
-            sprite.setFlip(a.facingRight, false); // Spiegeln, wenn Richtung 'facingRight' ist
+            sprite.setFlip(a.facingRight, false);
         }
     }
+
 
 
 

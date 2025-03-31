@@ -17,7 +17,7 @@ public class SinglePlayerChatExecutor implements ChatExecutor
     {
         if (text.startsWith("/"))
         {
-            commandRegistry.executeCommand(text.substring(1), sender);
+            ChatUI.getInstance().addMessage(commandRegistry.executeCommand(text.substring(1), sender));
         } else
         {
             ChatUI.getInstance().addMessage(Globals.username +": " + text);

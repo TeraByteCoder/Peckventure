@@ -4,137 +4,124 @@ import at.peckventure.chat.ChatUI;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 
-public class InputManager extends InputAdapter
-{
+public class InputManager extends InputAdapter {
     private static InputManager instance;
-    private boolean leftPressed, rightPressed, jumpPressed;
+    private boolean leftPressed, rightPressed, jumpPressed, wPressed, sPressed;
     // Referenz auf den Chat, die du beim Setup setzen kannst
     private ChatToggle chatToggle;
 
-    public interface ChatToggle
-    {
+    public interface ChatToggle {
         void toggleChat();
-
         void cancelChat();
-
         boolean isChatActive();
     }
 
-    private InputManager()
-    {
+    private InputManager() {
     }
 
-    public static InputManager getInstance()
-    {
-        if (instance == null)
-        {
+    public static InputManager getInstance() {
+        if (instance == null) {
             instance = new InputManager();
         }
         return instance;
     }
 
-    public void setChatToggle(ChatToggle chatToggle)
-    {
+    public void setChatToggle(ChatToggle chatToggle) {
         this.chatToggle = chatToggle;
     }
 
     @Override
-    public boolean keyDown(int keycode)
-    {
-        if (keycode == Input.Keys.T)
-        {
+    public boolean keyDown(int keycode) {
+        if (keycode == Input.Keys.T) {
             // Nur aktivieren, wenn der Chat noch nicht offen ist
-            if (chatToggle != null && !chatToggle.isChatActive())
-            {
+            if (chatToggle != null && !chatToggle.isChatActive()) {
                 chatToggle.toggleChat();
             }
             return true;
         }
 
-        if (keycode == Input.Keys.UP)
-        {
+        if (keycode == Input.Keys.UP) {
             ChatUI.getInstance().loadLastMessage(true);
             return true;
         }
-        if (keycode == Input.Keys.DOWN)
-        {
+        if (keycode == Input.Keys.DOWN) {
             ChatUI.getInstance().loadLastMessage(false);
         }
 
-
-        if (keycode == Input.Keys.ESCAPE)
-        {
-            if (chatToggle != null)
-            {
+        if (keycode == Input.Keys.ESCAPE) {
+            if (chatToggle != null) {
                 chatToggle.cancelChat();
             }
             return true;
         }
-        if (inputsPaused)
-        {
+        if (inputsPaused) {
             return true;
         }
-        if (keycode == Input.Keys.A)
-        {
+        if (keycode == Input.Keys.A) {
             leftPressed = true;
         }
-        if (keycode == Input.Keys.D)
-        {
+        if (keycode == Input.Keys.D) {
             rightPressed = true;
         }
-        if (keycode == Input.Keys.SPACE)
-        {
+        if (keycode == Input.Keys.SPACE) {
             jumpPressed = true;
+        }
+        if (keycode == Input.Keys.W) {
+            wPressed = true;
+        }
+        if (keycode == Input.Keys.S) {
+            sPressed = true;
         }
         return false;
     }
-
 
     private boolean inputsPaused = false;
 
-    public void pauseInputs()
-    {
+    public void pauseInputs() {
         inputsPaused = true;
     }
 
-    public void resumeInputs()
-    {
+    public void resumeInputs() {
         inputsPaused = false;
     }
 
-
     @Override
-    public boolean keyUp(int keycode)
-    {
-        if (keycode == Input.Keys.A)
-        {
+    public boolean keyUp(int keycode) {
+        if (keycode == Input.Keys.A) {
             leftPressed = false;
         }
-        if (keycode == Input.Keys.D)
-        {
+        if (keycode == Input.Keys.D) {
             rightPressed = false;
         }
-        if (keycode == Input.Keys.SPACE)
-        {
+        if (keycode == Input.Keys.SPACE) {
             jumpPressed = false;
+        }
+        if (keycode == Input.Keys.W) {
+            wPressed = false;
+        }
+        if (keycode == Input.Keys.S) {
+            sPressed = false;
         }
         return false;
     }
 
-    public boolean isLeftPressed()
-    {
+    public boolean isLeftPressed() {
         return leftPressed;
     }
 
-    public boolean isRightPressed()
-    {
+    public boolean isRightPressed() {
         return rightPressed;
     }
 
-    public boolean isJumpPressed()
-    {
+    public boolean isJumpPressed() {
         return jumpPressed;
     }
 
+    public boolean isWPressed() {
+        return wPressed;
+    }
 
+    public boolean isSPressed() {
+        return sPressed;
+    }
 }
