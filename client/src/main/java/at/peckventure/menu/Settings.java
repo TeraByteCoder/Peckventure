@@ -152,7 +152,8 @@ public class Settings implements Screen {
             new LanguageOption("en_us", texts.has("menu.language_en") ? texts.getString("menu.language_en") : "English"),
             new LanguageOption("de_de", texts.has("menu.language_de") ? texts.getString("menu.language_de") : "Deutsch"),
             new LanguageOption("de_at", texts.has("menu.language_de_at") ? texts.getString("menu.language_de_at") : "Österreichisch"),
-            new LanguageOption("de_ch", texts.has("menu.language_de_ch") ? texts.getString("menu.language_de_ch") : "Schweizerisch")
+            new LanguageOption("de_ch", texts.has("menu.language_de_ch") ? texts.getString("menu.language_de_ch") : "Schweizerisch"),
+            new LanguageOption("ru_ru", texts.has("menu.language_ru_ru") ? texts.getString("menu.language_ru_ru") : "Russich")
         };
         languageSelect.setItems(options);
         // Vorbelegung anhand des gespeicherten Sprachcodes
