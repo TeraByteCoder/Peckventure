@@ -2,8 +2,7 @@ package at.peckventure.menu;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Graphics.DisplayMode;
-import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -11,23 +10,40 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 
-public class Settings implements com.badlogic.gdx.Screen {
+public class Settings implements Screen {
     private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
+    private Skin skin;
+    private Table contentTable; // Bereich, in dem die Tab-Inhalte angezeigt werden.
+    private JsonValue texts;    // Übersetzungen
+
+    // Hilfsklasse, die Sprachcode und Anzeigetext kapselt
+    public static class LanguageOption {
+        public final String code;
+        public final String displayName;
+
+        public LanguageOption(String code, String displayName) {
+            this.code = code;
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
 
     public Settings(Game game) {
         this.game = game;
@@ -44,63 +60,142 @@ public class Settings implements com.badlogic.gdx.Screen {
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Skin laden (sollte alle nötigen Drawables enthalten)
-        Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        // Skin laden
+        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
-        // Sprachdatei laden: Es wird der in den Preferences gesetzte Sprachcode verwendet.
+        // Sprachdatei laden anhand der in den Preferences gesetzten Sprache
         String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
         JsonReader reader = new JsonReader();
-        JsonValue texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
+        texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
 
-        // Erstelle Slider für Musik- und Soundlautstärke sowie Checkbox für VSync.
+        // Hauptcontainer
+        Table mainTable = new Table();
+        mainTable.setFillParent(true);
+        mainTable.align(Align.top);
+        stage.addActor(mainTable);
+
+        // Tab-Leiste: Vier Tabs als TextButtons
+        final TextButton generalTab = new TextButton(texts.has("menu.tab_allgemein") ? texts.getString("menu.tab_allgemein") : "Allgemein", skin);
+        final TextButton audioTab = new TextButton(texts.has("menu.tab_audio") ? texts.getString("menu.tab_audio") : "Audio", skin);
+        final TextButton keyBindingsTab = new TextButton(texts.has("menu.tab_tastenbelegung") ? texts.getString("menu.tab_tastenbelegung") : "Tastenbelegung", skin);
+        final TextButton videoTab = new TextButton(texts.has("menu.tab_video") ? texts.getString("menu.tab_video") : "Video", skin);
+
+        Table tabBar = new Table();
+        tabBar.add(generalTab).pad(5);
+        tabBar.add(audioTab).pad(5);
+        tabBar.add(keyBindingsTab).pad(5);
+        tabBar.add(videoTab).pad(5);
+
+        // Inhaltsbereich, der je nach Tab gefüllt wird
+        contentTable = new Table();
+        contentTable.padTop(20);
+
+        // Back-Button am unteren Rand
+        TextButton backButton = new TextButton(texts.has("menu.back") ? texts.getString("menu.back") : "Back", skin);
+
+        // Hauptlayout zusammenbauen: Tab-Leiste oben, Content in der Mitte, Back-Button unten
+        mainTable.add(tabBar).expandX().fillX().padTop(10);
+        mainTable.row();
+        mainTable.add(contentTable).expand().fill().pad(10);
+        mainTable.row();
+        mainTable.add(backButton).padBottom(10);
+
+        // Standardmäßig den Allgemein-Tab laden
+        loadGeneralTab();
+
+        // Listener für die Tabs
+        generalTab.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                loadGeneralTab();
+            }
+        });
+
+        audioTab.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                loadAudioTab();
+            }
+        });
+
+        keyBindingsTab.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                loadKeyBindingsTab();
+            }
+        });
+
+        videoTab.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                loadVideoTab();
+            }
+        });
+
+        // Listener für Back-Button: Wechselt zurück ins Hauptmenü
+        backButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new MainMenu(game));
+            }
+        });
+    }
+
+    // Laden des "Allgemein"-Tabs, hier wird u. a. auch die Sprachauswahl angeboten.
+    private void loadGeneralTab() {
+        contentTable.clear();
+        Label languageLabel = new Label(texts.has("menu.language") ? texts.getString("menu.language") : "Language", skin);
+        final SelectBox<LanguageOption> languageSelect = new SelectBox<>(skin);
+
+        // Sprachoptionen: Code und Anzeige-Bezeichnung
+        LanguageOption[] options = new LanguageOption[] {
+            new LanguageOption("en_us", texts.has("menu.language_en") ? texts.getString("menu.language_en") : "English"),
+            new LanguageOption("de_de", texts.has("menu.language_de") ? texts.getString("menu.language_de") : "Deutsch"),
+            new LanguageOption("de_at", texts.has("menu.language_de_at") ? texts.getString("menu.language_de_at") : "Österreichisch"),
+            new LanguageOption("de_ch", texts.has("menu.language_de_ch") ? texts.getString("menu.language_de_ch") : "Schweizerisch")
+        };
+        languageSelect.setItems(options);
+        // Vorbelegung anhand des gespeicherten Sprachcodes
+        for (LanguageOption option : options) {
+            if (option.code.equals(GameSettings.getLanguage())) {
+                languageSelect.setSelected(option);
+                break;
+            }
+        }
+
+        contentTable.add(languageLabel).pad(10);
+        contentTable.add(languageSelect).width(200).pad(10);
+        contentTable.row();
+
+        // Listener für Sprachwechsel: direkt das Menü neu laden
+        languageSelect.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                LanguageOption selectedOption = languageSelect.getSelected();
+                GameSettings.setLanguage(selectedOption.code);
+                System.out.println("Sprache aktualisiert auf: " + selectedOption.code);
+                game.setScreen(new Settings(game));
+            }
+        });
+    }
+
+    // Laden des "Audio"-Tabs: Musik- und Soundlautstärke
+    private void loadAudioTab() {
+        contentTable.clear();
+        Label musicLabel = new Label(texts.has("menu.music_volume") ? texts.getString("menu.music_volume") : "Music Volume", skin);
         final Slider musicSlider = new Slider(0f, 1f, 0.1f, false, skin);
-        final Slider soundSlider = new Slider(0f, 1f, 0.1f, false, skin);
-        final CheckBox vsyncCheckbox = new CheckBox(texts.getString("menu.vsync"), skin);
-
-        // Setze die initialen Werte aus den Preferences
         musicSlider.setValue(GameSettings.getMusicVolume());
+
+        Label soundLabel = new Label(texts.has("menu.sound_volume") ? texts.getString("menu.sound_volume") : "Sound Volume", skin);
+        final Slider soundSlider = new Slider(0f, 1f, 0.1f, false, skin);
         soundSlider.setValue(GameSettings.getSoundVolume());
-        vsyncCheckbox.setChecked(GameSettings.isVSync());
 
-        // Tabellenlayout erstellen
-        Table table = new Table();
-        table.setFillParent(true);
-        table.align(Align.center);
-        stage.addActor(table);
-
-        // Texte aus der Sprachdatei (Fälle, in denen ein Schlüssel fehlt, werden mit Fallback-Texten abgedeckt)
-        String musicLabelText = texts.has("menu.music_volume") ? texts.getString("menu.music_volume") : "Music Volume";
-        String soundLabelText = texts.has("menu.sound_volume") ? texts.getString("menu.sound_volume") : "Sound Volume";
-        String vsyncLabelText = texts.has("menu.vsync") ? texts.getString("menu.vsync") : "VSync";
-        String languageLabelText = texts.has("menu.language") ? texts.getString("menu.language") : "Language";
-        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
-
-        // Musiklautstärke hinzufügen
-        table.add(new Label(musicLabelText, skin)).pad(10);
-        table.add(musicSlider).width(300).pad(10);
-        table.row();
-
-        // Soundlautstärke hinzufügen
-        table.add(new Label(soundLabelText, skin)).pad(10);
-        table.add(soundSlider).width(300).pad(10);
-        table.row();
-
-        // VSync hinzufügen
-        table.add(new Label(vsyncLabelText, skin)).pad(10);
-        table.add(vsyncCheckbox).pad(10);
-        table.row();
-
-        // Sprache auswählen (SelectBox)
-        final SelectBox<String> languageSelect = new SelectBox<>(skin);
-        languageSelect.setItems("en_us", "de_de", "de_at", "de_ch");
-        languageSelect.setSelected(GameSettings.getLanguage());
-        table.add(new Label(languageLabelText, skin)).pad(10);
-        table.add(languageSelect).width(200).pad(10);
-        table.row();
-
-        // Back-Button hinzufügen
-        TextButton backButton = new TextButton(backButtonText, skin);
-        table.add(backButton).colspan(2).padTop(20);
+        contentTable.add(musicLabel).pad(10);
+        contentTable.add(musicSlider).width(300).pad(10);
+        contentTable.row();
+        contentTable.add(soundLabel).pad(10);
+        contentTable.add(soundSlider).width(300).pad(10);
+        contentTable.row();
 
         // Listener für Musiklautstärke
         musicSlider.addListener(new ChangeListener() {
@@ -121,8 +216,32 @@ public class Settings implements com.badlogic.gdx.Screen {
                 System.out.println("Soundlautstärke aktualisiert auf: " + value);
             }
         });
+    }
 
-        // Listener für VSync
+    // Laden des "Tastenbelegung"-Tabs (Beispielhaft; hier kannst du später deine Konfiguration integrieren)
+    private void loadKeyBindingsTab() {
+        contentTable.clear();
+        Label keyBindingsLabel = new Label(texts.has("menu.key_bindings") ? texts.getString("menu.key_bindings") : "Key Bindings", skin);
+        // Hier könnte man später die Tastenbelegung zur Anpassung anbieten
+        contentTable.add(keyBindingsLabel).pad(10);
+        contentTable.row();
+        Label info = new Label(texts.has("menu.key_bindings_info") ? texts.getString("menu.key_bindings_info") : "Tastenbelegung bearbeiten...", skin);
+        contentTable.add(info).pad(10);
+    }
+
+    // Laden des "Video"-Tabs: VSync und evtl. weitere Videoeinstellungen
+    private void loadVideoTab() {
+        contentTable.clear();
+        Label vsyncLabel = new Label(texts.has("menu.vsync") ? texts.getString("menu.vsync") : "VSync", skin);
+        final CheckBox vsyncCheckbox = new CheckBox("", skin);
+        vsyncCheckbox.setChecked(GameSettings.isVSync());
+
+        contentTable.add(vsyncLabel).pad(10);
+        contentTable.add(vsyncCheckbox).pad(10);
+        contentTable.row();
+
+        // Weitere Videoeinstellungen (z. B. Auflösung) könnten hier ergänzt werden
+
         vsyncCheckbox.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -130,26 +249,6 @@ public class Settings implements com.badlogic.gdx.Screen {
                 GameSettings.setVSync(vsync);
                 Gdx.graphics.setVSync(vsync);
                 System.out.println("VSync aktualisiert auf: " + vsync);
-            }
-        });
-
-        // Listener für Sprache: Nach Änderung wird die Settings-Seite neu geladen,
-        // sodass die neuen Texte sofort sichtbar sind.
-        languageSelect.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                String selectedLang = languageSelect.getSelected();
-                GameSettings.setLanguage(selectedLang);
-                System.out.println("Sprache aktualisiert auf: " + selectedLang);
-                game.setScreen(new Settings(game));
-            }
-        });
-
-        // Listener für den Back-Button
-        backButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new MainMenu(game));
             }
         });
     }
@@ -167,13 +266,13 @@ public class Settings implements com.badlogic.gdx.Screen {
     }
 
     @Override
-    public void pause() { }
+    public void pause() {  }
 
     @Override
-    public void resume() { }
+    public void resume() {  }
 
     @Override
-    public void hide() { }
+    public void hide() {  }
 
     @Override
     public void dispose() {
