@@ -1,61 +1,33 @@
 package at.peckventure.menu;
 
 import at.peckventure.Globals;
-import at.peckventure.InputManager;
 import at.peckventure.NetworkClient;
-import at.peckventure.chat.ChatUI;
-import at.peckventure.chat.MultiPlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
-import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.MultiplayerInventoryManager;
 import at.peckventure.multiplayer.NetworkPackets;
-import at.peckventure.ui.EnergyUI;
-import at.peckventure.ui.HealthUI;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.MultiPlayerMap;
-import at.peckventure.world.WorldConfig;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MultiPlayerGameScreen implements Screen
+public class MultiPlayerGameScreen extends GameScreen
 {
-    private ChatUI chatUI;
     private Map<String, RemotePlayer> players = new HashMap<>();
-    private final Game game;
-    private OrthographicCamera camera;
-    private SpriteBatch batch;
-    private Player player;
-    private Stage stage;
-    private Stage uiStage;
     private MultiPlayerMap tilemap;
-    private final World physicsWorld;
-    private WorldConfig worldConfig;
-    private InventoryUI inventoryUI;
 
-    private HealthUI healthUI;
-    private EnergyUI energyUI;
+
     private String serverHost;
     private int serverPort;
     private boolean chunksLoaded = false;
@@ -63,7 +35,7 @@ public class MultiPlayerGameScreen implements Screen
 
     public MultiPlayerGameScreen(Game game, String serverAddress)
     {
-        this.game = game;
+        super(game);
         if (serverAddress.contains(":"))
         {
             int index = serverAddress.indexOf(":");
@@ -74,52 +46,19 @@ public class MultiPlayerGameScreen implements Screen
             serverHost = serverAddress;
             serverPort = DEFAULT_PORT;
         }
-        physicsWorld = new World(new Vector2(0, -19.81f), true);
-
     }
 
     @Override
     public void show()
     {
-        batch = new SpriteBatch();
-        camera = new OrthographicCamera();
-        camera.setToOrtho(false, Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
-        stage = new Stage(new StretchViewport(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, camera));
-        Globals.mobs = new MobMap(stage);
-        uiStage = new Stage(new ScreenViewport());
-        chatUI = new ChatUI(uiStage, new MultiPlayerChatExecutor());
-        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
-        {
-            public void toggleChat()
-            {
-                chatUI.toggleChat();
-            }
-
-            public void cancelChat()
-            {
-                chatUI.cancelChat();
-            }
-
-            public boolean isChatActive()
-            {
-                return chatUI.isChatActive();
-            }
-        });
-        InputMultiplexer multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(InputManager.getInstance());
-        multiplexer.addProcessor(uiStage);
-        multiplexer.addProcessor(stage);
-        Gdx.input.setInputProcessor(multiplexer);
+        super.show();
         tilemap = new MultiPlayerMap(physicsWorld);
-        player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
-        Box2DOperationManager.processOperations();
         stage.addActor(player);
 
-        healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
-        energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
 
         inventoryUI = new InventoryUI(uiStage, new MultiplayerInventoryManager());
-        Globals.physicsWorld = physicsWorld;
+
+
         NetworkClient.init(serverHost, serverPort, serverPort + 222);
 
         NetworkClient.getInstance().addListener(new Listener()
@@ -271,6 +210,7 @@ public class MultiPlayerGameScreen implements Screen
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
         camera.zoom = 2.0f;
         camera.update();
+        backgroundStage.draw();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -291,13 +231,6 @@ public class MultiPlayerGameScreen implements Screen
     }
 
     @Override
-    public void resize(int width, int height)
-    {
-        stage.getViewport().update(width, height, true);
-        uiStage.getViewport().update(width, height, true);
-    }
-
-    @Override
     public void pause()
     {
     }
@@ -312,13 +245,4 @@ public class MultiPlayerGameScreen implements Screen
     {
     }
 
-    @Override
-    public void dispose()
-    {
-        batch.dispose();
-        stage.dispose();
-        uiStage.dispose();
-        physicsWorld.dispose();
-        tilemap.dispose();
-    }
 }
