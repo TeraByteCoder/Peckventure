@@ -79,7 +79,7 @@ public class ParallaxBackgroundActor extends Actor {
             if (offsetX < 0) offsetX += drawWidth;
 
             // Vertikaler Offset: Wird berechnet, aber nicht gemodt – also kein Tiling
-            float offsetY = -camera.position.y * layer.parallaxRatio * 0.1f;
+            float offsetY = -camera.position.y * layer.parallaxRatio * 0.2f;
 
 
             // Für horizontalen Loop: Zeichne mehrere Kopien in x-Richtung

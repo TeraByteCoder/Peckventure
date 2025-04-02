@@ -91,23 +91,15 @@ public abstract class GameScreen implements Screen
         background = new ParallaxBackgroundActor(camera);
         backgroundStage.addActor(background);
 
-// Füge zuerst die weit entfernte, statische Ebene hinzu:
-        background.addLayer("textures/background/paralax/Background.png", 0.0f);
 
-        background.addLayer("textures/background/paralax/1.png", 0.1f);          // Sehr weit hinten, minimale Verschiebung
-
-// Dann kommen nach und nach die Ebenen, die näher rücken:
-        background.addLayer("textures/background/paralax/2.png", 0.3f);          // Etwas näher
-        background.addLayer("textures/background/paralax/3.png", 0.4f);
-        background.addLayer("textures/background/paralax/4.png", 0.5f);
-        background.addLayer("textures/background/paralax/5.png", 0.6f);
-        background.addLayer("textures/background/paralax/6.png", 0.7f);
-        background.addLayer("textures/background/paralax/7.png", 0.8f);
-        background.addLayer("textures/background/paralax/8.png", 0.9f);          // Bereits sehr nahe
+        background.addLayer("textures/background/paralax/sky.png", 0.0f);
+        background.addLayer("textures/background/paralax/cloud.png", 0.1f);
+        background.addLayer("textures/background/paralax/mountain2.png", 0.3f);
+        background.addLayer("textures/background/paralax/pine2.png", 0.8f);          // Bereits sehr nahe
 
 
 // Den Vordergrund (sollte am meisten mit der Kamera mitgehen) fügst du zuletzt hinzu:
-        background.addLayer("textures/background/paralax/Foreground.png", 1.0f);
+        background.addLayer("textures/background/paralax/pine1.png", 1.0f);
 
 
         // Stage für HUD/Chat/Inventar
