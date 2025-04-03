@@ -116,6 +116,7 @@ public abstract class Player extends Actor
     public void updateFromPacket(NetworkPackets.PlayerUpdatePacket packet)
     {
         setPosition(packet.x, packet.y);
+        this.getEnergyStatus().setCurrent(packet.energy);
         body.setTransform(packet.x / Block.BLOCK_SIZE, packet.y / Block.BLOCK_SIZE, body.getAngle());
     }
 

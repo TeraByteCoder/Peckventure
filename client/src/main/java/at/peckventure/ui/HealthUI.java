@@ -51,8 +51,8 @@ public class HealthUI extends Actor {
     @Override
     public void draw(Batch batch, float parentAlpha) {
         // Berechnung: jedes volles Herz entspricht 10 Leben.
-        int fullHearts = status.getCurrent() / 10;
-        int remainder = status.getCurrent() % 10;
+        int fullHearts = (int) (status.getCurrent() / 10);
+        int remainder = (int) (status.getCurrent() % 10);
         boolean partialHeart = remainder > 0;
 
         for (int i = 0; i < numHearts; i++) {

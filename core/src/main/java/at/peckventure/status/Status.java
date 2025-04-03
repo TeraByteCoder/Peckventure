@@ -5,7 +5,7 @@ package at.peckventure.status;
  */
 public class Status {
     private final String name;
-    private int current;
+    private float current;
     private int max;
 
     public Status(String name, int max) {
@@ -14,23 +14,23 @@ public class Status {
         this.current = max;
     }
 
-    public void damage(int amount) {
+    public void damage(float amount) {
         current = Math.max(0, current - amount);
     }
 
-    public void heal(int amount) {
+    public void heal(float amount) {
         current = Math.min(max, current + amount);
     }
 
-    public void consume(int amount) {
+    public void consume(float amount) {
         current = Math.max(0, current - amount);
     }
 
-    public void regenerate(int amount) {
+    public void regenerate(float amount) {
         current = Math.min(max, current + amount);
     }
 
-    public int getCurrent() {
+    public float getCurrent() {
         return current;
     }
 
@@ -42,7 +42,7 @@ public class Status {
         return name;
     }
 
-    public void setCurrent(int current) {
+    public void setCurrent(float current) {
         this.current = Math.max(0, Math.min(current, max));
     }
 

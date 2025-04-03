@@ -35,6 +35,7 @@ public class NetworkPackets
         public float y;
         public long time;
         public boolean rotation;
+        public float energy;
     }
 
     public static class PlayerListPacket
@@ -112,8 +113,8 @@ public class NetworkPackets
 
     public static class PlayerStatusUpdatePacket
     {
-        public int energy;
-        public int health;
+        public float energy;
+        public float health;
     }
 
     public static class ServerPositionChangePacket

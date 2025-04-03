@@ -19,47 +19,51 @@ public class ControlledPlayer extends Player {
     private boolean facingRight = true;
 
     // Felder für Flugmodi
-    private boolean diveInitiated = false; // Kennzeichnet, ob ein steiler Sturzflug begonnen hat
+    private boolean diveInitiated = false;
     private long lastLeftTapTime = 0;
     private long lastRightTapTime = 0;
+
+    private boolean wasLeftPressed = false;
+    private boolean wasRightPressed = false;
+
     private static final long DOUBLE_TAP_THRESHOLD = 300; // in Millisekunden
 
-    // Felder für Ground-Hop (einmaliges Hüpfen vom Boden)
-    private boolean groundJumpUsed = false;           // Wurde bereits gehupft, bis zum nächsten Bodenkontakt
-    private static final float GROUND_HOP_FORCE = 300f;  // Auftriebskraft beim Ground-Hop
+    // Felder für Ground-Hop
+    private boolean groundJumpUsed = false;
+    private static final float GROUND_HOP_FORCE = 300f;
 
-    // Neues Feld, das den Bodenkontakt speichert (wird über den ContactListener gesetzt)
+    // Bodenkontakt
     private boolean onGround = false;
 
-    // Annahme: Der Energie-Status wird in der Elternklasse gesetzt (z. B. new Status("Energie", 50))
+    // Angepasste Kräfte:
+    private static final float FLY_FORCE = 450f;
+    private static final float HIGH_UP_FORCE = 550f;
+    private static final float DIVE_FORCE = -150f;
+    private static final float HOVER_FORCE = 10f;
+    private static final float AIRROLL_IMPULSE = 50f;
 
-    // Angepasste Kräfte für beeindruckendes Flugverhalten:
-    private static final float FLY_FORCE = 450f;        // Normaler Flügelschlag: 5× mehr Auftrieb
-    private static final float HIGH_UP_FORCE = 550f;      // Explosiver Auftrieb nach steilem Sturzflug
-    private static final float DIVE_FORCE = -150f;        // Steiler, schneller Sturzflug
-    private static final float HOVER_FORCE = 10f;         // Für Präzisionsflug (W + SPACE)
-    private static final float AIRROLL_IMPULSE = 50f;       // Stärkerer horizontaler Impuls beim Airroll
-
-    // Basisgeschwindigkeit (hier als Konstante definiert)
+    // Basisgeschwindigkeit
     private static final float BASE_HORIZONTAL_SPEED = 300f;
 
-    // Horizontale Geschwindigkeitsmultiplikatoren:
-    private static final float HORIZONTAL_SPEED_MULTIPLIER_FLY = 1.5f;    // Im Flug
-    private static final float HORIZONTAL_SPEED_MULTIPLIER_GROUND = 2.0f; // Am Boden
+    // Geschwindigkeitsmultiplikatoren:
+    private static final float HORIZONTAL_SPEED_MULTIPLIER_FLY = 1.5f;
+    private static final float HORIZONTAL_SPEED_MULTIPLIER_GROUND = 2.0f;
 
-    // Maximale Beschleunigungszeiten (bis Maximum erreicht wird)
-    private static final float MAX_ACCEL_TIME_FLY = 1.0f;   // langsamer Anstieg im Flug
-    private static final float MAX_ACCEL_TIME_GROUND = 0.5f; // schneller Anstieg am Boden
+    // Maximale Beschleunigungszeiten:
+    private static final float MAX_ACCEL_TIME_FLY = 1.0f;
+    private static final float MAX_ACCEL_TIME_GROUND = 0.5f;
 
-    // Energiekosten (Beispielwerte)
+    // Energiekosten (pro Sekunde bzw. pro Aktion)
     private static final float FLUEGELSCHLAG_ENERGY_COST = 8.0f; // pro Sekunde
     private static final float HOVER_ENERGY_COST = 10.0f;         // pro Sekunde
     private static final float STURZFUG_ENERGY_COST = 20.0f;        // pro Aktion
     private static final float AIRROLL_ENERGY_COST = 15.0f;         // pro Aktion
+    private static final float REGENERATION_ENERGY = 5.0f;          // pro Sekunde
+    private static final float WALK_ENERGY_COST = 3.0f;             // pro Sekunde
 
-    // Variable für horizontale Beschleunigung (über Zeit)
+    // Variable für horizontale Beschleunigung
     private float accelerationTime = 0f;
-    private int lastDirection = 0; // -1 für links, 1 für rechts, 0 wenn keine Eingabe
+    private int lastDirection = 0; // -1 für links, 1 für rechts
 
     private ControlledPlayer(World world, float x, float y) {
         super(world, x, y);
@@ -84,32 +88,59 @@ public class ControlledPlayer extends Player {
     protected void handleInput(float delta) {
         int direction = 0; // -1: links, 1: rechts
 
+        // Bestimme, ob der Spieler gerade geht (links oder rechts gedrückt)
+        boolean isWalking = InputManager.getInstance().isLeftPressed() || InputManager.getInstance().isRightPressed();
+
+        // Berechne den zu regenerierenden Energie-Betrag pro Frame:
+        // - Steht der Spieler, wird der normale Regenerationswert verwendet.
+        // - Geht der Spieler, soll er so viel regenerieren, dass nach Abzug des Gehverbrauchs (WALK_ENERGY_COST)
+        //   noch ein Netto-Gewinn von 0,5 Energie pro Sekunde verbleibt.
+        float regenerationEnergy;
+        if (isWalking) {
+            regenerationEnergy = (WALK_ENERGY_COST + 0.5f) * delta;
+        } else {
+            regenerationEnergy = REGENERATION_ENERGY * delta;
+        }
+
         // Horizontale Eingabe inkl. Luftrolle (Doppeltippen)
+        // Linke Taste
         if (InputManager.getInstance().isLeftPressed()) {
-            long now = System.currentTimeMillis();
-            if (now - lastLeftTapTime < DOUBLE_TAP_THRESHOLD) {
-                if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
-                    this.getEnergyStatus().consume((int) AIRROLL_ENERGY_COST);
-                    body.setLinearVelocity(-AIRROLL_IMPULSE, body.getLinearVelocity().y);
+            if (!wasLeftPressed) { // Taste wurde gerade gedrückt
+                long now = System.currentTimeMillis();
+                if (now - lastLeftTapTime < DOUBLE_TAP_THRESHOLD) {
+                    if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
+                        this.getEnergyStatus().consume(AIRROLL_ENERGY_COST);
+                        body.setLinearVelocity(-AIRROLL_IMPULSE, body.getLinearVelocity().y);
+                    }
                 }
+                lastLeftTapTime = now;
             }
-            lastLeftTapTime = now;
+            wasLeftPressed = true;
             direction = -1;
             facingRight = false;
             sprite.setFlip(false, false);
+        } else {
+            wasLeftPressed = false;
         }
+
+        // Rechte Taste
         if (InputManager.getInstance().isRightPressed()) {
-            long now = System.currentTimeMillis();
-            if (now - lastRightTapTime < DOUBLE_TAP_THRESHOLD) {
-                if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
-                    this.getEnergyStatus().consume((int) AIRROLL_ENERGY_COST);
-                    body.setLinearVelocity(AIRROLL_IMPULSE, body.getLinearVelocity().y);
+            if (!wasRightPressed) { // Taste wurde gerade gedrückt
+                long now = System.currentTimeMillis();
+                if (now - lastRightTapTime < DOUBLE_TAP_THRESHOLD) {
+                    if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
+                        this.getEnergyStatus().consume(AIRROLL_ENERGY_COST);
+                        body.setLinearVelocity(AIRROLL_IMPULSE, body.getLinearVelocity().y);
+                    }
                 }
+                lastRightTapTime = now;
             }
-            lastRightTapTime = now;
+            wasRightPressed = true;
             direction = 1;
             facingRight = true;
             sprite.setFlip(true, false);
+        } else {
+            wasRightPressed = false;
         }
 
         // Horizontale Beschleunigung (unabhängig von Flug oder Boden)
@@ -135,6 +166,9 @@ public class ControlledPlayer extends Player {
             }
             float currentHorizontalSpeed = maxSpeed * (float)Math.sqrt(accelerationTime / maxAccelTime);
             body.setLinearVelocity(direction * currentHorizontalSpeed / Block.BLOCK_SIZE, vel.y);
+
+            // Ziehe den Gehenergieverbrauch ab (3 Energie pro Sekunde)
+            this.getEnergyStatus().consume(WALK_ENERGY_COST * delta);
         } else {
             accelerationTime = 0f;
             lastDirection = 0;
@@ -143,19 +177,17 @@ public class ControlledPlayer extends Player {
 
         // SPACE-Taste: Je nach Situation wird entweder gehupft oder der Flugmodus aktiviert.
         if (InputManager.getInstance().isJumpPressed()) {
+            regenerationEnergy=0;
             if (onGround) {
-                // Vom Boden einmalig hüpfen, falls noch nicht gehupft
                 if (!groundJumpUsed) {
                     body.setLinearVelocity(body.getLinearVelocity().x, GROUND_HOP_FORCE / Block.BLOCK_SIZE);
                     groundJumpUsed = true;
                 }
             } else if (direction != 0) {
-                // In der Luft: Flugmodi aktivieren
                 if (InputManager.getInstance().isWPressed()) {
                     // Präzisionsflug (Schweben)
-                    float energyCost = HOVER_ENERGY_COST * delta;
-                    if (this.getEnergyStatus().getCurrent() >= energyCost) {
-                        this.getEnergyStatus().consume((int) energyCost);
+                    if (this.getEnergyStatus().getCurrent() >= HOVER_ENERGY_COST * delta) {
+                        this.getEnergyStatus().consume(HOVER_ENERGY_COST * delta);
                         body.setLinearVelocity(body.getLinearVelocity().x, HOVER_FORCE / Block.BLOCK_SIZE);
                     }
                 } else if (InputManager.getInstance().isSPressed()) {
@@ -165,7 +197,7 @@ public class ControlledPlayer extends Player {
                         diveInitiated = true;
                     } else {
                         if (this.getEnergyStatus().getCurrent() >= STURZFUG_ENERGY_COST) {
-                            this.getEnergyStatus().consume((int) STURZFUG_ENERGY_COST);
+                            this.getEnergyStatus().consume(STURZFUG_ENERGY_COST);
                             body.setLinearVelocity(body.getLinearVelocity().x, HIGH_UP_FORCE / Block.BLOCK_SIZE);
                         }
                         diveInitiated = false;
@@ -173,9 +205,8 @@ public class ControlledPlayer extends Player {
                 } else {
                     // Normaler Flügelschlag (Auftrieb)
                     if (getY() < maxHeight) {
-                        float energyCost = FLUEGELSCHLAG_ENERGY_COST * delta;
-                        if (this.getEnergyStatus().getCurrent() >= energyCost) {
-                            this.getEnergyStatus().consume((int) energyCost);
+                        if (this.getEnergyStatus().getCurrent() >= FLUEGELSCHLAG_ENERGY_COST * delta) {
+                            this.getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
                             body.setLinearVelocity(body.getLinearVelocity().x, FLY_FORCE / Block.BLOCK_SIZE);
                         }
                     } else {
@@ -184,19 +215,18 @@ public class ControlledPlayer extends Player {
                 }
             }
         }
+        this.getEnergyStatus().regenerate(regenerationEnergy);
         setRotation(facingRight ? 0 : 180);
     }
 
-    // Methode zum Setzen des Bodenkontakts – wird z. B. vom ContactListener aufgerufen
+
     public void setOnGround(boolean onGround) {
         this.onGround = onGround;
         if (onGround) {
-            // Sobald der Spieler den Boden berührt, wird der Ground-Hop zurückgesetzt
             groundJumpUsed = false;
         }
     }
 
-    // Überschreibe isOnGround() nun, um den Kontakt aus dem Listener zu verwenden
     protected boolean isOnGround() {
         return onGround;
     }

@@ -102,7 +102,7 @@ public class GameServer
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
                 if(player != null)
                 {
-                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false, player.getEnergyStatus().getCurrent(), player.getHealthStatus().getCurrent());
+                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false, (int) player.getEnergyStatus().getCurrent(),(int)  player.getHealthStatus().getCurrent());
                     playerData.save(worldFolder);
                     tilemap.removePlayer(player);
                     players.remove(player);

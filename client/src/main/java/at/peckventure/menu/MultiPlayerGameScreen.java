@@ -227,6 +227,7 @@ public class MultiPlayerGameScreen extends GameScreen
         packet.y = player.getY();
         packet.rotation = ControlledPlayer.getInstance().isFacingRight();
         packet.time = System.currentTimeMillis();
+        packet.energy = player.getEnergyStatus().getCurrent();
         NetworkClient.getInstance().sendUDP(packet);
     }
 
