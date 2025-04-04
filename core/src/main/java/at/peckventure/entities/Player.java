@@ -1,14 +1,13 @@
 package at.peckventure.entities;
 
 import at.peckventure.Const;
-import at.peckventure.Globals;
-import at.peckventure.entities.mob.Mob;
-import at.peckventure.entities.mob.MobRegistry;
 import at.peckventure.inventory.Inventory;
 import at.peckventure.inventory.item.Item;
-import at.peckventure.inventory.item.Sword;
 import at.peckventure.multiplayer.NetworkPackets;
+import at.peckventure.status.AbstractStatusEffect;
+import at.peckventure.status.EffectRegistry;
 import at.peckventure.status.Status;
+import at.peckventure.status.StatusEffect;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
@@ -19,6 +18,10 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class Player extends Actor
 {
@@ -36,6 +39,23 @@ public abstract class Player extends Actor
     protected final float startY;
     Inventory inventory;
     protected boolean rotation;
+
+    private List<StatusEffect> effects = new ArrayList<>();
+
+    public void addEffect(StatusEffect effect)
+    {
+        effect.apply(this);
+        effects.add(effect);
+    }
+
+    public void setSpeed(float speed)
+    {
+    }
+
+    public float getSpeed()
+    {
+        return 0f;
+    }
 
     public Inventory getInventory()
     {
@@ -101,6 +121,15 @@ public abstract class Player extends Actor
     @Override
     public void act(float delta)
     {
+        Iterator<StatusEffect> it = effects.iterator();
+        while (it.hasNext()) {
+            StatusEffect e = it.next();
+            e.update(delta);
+            if (e.isExpired()) {
+                e.remove(this);
+                it.remove();
+            }
+        }
         handleInput(delta);
         Vector2 bodyPos = body.getPosition();
         setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
@@ -137,11 +166,52 @@ public abstract class Player extends Actor
 
     public abstract void dropItemOutside(Item item, int amount);
 
-    public Status getHealthStatus() {
+    public Status getHealthStatus()
+    {
         return health;
     }
 
-    public Status getEnergyStatus() {
+    public Status getEnergyStatus()
+    {
         return energy;
+    }
+
+    public String serializeEffects() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < effects.size(); i++) {
+            // Wir gehen davon aus, dass der Effekt aus AbstractStatusEffect stammt
+            AbstractStatusEffect effect = (AbstractStatusEffect) effects.get(i);
+            sb.append(effect.getId())
+                .append(":")
+                .append(effect.getLevel())
+                .append(":")
+                .append(effect.getRemainingDuration());
+            if (i < effects.size() - 1) {
+                sb.append(",");
+            }
+        }
+        return sb.toString();
+    }
+
+    public void deserializeEffects(String data) {
+        if (data == null || data.isEmpty()) return;
+        String[] entries = data.split(",");
+        for (String entry : entries) {
+            String[] parts = entry.split(":");
+            if (parts.length == 3) {
+                String id = parts[0].trim();
+                try {
+                    int level = Integer.parseInt(parts[1].trim());
+                    float duration = Float.parseFloat(parts[2].trim());
+                    StatusEffect effect = EffectRegistry.createEffect(id, level, duration);
+                    if (effect != null) {
+                        effects.add(effect);
+                        effect.apply(this);
+                    }
+                } catch (NumberFormatException e) {
+                    // Fehlerhafte Einträge überspringen
+                }
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package at.peckventure.entities;
 
+import at.peckventure.Const;
 import at.peckventure.inventory.item.Item;
 import at.peckventure.multiplayer.NetworkPackets;
 import com.badlogic.gdx.graphics.Texture;

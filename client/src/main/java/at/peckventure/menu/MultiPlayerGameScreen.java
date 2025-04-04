@@ -111,6 +111,7 @@ public class MultiPlayerGameScreen extends GameScreen
                         ControlledPlayer.getInstance().getInventory().deserialize(packet.inventoryHotbar, packet.inventoryMain);
                         ControlledPlayer.getInstance().getHealthStatus().setCurrent(packet.playerStatus.health);
                         ControlledPlayer.getInstance().getEnergyStatus().setCurrent(packet.playerStatus.energy);
+                        ControlledPlayer.getInstance().deserializeEffects(packet.effects.effects);
 
 
                         for (NetworkPackets.PlayerUpdatePacket updatePacket : listPacket.players)
@@ -178,6 +179,14 @@ public class MultiPlayerGameScreen extends GameScreen
                     {
                         float angle = ControlledPlayer.getInstance().getBody().getAngle();
                         ControlledPlayer.getInstance().getBody().setTransform((packet.x / Block.BLOCK_SIZE), (packet.y / Block.BLOCK_SIZE), angle);
+                    });
+                } else if (object instanceof NetworkPackets.EffectUpdatePacket)
+                {
+                    NetworkPackets.EffectUpdatePacket packet = (NetworkPackets.EffectUpdatePacket) object;
+
+                    Gdx.app.postRunnable(() ->
+                    {
+                        ControlledPlayer.getInstance().deserializeEffects(packet.effects);
                     });
                 }
 

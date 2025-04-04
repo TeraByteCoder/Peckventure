@@ -80,6 +80,9 @@ public class SinglePlayerGameScreen extends GameScreen
         // Spieler erstellen und zur Stage hinzufügen
         ControlledPlayer.getInstance().getBody().setTransform(spawnX / Block.BLOCK_SIZE, spawnY / Block.BLOCK_SIZE, ControlledPlayer.getInstance().getBody().getAngle());
         player = ControlledPlayer.getInstance(physicsWorld, spawnX, spawnY);
+        player.getEnergyStatus().setMax(playerData.getMaxEnergy());
+        player.getHealthStatus().setMax(playerData.getMaxHealth());
+        player.deserializeEffects(playerData.getEffects());
         stage.addActor(player);
 
         // HUD und UI initialisieren

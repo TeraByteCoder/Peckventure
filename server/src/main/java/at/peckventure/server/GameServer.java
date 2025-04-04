@@ -102,7 +102,7 @@ public class GameServer
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
                 if(player != null)
                 {
-                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false, (int) player.getEnergyStatus().getCurrent(),(int)  player.getHealthStatus().getCurrent());
+                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false, (int) player.getEnergyStatus().getCurrent(),(int)  player.getHealthStatus().getCurrent(), player.getHealthStatus().getMax(), player.getEnergyStatus().getMax(), "");
                     playerData.save(worldFolder);
                     tilemap.removePlayer(player);
                     players.remove(player);
@@ -149,6 +149,7 @@ public class GameServer
                     //connectpacket erstellen
                     NetworkPackets.ClientConnectPacket connectPacket = new NetworkPackets.ClientConnectPacket();
                     connectPacket.playerStatus = new NetworkPackets.PlayerStatusUpdatePacket();
+                    connectPacket.effects = new NetworkPackets.EffectUpdatePacket();
 
                     if (playerData.getPlayerX() == 0.0 && playerData.getPlayerY() == 0.0 && playerData.getInventoryHotbar().isEmpty() && playerData.getInventoryMain().isEmpty())
                     {
@@ -160,10 +161,12 @@ public class GameServer
                         connectPacket.inventoryMain = "";
                         connectPacket.playerStatus.energy = Const.MAXENERGY;
                         connectPacket.playerStatus.health = Const.MAXHEALTH;
+                        connectPacket.effects.effects = "";
                     } else
                     {
                         ServerPlayer player = new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username, playerData.getEnergy(), playerData.getHealth());
                         player.getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
+                        player.deserializeEffects(playerData.getEffects());
                         players.add(player);
                         connectPacket.posx = (int) playerData.getPlayerX();
                         connectPacket.posy = (int) playerData.getPlayerY();
@@ -171,6 +174,7 @@ public class GameServer
                         connectPacket.inventoryMain = playerData.getInventoryMain();
                         connectPacket.playerStatus.energy = playerData.getEnergy();
                         connectPacket.playerStatus.health = playerData.getHealth();
+                        connectPacket.effects.effects = playerData.getEffects();
                     }
                     NetworkPackets.PlayerListPacket listPacket = new NetworkPackets.PlayerListPacket();
                     for (ServerPlayer player : players)

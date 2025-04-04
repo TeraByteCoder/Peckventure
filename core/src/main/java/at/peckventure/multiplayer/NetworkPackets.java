@@ -53,6 +53,7 @@ public class NetworkPackets
 
         public PlayerListPacket playerList;
         public PlayerStatusUpdatePacket playerStatus;
+        public EffectUpdatePacket effects;
 
     }
 
@@ -121,6 +122,11 @@ public class NetworkPackets
     {
         public float x;
         public float y;
+    }
+
+    public static class EffectUpdatePacket
+    {
+        public String effects;
     }
 
 }

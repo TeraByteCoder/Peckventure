@@ -39,6 +39,7 @@ public class CommandRegistry
         registerCommand(new TeleportCommand());
         registerCommand(new HealCommand());
         registerCommand(new DamageCommand());
+        registerCommand(new EffectCommand());
     }
 
     public static void init()

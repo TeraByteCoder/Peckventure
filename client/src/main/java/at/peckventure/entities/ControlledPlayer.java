@@ -5,6 +5,7 @@ import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
 import at.peckventure.inventory.item.Item;
+import at.peckventure.status.SpeedBoostEffect;
 import at.peckventure.status.Status;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
@@ -43,7 +44,7 @@ public class ControlledPlayer extends Player {
     private static final float AIRROLL_IMPULSE = 50f;
 
     // Basisgeschwindigkeit
-    private static final float BASE_HORIZONTAL_SPEED = 300f;
+    private static float BASE_HORIZONTAL_SPEED = 300f;
 
     // Geschwindigkeitsmultiplikatoren:
     private static final float HORIZONTAL_SPEED_MULTIPLIER_FLY = 1.5f;
@@ -65,13 +66,16 @@ public class ControlledPlayer extends Player {
     private float accelerationTime = 0f;
     private int lastDirection = 0; // -1 für links, 1 für rechts
 
-    private ControlledPlayer(World world, float x, float y) {
+    private ControlledPlayer(World world, float x, float y)
+    {
         super(world, x, y);
         this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
     }
 
-    public static ControlledPlayer getInstance(World world, float x, float y) {
-        if (instance == null) {
+    public static ControlledPlayer getInstance(World world, float x, float y)
+    {
+        if (instance == null)
+        {
             instance = new ControlledPlayer(world, x, y);
         }
         return instance;
@@ -248,5 +252,17 @@ public class ControlledPlayer extends Player {
             if (mob.getBody() != null)
                 mob.getBody().setLinearVelocity(vx, vy);
         });
+    }
+
+    @Override
+    public void setSpeed(float speed)
+    {
+        BASE_HORIZONTAL_SPEED = speed;
+    }
+
+    @Override
+    public float getSpeed()
+    {
+        return BASE_HORIZONTAL_SPEED;
     }
 }
