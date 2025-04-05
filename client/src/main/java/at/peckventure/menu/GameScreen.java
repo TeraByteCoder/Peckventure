@@ -114,29 +114,6 @@ public abstract class GameScreen implements Screen
         // Physik-Listener
         physicsWorld.setContactListener(new GameContactListener());
 
-        // Chat initialisieren
-        chatUI = new ChatUI(uiStage, new SinglePlayerChatExecutor());
-        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
-        {
-            @Override
-            public void toggleChat()
-            {
-                chatUI.toggleChat();
-            }
-
-            @Override
-            public void cancelChat()
-            {
-                chatUI.cancelChat();
-            }
-
-            @Override
-            public boolean isChatActive()
-            {
-                return chatUI.isChatActive();
-            }
-        });
-
         player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
 
         // InputMultiplexer: pauseStage hat höchste Priorität

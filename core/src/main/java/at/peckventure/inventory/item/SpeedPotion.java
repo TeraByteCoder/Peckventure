@@ -19,6 +19,5 @@ public class SpeedPotion extends Item
     public void onUse(Player player)
     {
         player.addEffect(Objects.requireNonNull(EffectRegistry.createEffect("speed_boost", 3, 10)));
-        System.out.println("SpeedPotion onUse");
     }
 }

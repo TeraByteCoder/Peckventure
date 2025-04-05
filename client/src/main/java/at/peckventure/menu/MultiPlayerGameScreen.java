@@ -1,7 +1,11 @@
 package at.peckventure.menu;
 
 import at.peckventure.Globals;
+import at.peckventure.InputManager;
 import at.peckventure.NetworkClient;
+import at.peckventure.chat.ChatUI;
+import at.peckventure.chat.MultiPlayerChatExecutor;
+import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
@@ -52,6 +56,28 @@ public class MultiPlayerGameScreen extends GameScreen
     public void show()
     {
         super.show();
+        // Chat initialisieren
+        chatUI = new ChatUI(uiStage, new MultiPlayerChatExecutor());
+        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
+        {
+            @Override
+            public void toggleChat()
+            {
+                chatUI.toggleChat();
+            }
+
+            @Override
+            public void cancelChat()
+            {
+                chatUI.cancelChat();
+            }
+
+            @Override
+            public boolean isChatActive()
+            {
+                return chatUI.isChatActive();
+            }
+        });
         tilemap = new MultiPlayerMap(physicsWorld);
         stage.addActor(player);
 

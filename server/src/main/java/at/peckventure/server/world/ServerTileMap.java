@@ -84,7 +84,7 @@ public class ServerTileMap extends AbstractTileMap {
                 if(mob instanceof ItemActor)
                 {
                     ItemActor item = (ItemActor)mob;
-                    update.extraItem = item.getInventoryItem().getName();
+                    update.extraItem = item.getInventoryItem().getId();
                 }
                 mobPacket.mobUpdates.add(update);
             }

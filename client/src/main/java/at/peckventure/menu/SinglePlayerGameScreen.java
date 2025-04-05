@@ -1,6 +1,9 @@
 package at.peckventure.menu;
 
 import at.peckventure.Globals;
+import at.peckventure.InputManager;
+import at.peckventure.chat.ChatUI;
+import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
@@ -49,6 +52,29 @@ public class SinglePlayerGameScreen extends GameScreen {
     @Override
     public void show() {
         super.show();
+
+        // Chat initialisieren
+        chatUI = new ChatUI(uiStage, new SinglePlayerChatExecutor());
+        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
+        {
+            @Override
+            public void toggleChat()
+            {
+                chatUI.toggleChat();
+            }
+
+            @Override
+            public void cancelChat()
+            {
+                chatUI.cancelChat();
+            }
+
+            @Override
+            public boolean isChatActive()
+            {
+                return chatUI.isChatActive();
+            }
+        });
 
         FileHandle worldDir = Gdx.files.absolute(at.peckventure.Const.savesDir + "/" + worldName);
         WorldIO.LoadedWorld loadedWorld = WorldIO.loadWorld(worldDir, physicsWorld);
