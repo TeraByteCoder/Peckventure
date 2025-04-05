@@ -14,12 +14,11 @@ public enum Textures
     INVENTORY_SLOT("textures/inventory_slot.png"),
     TEST_ITEM("textures/items/test_item.png"),
     SPEED_POTION("textures/items/speed_potion.png"),
-
-    WOOD("textures/items/wood.png"),
+    PHYTON("textures/criters/garden_foliage_beetle_idle.png"),
+    WOOD("textures/items/wood.png");
 
 
     ;
-
     private Texture texture;
     private final String texturePath;
 
