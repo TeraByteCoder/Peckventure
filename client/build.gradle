@@ -29,6 +29,9 @@ dependencies {
 
   // Discord RPC – eingebunden über lokale JAR-Datei
   implementation files('libs/discord-rpc.jar')
+  implementation files('libs/jna-5.17.0.jar')
+  implementation files('libs/jna-platform-5.17.0.jar')
+
 
   // Falls du Box2D nutzt:
   implementation "com.badlogicgames.gdx:gdx-box2d:1.13.1"
