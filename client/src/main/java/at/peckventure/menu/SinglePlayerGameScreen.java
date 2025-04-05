@@ -161,6 +161,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         );
         camera.zoom = 2.0f;
         camera.update();
+        backgroundStage.draw();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
