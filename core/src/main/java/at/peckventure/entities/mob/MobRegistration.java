@@ -1,6 +1,6 @@
 package at.peckventure.entities.mob;
 
-import at.peckventure.inventory.item.Sword;
+import at.peckventure.inventory.item.Item;
 import com.badlogic.gdx.Gdx;
 
 public class MobRegistration {
@@ -14,8 +14,8 @@ public class MobRegistration {
         Gdx.app.log("MobRegistration", "Registered Beetle with int ID " + BEETLE_ID + " and string ID " + BEETLE_STRING_ID);
 
         MobRegistry.registerMob(ITEMACTOR_ID, ITEMACTOR_STRING_ID, ItemActor.class, (world, x, y, args) -> {
-            if(args != null && args.length > 0 && args[0] instanceof Sword) {
-                return new ItemActor(world, x, y, (Sword) args[0]);
+            if(args != null && args.length > 0 && args[0] instanceof Item) {
+                return new ItemActor(world, x, y, (Item) args[0]);
             } else {
                 return new ItemActor(world, x, y);
             }

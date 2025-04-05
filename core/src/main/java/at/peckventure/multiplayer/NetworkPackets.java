@@ -129,4 +129,9 @@ public class NetworkPackets
         public String effects;
     }
 
+    public static class ItemUsePacket
+    {
+        public int slot;
+    }
+
 }

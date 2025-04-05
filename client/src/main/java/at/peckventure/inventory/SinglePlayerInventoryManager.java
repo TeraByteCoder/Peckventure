@@ -66,7 +66,7 @@ public class SinglePlayerInventoryManager implements InventoryManager
             // Falls im Zielslot bereits ein Item desselben Typs liegt, versuche die Stacks zu mergen.
             if (targetSlot.getItem().getId().equals(sourceItem.getId()))
             {
-                int availableSpace = Item.MAX_STACK_SIZE - targetSlot.getItem().getStackSize();
+                int availableSpace = targetSlot.getItem().MAX_STACK_SIZE - targetSlot.getItem().getStackSize();
                 if (availableSpace <= 0) return false;
                 int toMove = Math.min(count, Math.min(sourceItem.getStackSize(), availableSpace));
                 targetSlot.getItem().setStackSize(targetSlot.getItem().getStackSize() + toMove);
@@ -85,5 +85,26 @@ public class SinglePlayerInventoryManager implements InventoryManager
                 return true;
             }
         }
+    }
+
+    @Override
+    public boolean useItem(int slot)
+    {
+        // Sucht das Item im Inventar (zuerst in der Hotbar, dann im Main-Inventar),
+        // entfernt es und löst die Drop-Logik aus.
+        Inventory inventory = ControlledPlayer.getInstance().getInventory();
+
+        InventorySlot inventorySlot = inventory.getSlotByIndex(slot);
+        if (inventorySlot == null) return false;
+        if (inventorySlot.getItem() == null) return false;
+        boolean used = false;
+        Item item = inventorySlot.getItem();
+        if (inventorySlot.getItem() != null && inventorySlot.getItem().getStackSize() >=1)
+        {
+            inventorySlot.setItem(null);
+            item.onUse(ControlledPlayer.getInstance());
+            used = true;
+        }
+        return used;
     }
 }

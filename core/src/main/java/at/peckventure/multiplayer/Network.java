@@ -15,6 +15,7 @@ public class Network {
         kryo.register(NetworkPackets.ItemDropPacket.class);
         kryo.register(NetworkPackets.InventoryMovePacket.class);
         kryo.register(NetworkPackets.InventoryUpdatePacket.class);
+        kryo.register(NetworkPackets.ItemUsePacket.class);
 
         // Player packets
         kryo.register(NetworkPackets.PlayerUpdatePacket.class);

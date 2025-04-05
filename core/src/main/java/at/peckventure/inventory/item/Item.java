@@ -1,5 +1,6 @@
 package at.peckventure.inventory.item;
 
+import at.peckventure.entities.Player;
 import com.badlogic.gdx.graphics.Texture;
 
 public abstract class Item
@@ -9,7 +10,7 @@ public abstract class Item
     private final Texture texture;
 
     private int stackSize = 1;           // aktuelle Anzahl in diesem Stack
-    public static final int MAX_STACK_SIZE = 32; // globales Stacklimit
+    public final int MAX_STACK_SIZE = 32;
 
     public Item(String id, String name, Texture texture)
     {
@@ -55,5 +56,10 @@ public abstract class Item
     public int getStackSize()
     {
         return stackSize;
+    }
+
+    public void onUse(Player player)
+    {
+
     }
 }

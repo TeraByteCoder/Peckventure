@@ -2,7 +2,7 @@ package at.peckventure.chat.commands;
 
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.ItemRegistry;
-import at.peckventure.inventory.item.Sword;
+import at.peckventure.inventory.item.Item;
 import at.peckventure.multiplayer.NetworkManager;
 import at.peckventure.multiplayer.NetworkPackets;
 
@@ -38,7 +38,7 @@ public class GiveCommand extends Command
 
         if (ItemRegistry.contains(itemName))
         {
-            Sword item = ItemRegistry.createItem(itemName);
+            Item item = ItemRegistry.createItem(itemName);
             executor.getInventory().addItem(item, amount);
         }
 

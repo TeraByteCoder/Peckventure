@@ -231,7 +231,7 @@ public class GameServer
                                 // Falls im Zielslot bereits ein Item desselben Typs liegt, versuche die Stacks zu mergen.
                                 if (targetSlot.getItem().getId().equals(sourceItem.getId()))
                                 {
-                                    int availableSpace = Item.MAX_STACK_SIZE - targetSlot.getItem().getStackSize();
+                                    int availableSpace = targetSlot.getItem().MAX_STACK_SIZE - targetSlot.getItem().getStackSize();
                                     if (availableSpace >= 0)
                                     {
                                         int toMove = Math.min(movePacket.count, Math.min(sourceItem.getStackSize(), availableSpace));
@@ -279,6 +279,29 @@ public class GameServer
                     updatePacket.hotbarData = player.getInventory().serializeHotbar();
                     updatePacket.mainInventoryData = player.getInventory().serializeMain();
                     connection.sendTCP(updatePacket);
+                } else if (object instanceof NetworkPackets.ItemUsePacket)
+                {
+                    NetworkPackets.ItemUsePacket packet = (NetworkPackets.ItemUsePacket) object;
+                    ServerPlayer player = ServerPlayer.findPlayer(connection);
+                    if (player != null)
+                    {
+                        InventorySlot inventorySlot = player.getInventory().getSlotByIndex(packet.slot);
+                        Item item = inventorySlot.getItem();
+                        if (inventorySlot.getItem() != null && inventorySlot.getItem().getStackSize() >=1)
+                        {
+                            inventorySlot.getItem().onUse(player);
+                            inventorySlot.setItem(null);
+                            NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
+                            updatePacket.hotbarData = player.getInventory().serializeHotbar();
+                            updatePacket.mainInventoryData = player.getInventory().serializeMain();
+                            connection.sendTCP(updatePacket);
+
+                            NetworkPackets.EffectUpdatePacket effectPacket = new NetworkPackets.EffectUpdatePacket();
+                            effectPacket.effects = player.serializeEffects();
+                            connection.sendTCP(effectPacket);
+                        }
+                    }
+
                 } else if (object instanceof NetworkPackets.PingRequestPacket)
                 {
                     connection.sendTCP(new NetworkPackets.PingResponsePacket());

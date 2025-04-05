@@ -27,4 +27,6 @@ public interface InventoryManager {
      * @return true, wenn der Verschiebevorgang erfolgreich war.
      */
     boolean moveItem(int fromSlot, int toSlot, int count);
+
+    boolean useItem(int slot);
 }

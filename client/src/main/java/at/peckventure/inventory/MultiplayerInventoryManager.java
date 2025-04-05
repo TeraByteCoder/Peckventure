@@ -41,4 +41,13 @@ public class MultiplayerInventoryManager implements InventoryManager {
         NetworkClient.getInstance().sendTCP(packet);
         return true;
     }
+
+    @Override
+    public boolean useItem(int slot)
+    {
+        NetworkPackets.ItemUsePacket packet = new NetworkPackets.ItemUsePacket();
+        packet.slot = slot;
+        NetworkClient.getInstance().sendTCP(packet);
+        return true;
+    }
 }

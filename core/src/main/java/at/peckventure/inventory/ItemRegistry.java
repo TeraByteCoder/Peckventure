@@ -5,14 +5,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.peckventure.Textures;
-import at.peckventure.inventory.item.Sword;
+import at.peckventure.inventory.item.Item;
+import at.peckventure.inventory.item.SpeedPotion;
+import at.peckventure.inventory.item.Wood;
 
 public class ItemRegistry
 {
 
     public interface ItemFactory
     {
-        Sword create();
+        Item create();
     }
 
     private static final Map<String, ItemFactory> registry = new HashMap<>();
@@ -22,7 +24,7 @@ public class ItemRegistry
         registry.put(id, factory);
     }
 
-    public static Sword createItem(String id)
+    public static Item createItem(String id)
     {
         ItemFactory factory = registry.get(id);
         return (factory != null) ? factory.create() : null;
@@ -35,9 +37,11 @@ public class ItemRegistry
 
     static
     {
-        ItemRegistry.register("sword", () ->
-            new Sword("sword", "Schwert", Textures.TEST_ITEM.getTexture())
+        ItemRegistry.register("wood", () ->
+            new Wood("wood", "Wood", Textures.WOOD.getTexture())
         );
+        ItemRegistry.register("speed_potion", () ->
+            new SpeedPotion("speed_potion", "Trank der Geschwindigkeit", Textures.SPEED_POTION.getTexture()));
     }
 
     public static void init()

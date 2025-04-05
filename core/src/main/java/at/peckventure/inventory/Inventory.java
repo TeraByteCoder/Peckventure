@@ -136,7 +136,7 @@ public class Inventory {
             if (newItem.getStackSize() <= 0) break;
             Item slotItem = slot.getItem();
             if (slotItem != null && slotItem.getId().equals(newItem.getId())) {
-                int canAdd = Item.MAX_STACK_SIZE - slotItem.getStackSize();
+                int canAdd = slotItem.MAX_STACK_SIZE - slotItem.getStackSize();
                 if (canAdd > 0) {
                     int toAdd = Math.min(canAdd, newItem.getStackSize());
                     slotItem.setStackSize(slotItem.getStackSize() + toAdd);
@@ -151,11 +151,11 @@ public class Inventory {
         for (InventorySlot slot : slots) {
             if (newItem.getStackSize() <= 0) break;
             if (slot.getItem() == null) {
-                if (newItem.getStackSize() > Item.MAX_STACK_SIZE) {
+                if (newItem.getStackSize() > newItem.MAX_STACK_SIZE) {
                     Item fullStack = ItemRegistry.createItem(newItem.getId());
-                    fullStack.setStackSize(Item.MAX_STACK_SIZE);
+                    fullStack.setStackSize(newItem.MAX_STACK_SIZE);
                     slot.setItem(fullStack);
-                    newItem.setStackSize(newItem.getStackSize() - Item.MAX_STACK_SIZE);
+                    newItem.setStackSize(newItem.getStackSize() - newItem.MAX_STACK_SIZE);
                 } else {
                     Item clone = cloneItem(newItem);
                     slot.setItem(clone);

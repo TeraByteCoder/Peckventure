@@ -85,6 +85,8 @@ public class InputManager extends InputAdapter {
         inputsPaused = false;
     }
 
+
+
     @Override
     public boolean keyUp(int keycode) {
         if (keycode == Input.Keys.A) {
