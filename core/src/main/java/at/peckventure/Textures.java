@@ -11,7 +11,8 @@ public enum Textures {
     GRASSRAMPRIGHT("textures/blocks/grass_ramp_right.png"),
     BEETLE("textures/criters/garden_foliage_beetle_idle.png"),
     INVENTORY_SLOT("textures/inventory_slot.png"),
-    TEST_ITEM("textures/test_item.png");
+    TEST_ITEM("textures/test_item.png"),
+    PHYTON("textures/criters/garden_foliage_beetle_idle.png");
 
     private Texture texture;
     private final String texturePath;

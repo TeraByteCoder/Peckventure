@@ -7,8 +7,8 @@ def appName = 'PeckventureClient'
 group = 'at.peckventure'
 version = 'unspecified'
 
-java.sourceCompatibility = 8
-java.targetCompatibility = 8
+java.sourceCompatibility = '24.PREVIEW'
+java.targetCompatibility = '24.PREVIEW'
 if (JavaVersion.current().isJava9Compatible()) {
   compileJava.options.release.set(8)
 }
@@ -27,24 +27,30 @@ dependencies {
   implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.13.1"
   implementation "com.badlogicgames.gdx:gdx-platform:1.13.1:natives-desktop"
 
+  // Discord RPC – eingebunden über lokale JAR-Datei
+  implementation files('libs/discord-rpc.jar')
+
   // Falls du Box2D nutzt:
   implementation "com.badlogicgames.gdx:gdx-box2d:1.13.1"
   implementation "com.badlogicgames.gdx:gdx-box2d-platform:1.13.1:natives-desktop"
 
-  // Falls dein Client auf das core-Projekt zugreifen muss:
-  // implementation project(':core')
+  // Zugriff auf core-Projekt
+  implementation project(':core')
 
+  // Tests
   testImplementation platform('org.junit:junit-bom:5.10.0')
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
-  implementation project(':core')
 }
 
 jar {
   archiveBaseName.set(appName)
   duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
   dependsOn configurations.runtimeClasspath
-  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  from {
+    configurations.runtimeClasspath.collect {
+      it.isDirectory() ? it : zipTree(it)
+    }
+  }
   exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
   dependencies {
     exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
