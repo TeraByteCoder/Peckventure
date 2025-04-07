@@ -16,6 +16,7 @@ public class Lwjgl3Launcher {
         DiscordPresence.start();
 
         createApplication();
+
     }
 
     private static Lwjgl3Application createApplication() {

@@ -18,8 +18,12 @@ public class DiscordPresence {
         updatePresence("🧭 Im Hauptmenü", "mainmenu", "Peckventure");
     }
 
-    public static void updateToIngame(String mapName) {
-        updatePresence("⚔️ In einem Abenteuer - Karte: " + mapName, "ingame", "Abenteuer läuft");
+    public static void updateToIngameSP(String mapName) {
+        updatePresence("⚔️ Im Singleplayer - Karte: " + mapName, "Singleplayer", "Abenteuer läuft");
+    }
+
+    public static void updateToIngameMP(String mapName) {
+        updatePresence("⚔️ Im Multiplayer - Karte: "+mapName, "Multiplayer", "Abenteuer läuft");
     }
 
     public static void updateToLoading() {
