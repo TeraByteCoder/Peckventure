@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -19,8 +20,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 
 public class AddServerScreen implements Screen {
     private final Game game;
@@ -30,6 +32,7 @@ public class AddServerScreen implements Screen {
     private BitmapFont font;
     private Texture textFieldTexture;
     private FileHandle serverDataFile;
+    private JsonValue texts;
 
     public AddServerScreen(Game game) {
         this.game = game;
@@ -37,41 +40,71 @@ public class AddServerScreen implements Screen {
 
     @Override
     public void show() {
+        // Sprachdatei laden
+        String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
+        JsonReader reader = new JsonReader();
+        texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
+
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
         font = new BitmapFont();
         font.getData().setScale(2f);
+
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
+
+        // Label Style
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = font;
         labelStyle.fontColor = Color.WHITE;
-        Label titleLabel = new Label("Add Server", labelStyle);
+
+        // Titel mit Übersetzung
+        String titleText = texts.has("menu.add_server") ? texts.getString("menu.add_server") : "Add Server";
+        Label titleLabel = new Label(titleText, labelStyle);
         titleLabel.setFontScale(3f);
         titleLabel.setAlignment(Align.center);
+
+        // Button Styles
         Texture buttonTexture = new Texture("textures/gui/button1.png");
         TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.up = buttonDrawable;
         buttonStyle.down = buttonDrawable;
         buttonStyle.font = font;
-        TextButton addButton = new TextButton("Add Server", buttonStyle);
-        TextButton backButton = new TextButton("Back", buttonStyle);
+
+        // Übersetzte Buttons
+        String addButtonText = texts.has("menu.add_server") ? texts.getString("menu.add_server") : "Add Server";
+        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
+        TextButton addButton = new TextButton(addButtonText, buttonStyle);
+        TextButton backButton = new TextButton(backButtonText, buttonStyle);
+
+        // TextField Style
         TextField.TextFieldStyle textFieldStyle = new TextField.TextFieldStyle();
         textFieldStyle.font = font;
         textFieldStyle.fontColor = Color.WHITE;
+
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.DARK_GRAY);
         pixmap.fill();
         textFieldTexture = new Texture(pixmap);
         pixmap.dispose();
         textFieldStyle.background = new TextureRegionDrawable(new TextureRegion(textFieldTexture));
-        final TextField nameInput = new TextField("Server Name", textFieldStyle);
-        final TextField addressInput = new TextField("ip:port", textFieldStyle);
-        Label nameLabel = new Label("Server Name:", labelStyle);
-        Label addressLabel = new Label("Address:", labelStyle);
+
+        // Textfelder mit Platzhaltern
+        String serverNamePlaceholder = texts.has("menu.server_name") ? texts.getString("menu.server_name") : "Server Name";
+        String addressPlaceholder = texts.has("menu.address") ? texts.getString("menu.address") : "ip:port";
+        final TextField nameInput = new TextField(serverNamePlaceholder, textFieldStyle);
+        final TextField addressInput = new TextField(addressPlaceholder, textFieldStyle);
+
+        // Labels mit Übersetzungen
+        String serverNameLabelText = texts.has("menu.server_name_label") ? texts.getString("menu.server_name_label") : "Server Name:";
+        String addressLabelText = texts.has("menu.address") ? texts.getString("menu.address") : "Address:";
+        Label nameLabel = new Label(serverNameLabelText, labelStyle);
+        Label addressLabel = new Label(addressLabelText, labelStyle);
+
+        // Layout
         Table inputTable = new Table();
         inputTable.center();
         inputTable.add(nameLabel).pad(10).center();
@@ -79,9 +112,11 @@ public class AddServerScreen implements Screen {
         inputTable.row();
         inputTable.add(addressLabel).pad(10).center();
         inputTable.add(addressInput).width(600).height(80).pad(10).center();
+
         Table buttonTable = new Table();
         buttonTable.add(addButton).size(400, 120).pad(10);
         buttonTable.add(backButton).size(400, 120).pad(10);
+
         Table rootTable = new Table();
         rootTable.setFillParent(true);
         rootTable.center();
@@ -90,11 +125,15 @@ public class AddServerScreen implements Screen {
         rootTable.add(inputTable).expand().center().pad(20);
         rootTable.row();
         rootTable.add(buttonTable).expandX().center().padBottom(10);
+
         stage.addActor(rootTable);
+
         serverDataFile = Const.gameDir.child("serverdata.txt");
         if (!serverDataFile.exists()) {
             serverDataFile.writeString("", false);
         }
+
+        // Button Listener
         addButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -111,6 +150,7 @@ public class AddServerScreen implements Screen {
                 game.setScreen(new MultiPlayer(game));
             }
         });
+
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
