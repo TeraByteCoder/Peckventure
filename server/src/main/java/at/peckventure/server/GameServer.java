@@ -108,7 +108,7 @@ public class GameServer
                     players.remove(player);
 
                     NetworkPackets.ChatMessagePacket leavemessage = new NetworkPackets.ChatMessagePacket();
-                    leavemessage.message = player.getUsername() + "left the Game";
+                    leavemessage.message = player.getUsername() + " left the Game";
                     server.sendToAllTCP(leavemessage);
 
                     NetworkPackets.ClientDisconnectPacket packet = new NetworkPackets.ClientDisconnectPacket();

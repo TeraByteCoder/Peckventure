@@ -2,7 +2,6 @@ package at.peckventure.inventory.item;
 
 import at.peckventure.entities.Player;
 import at.peckventure.status.EffectRegistry;
-import at.peckventure.status.SpeedBoostEffect;
 import com.badlogic.gdx.graphics.Texture;
 
 import java.util.Objects;

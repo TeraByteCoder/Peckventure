@@ -40,6 +40,12 @@ public class MultiPlayerMap extends AbstractTileMap
         }
     }
 
+    @Override
+    public Chunk loadChunk(int targetchunkx, int targetchunky, boolean trees)
+    {
+        throw new RuntimeException("method should not be called");
+    }
+
     public void updateMobs(NetworkPackets.MobUpdatePacket packet)
     {
         // Erstelle ein Set, um die IDs der im Paket vorhandenen Mobs zu verfolgen

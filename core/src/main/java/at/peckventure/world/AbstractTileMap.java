@@ -1,5 +1,6 @@
 package at.peckventure.world;
 
+import at.peckventure.Globals;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.world.chunk.Chunk;
@@ -17,6 +18,7 @@ public abstract class AbstractTileMap {
     protected volatile boolean running = false;
 
     public AbstractTileMap(World world) {
+        Globals.tileMap = this;
         this.physicsWorld = world;
     }
 
@@ -32,6 +34,7 @@ public abstract class AbstractTileMap {
 
     public abstract void loadChunksAroundPlayer(Player player);
     public abstract void unloadChunksOutsideRenderDistance(Player player);
+    public abstract Chunk loadChunk(int targetchunkx, int targetchunky, boolean trees);
     public abstract void updateChunks(Player player);
     public abstract void dispose();
 

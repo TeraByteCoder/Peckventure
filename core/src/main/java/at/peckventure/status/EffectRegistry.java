@@ -1,8 +1,8 @@
 package at.peckventure.status;
 
-import java.util.ArrayList;
+import at.peckventure.status.effects.SpeedBoostEffect;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class EffectRegistry {

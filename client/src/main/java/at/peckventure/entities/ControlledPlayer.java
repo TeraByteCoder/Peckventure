@@ -5,8 +5,6 @@ import at.peckventure.Globals;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
 import at.peckventure.inventory.item.Item;
-import at.peckventure.status.SpeedBoostEffect;
-import at.peckventure.status.Status;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import com.badlogic.gdx.graphics.Texture;

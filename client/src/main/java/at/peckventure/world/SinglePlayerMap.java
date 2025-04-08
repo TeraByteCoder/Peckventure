@@ -57,7 +57,7 @@ public class SinglePlayerMap extends AbstractTileMap {
                         chunk = ChunkIO.deserialize(data, physicsWorld);
                     } else {
                         chunk = new Chunk(targetChunkX, targetChunkY);
-                        worldGenerator.generateChunk(chunk);
+                        worldGenerator.generateChunk(chunk, true);
                     }
                     loadedChunks.add(chunk);
                 }
@@ -89,6 +89,36 @@ public class SinglePlayerMap extends AbstractTileMap {
         }
     }
 
+
+
+    @Override
+    public Chunk loadChunk(int targetChunkX, int targetChunkY, boolean trees)
+    {
+        Chunk dummy = new Chunk(targetChunkX, targetChunkY);
+        if (!loadedChunks.contains(dummy)) {
+            int regionX = Math.floorDiv(targetChunkX, RegionManager.REGION_SIZE);
+            int regionY = Math.floorDiv(targetChunkY, RegionManager.REGION_SIZE);
+            RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
+            int localX = Math.floorMod(targetChunkX, RegionManager.REGION_SIZE);
+            int localY = Math.floorMod(targetChunkY, RegionManager.REGION_SIZE);
+            byte[] data = null;
+            try {
+                data = regionFile.readChunk(localX, localY);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Chunk chunk;
+            if (data != null) {
+                chunk = ChunkIO.deserialize(data, physicsWorld);
+            } else {
+                chunk = new Chunk(targetChunkX, targetChunkY);
+                worldGenerator.generateChunk(chunk, trees);
+            }
+            loadedChunks.add(chunk);
+            return chunk;
+        }
+        return null;
+    }
     public void loadMobsAroundPlayer(Player player) {
         for (int x_offset = -MOB_DISTANCE - 1; x_offset <= MOB_DISTANCE; x_offset++) {
             for (int y_offset = -MOB_DISTANCE; y_offset <= MOB_DISTANCE; y_offset++) {

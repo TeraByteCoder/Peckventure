@@ -10,6 +10,8 @@ public abstract class Block extends Actor
 {
     public static final int BLOCK_SIZE = 32; // Blockgröße in Pixel
 
+    protected boolean isCollisionEnabled = true;
+
     private final World world;
     private Body body;
     private final Texture texture;
@@ -109,5 +111,9 @@ public abstract class Block extends Actor
     public String toString()
     {
         return(this.getClass().getSimpleName());
+    }
+
+    public boolean isCollisionEnabled() {
+        return isCollisionEnabled;
     }
 }

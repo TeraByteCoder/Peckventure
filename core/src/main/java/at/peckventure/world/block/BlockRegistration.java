@@ -8,6 +8,8 @@ public class BlockRegistration
     public static final int GRASS_ID = 2;
     public static final int GRASSRAMPLEFT_ID = 3;
     public static final int GRASSRAMPRIGHT_ID = 4;
+    public static final int SPRUCE_LOG_ID = 5;
+    public static final int SPRUCE_LEAVES_ID = 6;
 
     static
     {
@@ -15,6 +17,8 @@ public class BlockRegistration
         BlockRegistry.registerBlock(GRASS_ID, GrassBlock.class, (world, worldX, worldY, args) -> new GrassBlock(world, worldX, worldY));
         BlockRegistry.registerBlock(GRASSRAMPLEFT_ID, GrassRamp.class, (world, worldX, worldY, args) -> new GrassRamp(world, worldX, worldY, true));
         BlockRegistry.registerBlock(GRASSRAMPRIGHT_ID, GrassRamp.class, (world, worldX, worldY, args) -> new GrassRamp(world, worldX, worldY, false));
+        BlockRegistry.registerBlock(SPRUCE_LOG_ID, SpruceLogBlock.class, (world, worldX, worldY, args) -> new SpruceLogBlock(world, worldX, worldY));
+        BlockRegistry.registerBlock(SPRUCE_LEAVES_ID, SpruceLeavesBlock.class, (world, worldX, worldY, args) -> new SpruceLeavesBlock(world, worldX, worldY));
     }
 
     // Optional: Diese Methode aufrufen, damit die statische Initialisierung ausgelöst wird.

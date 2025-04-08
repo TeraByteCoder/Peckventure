@@ -28,6 +28,11 @@ public class ServerTileMap extends AbstractTileMap {
     public static final float MOB_UPDATE_RADIUS = 1000f; // z. B. 500 Pixel oder passe den Wert an
     public static final int MOB_UNLOAD_DISTANCE = MOB_DISTANCE + 2;
 
+    private static final int LOAD_DISTANCE = 6;  // Größerer Radius zum Vorladen
+    private static final int SEND_DISTANCE = 3;  // Kleinerer Radius zum Senden
+    private static final int MOB_LOAD_DISTANCE = 6;
+    private static final int MOB_SEND_DISTANCE = 4;
+
 
 
     // Globaler Chunk-Pool (wird z. B. zum Caching genutzt – stammt aus der Oberklasse)
@@ -57,6 +62,36 @@ public class ServerTileMap extends AbstractTileMap {
     public void unloadChunksOutsideRenderDistance(Player player) {
         // Wird jetzt im per-Spieler-Update (updateChunksForPlayer) gehandhabt.
     }
+
+    @Override
+    public Chunk loadChunk(int targetChunkX, int targetChunkY, boolean trees) {
+        Chunk dummy = new Chunk(targetChunkX, targetChunkY);
+        if (!loadedChunks.contains(dummy)) {
+            int regionX = Math.floorDiv(targetChunkX, RegionManager.REGION_SIZE);
+            int regionY = Math.floorDiv(targetChunkY, RegionManager.REGION_SIZE);
+            RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
+            int localX = Math.floorMod(targetChunkX, RegionManager.REGION_SIZE);
+            int localY = Math.floorMod(targetChunkY, RegionManager.REGION_SIZE);
+            byte[] data = null;
+            try {
+                data = regionFile.readChunk(localX, localY);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Chunk chunk;
+            if (data != null) {
+                chunk = ChunkIO.deserialize(data, physicsWorld);
+            } else {
+                chunk = new Chunk(targetChunkX, targetChunkY);
+                worldGenerator.generateChunk(chunk, trees);
+            }
+            loadedChunks.add(chunk);
+            return chunk;
+        }
+        return null;
+    }
+
+
 
     public void updateMobsForPlayer(ServerPlayer player) {
         // Erstelle ein neues MobUpdatePacket
@@ -228,37 +263,35 @@ public class ServerTileMap extends AbstractTileMap {
      * Fehlende Chunks werden geladen und an den Spieler gesendet, nicht mehr benötigte werden aus seinem Set entfernt.
      */
     public void updateChunksForPlayer(ServerPlayer player) {
-        // Hole oder initialisiere das Set für diesen Spieler
         Set<Chunk> loadedForPlayer = playerLoadedChunks.computeIfAbsent(player, k -> new HashSet<>());
 
-        // Berechne alle Chunks, die der Spieler aktuell im Sichtbereich (RENDER_DISTANCE) benötigt
-        Set<Chunk> requiredChunks = new HashSet<>();
-        for (int xOffset = -RENDER_DISTANCE - 1; xOffset <= RENDER_DISTANCE; xOffset++) {
-            for (int yOffset = -RENDER_DISTANCE; yOffset <= RENDER_DISTANCE; yOffset++) {
-                int targetChunkX = player.getChunkX() + xOffset;
-                int targetChunkY = player.getChunkY() + yOffset;
-                // Erstelle einen Dummy-Chuck, der nur die Koordinaten repräsentiert
-                requiredChunks.add(new Chunk(targetChunkX, targetChunkY));
-            }
-        }
+        // 1. Lade alle Chunks im großen Radius (LOAD_DISTANCE)
+        Set<Chunk> chunksToLoad = calculateChunkRadius(player, LOAD_DISTANCE);
 
-        // Lade alle benötigten Chunks, die im Spieler-Set noch fehlen
-        for (Chunk required : requiredChunks) {
-            if (!loadedForPlayer.contains(required)) {
+        // 2. Bestimme welche Chunks gesendet werden sollen (kleinerer Radius)
+        Set<Chunk> chunksToSend = calculateChunkRadius(player, SEND_DISTANCE);
+
+        // Lade und halte Chunks im Speicher
+        for (Chunk required : chunksToLoad) {
+            if (!loadedChunks.contains(required)) {
                 Chunk actualChunk = getOrLoadChunk(required.getChunkX(), required.getChunkY());
-                loadedForPlayer.add(actualChunk);
-                // Sende den Chunk an den Spieler
-                NetworkPackets.ChunkDataPacket dataPacket = new NetworkPackets.ChunkDataPacket();
-                dataPacket.data = ChunkIO.serialize(actualChunk);
-                player.getConnection().sendTCP(dataPacket);
+                loadedChunks.add(actualChunk);
             }
         }
 
-        // Entferne alle Chunks, die nicht mehr im Sichtbereich des Spielers liegen
+        // Sende nur Chunks im kleineren Radius
+        for (Chunk chunk : loadedChunks) {
+            if (chunksToSend.contains(chunk) && !loadedForPlayer.contains(chunk)) {
+                sendChunkToPlayer(player, chunk);
+                loadedForPlayer.add(chunk);
+            }
+        }
+
+        // Entferne nicht mehr benötigte Chunks aus dem Spieler-Set
         Iterator<Chunk> it = loadedForPlayer.iterator();
         while (it.hasNext()) {
             Chunk chunk = it.next();
-            if (!requiredChunks.contains(chunk)) {
+            if (!chunksToSend.contains(chunk)) {
                 it.remove();
             }
         }
@@ -293,7 +326,7 @@ public class ServerTileMap extends AbstractTileMap {
             chunk = ChunkIO.deserialize(data, physicsWorld);
         } else {
             chunk = new Chunk(chunkX, chunkY);
-            worldGenerator.generateChunk(chunk);
+            worldGenerator.generateChunk(chunk, true);
         }
         loadedChunks.add(chunk);
         return chunk;
@@ -342,4 +375,24 @@ public class ServerTileMap extends AbstractTileMap {
             updateChunksForPlayer(player);
         }
     }
+
+    private void sendChunkToPlayer(ServerPlayer player, Chunk chunk) {
+        NetworkPackets.ChunkDataPacket packet = new NetworkPackets.ChunkDataPacket();
+        packet.data = ChunkIO.serialize(chunk);
+        player.getConnection().sendTCP(packet);
+    }
+
+    private Set<Chunk> calculateChunkRadius(ServerPlayer player, int distance) {
+        Set<Chunk> chunks = new HashSet<>();
+        for (int x = -distance; x <= distance; x++) {
+            for (int y = -distance; y <= distance; y++) {
+                chunks.add(new Chunk(
+                    player.getChunkX() + x,
+                    player.getChunkY() + y
+                ));
+            }
+        }
+        return chunks;
+    }
+
 }
