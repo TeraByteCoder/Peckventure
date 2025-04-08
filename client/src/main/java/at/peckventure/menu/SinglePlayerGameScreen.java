@@ -8,6 +8,7 @@ import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.SinglePlayerInventoryManager;
+import at.peckventure.rpc.DiscordPresence;
 import at.peckventure.ui.DebugOverlay;
 import at.peckventure.ui.EnergyUI;
 import at.peckventure.ui.HealthUI;
@@ -31,6 +32,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
+
 public class SinglePlayerGameScreen extends GameScreen {
 
     private final String worldName;
@@ -49,8 +51,12 @@ public class SinglePlayerGameScreen extends GameScreen {
         this.worldName = worldName;
     }
 
+
+
     @Override
     public void show() {
+        DiscordPresence.updateToIngameSP(worldName);
+
         super.show();
 
         // Chat initialisieren
@@ -151,6 +157,37 @@ public class SinglePlayerGameScreen extends GameScreen {
             }
         });
 
+        TextButton returnToMenuButton = new TextButton("Return to Main Menu", buttonStyle);
+        returnToMenuButton.setSize(300, 80);
+        returnToMenuButton.setPosition(
+            (pauseStage.getViewport().getWorldWidth() - returnToMenuButton.getWidth()) / 2f,
+            (pauseStage.getViewport().getWorldHeight() - returnToMenuButton.getHeight()) / 2f - 120
+        );
+        returnToMenuButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Welt speichern
+                WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
+
+                tilemap.stopChunkUpdateThread();
+
+                ControlledPlayer.getInstance().remove();
+
+                dispose();
+
+
+                // Discord Presence zurücksetzen
+                DiscordPresence.start();
+
+
+
+                game.setScreen(new MainMenu(game));
+            }
+        });
+        pauseStage.addActor(returnToMenuButton);
+
+
+
         // Dynamisch weiße Textur erzeugen
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.WHITE);
@@ -178,6 +215,9 @@ public class SinglePlayerGameScreen extends GameScreen {
             player.act(delta);
             stage.act(delta);
             uiStage.act(delta);
+            DiscordPresence.updateToIngameSP(worldName);
+
+
         }
 
         camera.position.set(
@@ -210,6 +250,7 @@ public class SinglePlayerGameScreen extends GameScreen {
             batch.end();
             pauseStage.act(delta);
             pauseStage.draw();
+            DiscordPresence.updateToPaused();
         }
     }
 

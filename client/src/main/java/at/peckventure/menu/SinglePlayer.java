@@ -13,82 +13,81 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 
 import static at.peckventure.Const.savesDir;
 
-public class SinglePlayer implements Screen
-{
+public class SinglePlayer implements Screen {
     private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
     private Label titleLabel;
-    private Table worldTable; // Enthält die Welt-Buttons
-    private BitmapFont font; // Schriftart für Buttons
+    private Table worldTable;
+    private BitmapFont font;
+    private JsonValue texts;
 
-    public SinglePlayer(Game game)
-    {
+    public SinglePlayer(Game game) {
         this.game = game;
     }
 
     @Override
-    public void show()
-    {
+    public void show() {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
-        // 📌 Standard-Schriftart erstellen
+        // Schriftart
         font = new BitmapFont();
 
-        // 🎨 Hintergrundbild
+        // Hintergrund
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // 📌 Titel oben
+        // Sprachdatei laden
+        String langCode = GameSettings.getLanguage();
+        texts = new JsonReader().parse(Gdx.files.internal("lang/" + langCode + ".json"));
+
+        // Titel
         Label.LabelStyle titleStyle = new Label.LabelStyle();
         titleStyle.font = font;
-        titleLabel = new Label("Singleplayer", titleStyle);
+        titleLabel = new Label(getText("menu.singleplayer", "Singleplayer"), titleStyle);
         titleLabel.setFontScale(2f);
         titleLabel.setAlignment(Align.center);
 
-        // 🔘 Button-Stil mit eigener Textur
+        // Button-Stil
         Texture buttonTexture = new Texture("textures/gui/button1.png");
         TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.up = buttonDrawable;
         buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font; // ✅ Jetzt wird die Schriftart gesetzt
+        buttonStyle.font = font;
 
-        TextButton createWorldButton = new TextButton("Create World", buttonStyle);
-        TextButton backButton = new TextButton("Back", buttonStyle);
+        // Buttons
+        TextButton createWorldButton = new TextButton(getText("menu.create_world", "Create World"), buttonStyle);
+        TextButton backButton = new TextButton(getText("menu.back", "Back"), buttonStyle);
 
-        // 📌 Scrollbare Liste für Welten
+        // Welten-Liste
         worldTable = new Table();
-        worldTable.top().pad(20); // 20 Pixel Padding oben & unten
+        worldTable.top().pad(20);
 
         ScrollPane scrollPane = new ScrollPane(worldTable);
-        scrollPane.setScrollingDisabled(true, false); // Horizontal deaktiviert, vertikal aktiv
+        scrollPane.setScrollingDisabled(true, false);
 
-        loadWorlds(savesDir); // Lade alle vorhandenen Welten
-        // 📌 Speicherpfad ausgeben
-        System.out.println("Welten werden gespeichert unter: " + savesDir.file().getAbsolutePath());
+        loadWorlds(savesDir);
 
-        // 📌 Hauptlayout
+        // Layout
         Table rootTable = new Table();
         rootTable.setFillParent(true);
 
-        // Titel hinzufügen
         rootTable.top();
         rootTable.add(titleLabel).padTop(50).expandX().center();
         rootTable.row();
-
-        // ScrollPane mit Welten
         rootTable.add(scrollPane).expand().fill().pad(20);
         rootTable.row();
 
-        // 📌 Buttons unten nebeneinander setzen
         Table buttonTable = new Table();
         buttonTable.add(createWorldButton).size(300, 80).pad(10);
         buttonTable.add(backButton).size(300, 80).pad(10);
@@ -97,110 +96,82 @@ public class SinglePlayer implements Screen
 
         stage.addActor(rootTable);
 
-        // Button-Events
-        createWorldButton.addListener(new ClickListener()
-        {
+        // Button Events
+        createWorldButton.addListener(new ClickListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y)
-            {
+            public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new CreateWorld(game));
             }
         });
 
-        backButton.addListener(new ClickListener()
-        {
+        backButton.addListener(new ClickListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y)
-            {
+            public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new MainMenu(game));
             }
         });
     }
 
-    // 📌 Methode zum Laden der Welten
-    private void loadWorlds(FileHandle savesDir)
-    {
+    private String getText(String key, String fallback) {
+        return texts.has(key) ? texts.getString(key) : fallback;
+    }
+
+    private void loadWorlds(FileHandle savesDir) {
         FileHandle[] worldDirs = savesDir.list();
-        for (FileHandle world : worldDirs)
-        {
-            if (world.isDirectory())
-            { // Nur Verzeichnisse als Welten anzeigen
+        for (FileHandle world : worldDirs) {
+            if (world.isDirectory()) {
                 addWorldButton(world.name());
             }
         }
     }
 
-    // 📌 Fügt einen Button für eine gespeicherte Welt hinzu
-    private void addWorldButton(final String worldName)
-    {
-        // Verwende denselben Button-Stil wie "Create World" & "Back"
+    private void addWorldButton(final String worldName) {
         Texture buttonTexture = new Texture("textures/gui/button1.png");
         TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
 
         TextButton.TextButtonStyle worldButtonStyle = new TextButton.TextButtonStyle();
         worldButtonStyle.up = buttonDrawable;
         worldButtonStyle.down = buttonDrawable;
-        worldButtonStyle.font = font; // ✅ Jetzt hat er dieselbe Schriftart
+        worldButtonStyle.font = font;
 
-        // Welt-Button erstellen
         TextButton worldButton = new TextButton(worldName, worldButtonStyle);
         worldButton.getLabel().setFontScale(1.5f);
         worldButton.pad(10);
         worldButton.setSize(300, 60);
 
-        // Klick-Event für Welt-Button
-        worldButton.addListener(new ClickListener()
-        {
+        worldButton.addListener(new ClickListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y)
-            {
-                game.setScreen(new SinglePlayerGameScreen(game, worldName)); // Wechselt zur Spielwelt
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new SinglePlayerGameScreen(game, worldName));
             }
         });
 
-
-        // Button zur Scroll-Tabelle hinzufügen
         worldTable.add(worldButton).size(400, 80).padBottom(10).row();
     }
 
-
     @Override
-    public void render(float delta)
-    {
+    public void render(float delta) {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
     }
 
     @Override
-    public void resize(int i, int i1)
-    {
-
-    }
+    public void resize(int i, int i1) { }
 
     @Override
-    public void pause()
-    {
-
-    }
+    public void pause() { }
 
     @Override
-    public void resume()
-    {
-
-    }
+    public void resume() { }
 
     @Override
-    public void hide()
-    {
-
-    }
+    public void hide() { }
 
     @Override
-    public void dispose()
-    {
+    public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
-        font.dispose(); // ✅ Speicher aufräumen
+        font.dispose();
     }
 }

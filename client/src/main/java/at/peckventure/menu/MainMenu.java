@@ -1,28 +1,29 @@
 package at.peckventure.menu;
 
-import at.peckventure.SettingsManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class MainMenu implements Screen {
     private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
-    private Label titleLabel;
+    private Skin skin;
+    private JsonValue texts;
 
     public MainMenu(Game game) {
         this.game = game;
@@ -33,45 +34,41 @@ public class MainMenu implements Screen {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
-        // Hintergrund laden
+        // Hintergrundbild laden
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Titel erstellen
-        Label.LabelStyle titleStyle = new Label.LabelStyle();
-        titleStyle.font = new BitmapFont();
-        titleLabel = new Label("Peckventure", titleStyle);
-        titleLabel.setFontScale(2f);
-        titleLabel.setAlignment(Align.center);
+        // Skin laden
+        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
-        // Button-Stil definieren
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = new BitmapFont();
+        // Sprachdatei laden wie im Settings-Menü
+        String langCode = GameSettings.getLanguage(); // z. B. "de_at"
+        texts = new JsonReader().parse(Gdx.files.internal("lang/" + langCode + ".json"));
 
-        // Buttons erstellen
-        TextButton singlePlayerButton = new TextButton("SinglePlayer", buttonStyle);
-        TextButton multiPlayerButton = new TextButton("MultiPlayer", buttonStyle);
-        TextButton creditsButton = new TextButton("Credits", buttonStyle);
-        TextButton settingsButton = new TextButton("Einstellungen", buttonStyle);
-        TextButton exitButton = new TextButton("Beenden", buttonStyle);
-
-        // Tabellenlayout
+        // Tabelle für Layout
         Table rootTable = new Table();
         rootTable.setFillParent(true);
-        Table buttonTable = new Table();
+        rootTable.align(Align.top);
+        stage.addActor(rootTable);
 
-        // Titel platzieren
-        rootTable.top();
+        // Titel
+        Label titleLabel = new Label("Peckventure", skin); // Spielname bleibt konstant
+        titleLabel.setFontScale(2f);
+        titleLabel.setAlignment(Align.center);
         rootTable.add(titleLabel).padTop(50).expandX().center();
         rootTable.row();
 
-        // Buttons platzieren
+        // Buttons
+        final TextButton singlePlayerButton = new TextButton(getText("menu.singleplayer", "Einzelspieler"), skin);
+        final TextButton multiPlayerButton = new TextButton(getText("menu.multiplayer", "Mehrspieler"), skin);
+        final TextButton creditsButton = new TextButton(getText("menu.credits", "Mitwirkende"), skin);
+        final TextButton settingsButton = new TextButton(getText("menu.settings", "Einstellungen"), skin);
+        final TextButton exitButton = new TextButton(getText("menu.quit", "Beenden"), skin);
+
+        // Button-Tabelle
+        Table buttonTable = new Table();
         buttonTable.center();
         buttonTable.add(singlePlayerButton).size(300, 80).pad(20);
         buttonTable.row();
@@ -84,38 +81,39 @@ public class MainMenu implements Screen {
         buttonTable.add(exitButton).size(300, 80).pad(20);
 
         rootTable.add(buttonTable).expandY().center();
-        stage.addActor(rootTable);
 
-        // Button-Events
-        singlePlayerButton.addListener(new ClickListener() {
+        // Button-Aktionen
+        singlePlayerButton.addListener(new ChangeListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void changed(ChangeEvent event, Actor actor) {
                 game.setScreen(new SinglePlayer(game));
             }
         });
 
-        settingsButton.addListener(new ClickListener() {
+        multiPlayerButton.addListener(new ChangeListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
-                // Wechselt zu deinem Settings-Screen, in dem Musiklautstärke und VSync
-                // über GameSettings verwaltet werden.
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new MultiPlayer(game));
+            }
+        });
+
+        settingsButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
                 game.setScreen(new Settings(game));
             }
         });
 
-        exitButton.addListener(new ClickListener() {
+        exitButton.addListener(new ChangeListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void changed(ChangeEvent event, Actor actor) {
                 Gdx.app.exit();
             }
         });
+    }
 
-        multiPlayerButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new MultiPlayer(game));
-            }
-        });
+    private String getText(String key, String fallback) {
+        return texts.has(key) ? texts.getString(key) : fallback;
     }
 
     @Override
@@ -127,7 +125,7 @@ public class MainMenu implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        // Hier kannst du den Stage-Viewport aktualisieren, falls benötigt
+        stage.getViewport().update(width, height, true);
     }
 
     @Override

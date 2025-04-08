@@ -42,5 +42,8 @@
   "menu.fullscreen": "Vollbild",
   "menu.video": "Video",
   "menu.audio": "Audio",
-  "menu.world_save_path": "Welten werden gespeichert unter: "
+  "menu.world_save_path": "Welten werden gespeichert unter: ",
+  "menu.world_name_placeholder": "Neue Welt",
+  "menu.world_seed_placeholder": "Seed",
+  "menu.create_world_button": "Welt erstellen"
 }

@@ -14,10 +14,10 @@ public enum Textures
     INVENTORY_SLOT("textures/inventory_slot.png"),
     TEST_ITEM("textures/items/test_item.png"),
     SPEED_POTION("textures/items/speed_potion.png"),
-    PHYTON("textures/criters/garden_foliage_beetle_idle.png"),
     WOOD("textures/items/wood.png"),
     SPRUCE_LOG("textures/blocks/log_spruce.png"),
     SPRUCE_LEAVES("textures/blocks/leaves_spruce.png"),
+    PHYTON("textures/mobs/cobra.png"),
 
 
     ;

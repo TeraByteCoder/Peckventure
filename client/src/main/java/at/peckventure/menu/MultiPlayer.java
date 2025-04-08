@@ -18,6 +18,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 
 public class MultiPlayer implements Screen {
     private final Game game;
@@ -28,6 +30,7 @@ public class MultiPlayer implements Screen {
     private Table serverTable;
     private BitmapFont font;
     private FileHandle serverDataFile;
+    private JsonValue texts;
 
     public MultiPlayer(Game game) {
         this.game = game;
@@ -35,6 +38,11 @@ public class MultiPlayer implements Screen {
 
     @Override
     public void show() {
+        // Sprachdatei laden
+        String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
+        JsonReader reader = new JsonReader();
+        texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
+
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
         font = new BitmapFont();
@@ -42,19 +50,27 @@ public class MultiPlayer implements Screen {
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
+
         Label.LabelStyle titleStyle = new Label.LabelStyle();
         titleStyle.font = font;
-        titleLabel = new Label("Multiplayer", titleStyle);
+        String titleText = texts.has("menu.multiplayer") ? texts.getString("menu.multiplayer") : "Multiplayer";
+        titleLabel = new Label(titleText, titleStyle);
         titleLabel.setFontScale(2f);
         titleLabel.setAlignment(Align.center);
+
         Texture buttonTexture = new Texture("textures/gui/button1.png");
         TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.up = buttonDrawable;
         buttonStyle.down = buttonDrawable;
         buttonStyle.font = font;
-        TextButton addServerButton = new TextButton("Add Server", buttonStyle);
-        TextButton backButton = new TextButton("Back", buttonStyle);
+
+        // Übersetzte Buttons
+        String addServerText = texts.has("menu.add_server") ? texts.getString("menu.add_server") : "Add Server";
+        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
+        TextButton addServerButton = new TextButton(addServerText, buttonStyle);
+        TextButton backButton = new TextButton(backButtonText, buttonStyle);
+
         serverTable = new Table();
         serverTable.top().pad(20);
         ScrollPane scrollPane = new ScrollPane(serverTable);
@@ -64,6 +80,7 @@ public class MultiPlayer implements Screen {
             serverDataFile.writeString("", false);
         }
         loadServers();
+
         Table rootTable = new Table();
         rootTable.setFillParent(true);
         rootTable.top();
@@ -76,12 +93,14 @@ public class MultiPlayer implements Screen {
         buttonTable.add(backButton).size(300, 80).pad(10);
         rootTable.add(buttonTable).padBottom(10).expandX().bottom();
         stage.addActor(rootTable);
+
         addServerButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new AddServerScreen(game));
             }
         });
+
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

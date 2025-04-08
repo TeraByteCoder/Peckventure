@@ -16,6 +16,7 @@ public class Lwjgl3Launcher {
         DiscordPresence.start();
 
         createApplication();
+
     }
 
     private static Lwjgl3Application createApplication() {
@@ -46,7 +47,7 @@ public class Lwjgl3Launcher {
         configuration.setWindowedMode(width, height);
 
         // Fenster-Icons bleiben unverändert
-        configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
+        configuration.setWindowIcon("peckventure128.png", "peckvenutre64.png", "peckventure32.png", "peckventure16.png");
         return configuration;
     }
 }
