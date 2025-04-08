@@ -227,7 +227,7 @@ public class SinglePlayerGameScreen extends GameScreen {
             player.getY() + player.getHeight() / 2,
             0
         );
-        camera.zoom = 2.0f;
+        camera.zoom = 1.0f;
         camera.update();
         backgroundStage.draw();
 

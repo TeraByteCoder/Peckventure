@@ -10,8 +10,11 @@ import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.physics.box2d.World;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -21,6 +24,80 @@ import static at.peckventure.Globals.uuid;
 
 public class WorldIO
 {
+    private static final Gson gson = new Gson();
+    private static final Type MOB_LIST_TYPE = new TypeToken<List<MobIO.MobData>>(){}.getType();
+
+    /**
+     * Gruppiert die Mobs nach ihrer Chunk-Position
+     */
+    private static Map<String, List<Mob>> groupMobsByChunk(Collection<Mob> mobCollection) {
+        Map<String, List<Mob>> mobsByChunk = new HashMap<>();
+
+        for (Mob mob : mobCollection) {
+            String chunkKey = getChunkKey(mob.getChunkX(), mob.getChunkY());
+
+            if (!mobsByChunk.containsKey(chunkKey)) {
+                mobsByChunk.put(chunkKey, new ArrayList<>());
+            }
+            mobsByChunk.get(chunkKey).add(mob);
+        }
+
+        return mobsByChunk;
+    }
+
+    /**
+     * Erzeugt einen eindeutigen Schlüssel für die Chunk-Position
+     */
+    private static String getChunkKey(int chunkX, int chunkY) {
+        return chunkX + ":" + chunkY;
+    }
+
+    /**
+     * Speichert alle Mobs für einen bestimmten Chunk in der entsprechenden Regionsdatei
+     */
+    private static void saveMobsForChunk(MobRegionManager mobRegionManager, int chunkX, int chunkY, List<Mob> mobsToSave) {
+        int regionX = Math.floorDiv(chunkX, MobRegionManager.REGION_SIZE);
+        int regionY = Math.floorDiv(chunkY, MobRegionManager.REGION_SIZE);
+        MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
+        int localX = Math.floorMod(chunkX, MobRegionManager.REGION_SIZE);
+        int localY = Math.floorMod(chunkY, MobRegionManager.REGION_SIZE);
+
+        try {
+            // Lese vorhandene Mobs, falls vorhanden
+            byte[] existingMobData = mobRegionFile.readMobs(localX, localY);
+            List<MobIO.MobData> allMobData = new ArrayList<>();
+
+            if (existingMobData != null) {
+                String existingJson = new String(existingMobData, StandardCharsets.UTF_8);
+                // Prüfe, ob es sich um ein JSON-Array handelt
+                if (existingJson.startsWith("[") && existingJson.endsWith("]")) {
+                    allMobData = gson.fromJson(existingJson, MOB_LIST_TYPE);
+                } else {
+                    // Es handelt sich um einen einzelnen Mob
+                    MobIO.MobData singleMob = gson.fromJson(existingJson, MobIO.MobData.class);
+                    if (singleMob != null) {
+                        allMobData.add(singleMob);
+                    }
+                }
+            }
+
+            // Serialisiere alle neuen Mobs und füge sie zur Liste hinzu
+            for (Mob mob : mobsToSave) {
+                String mobJson = MobIO.serializeToJson(mob);
+                MobIO.MobData mobData = gson.fromJson(mobJson, MobIO.MobData.class);
+                allMobData.add(mobData);
+            }
+
+            // Speichere alle Mobs zusammen
+            String finalJson = gson.toJson(allMobData);
+            byte[] combinedMobData = finalJson.getBytes(StandardCharsets.UTF_8);
+            mobRegionFile.writeMobs(localX, localY, combinedMobData);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void saveWorld(String worldName, WorldConfig config, Set<Chunk> loadedChunks, HashMap<String, Player> players)
     {
         FileHandle worldDir = Gdx.files.absolute(savesDir + "/" + worldName);
@@ -60,24 +137,23 @@ public class WorldIO
             }
         }
         regionManager.closeAll();
+
+        // Gruppiere Mobs nach Chunk für besseres Speichern
         MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
-        for (Mob mob : mobs.values())
-        {
-            int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
-            int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
-            MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
-            int localX = Math.floorMod(mob.getChunkX(), MobRegionManager.REGION_SIZE);
-            int localY = Math.floorMod(mob.getChunkY(), MobRegionManager.REGION_SIZE);
-            String mobJson = MobIO.serializeToJson(mob);
-            byte[] mobData = mobJson.getBytes(StandardCharsets.UTF_8);
-            try
-            {
-                mobRegionFile.writeMobs(localX, localY, mobData);
-            } catch (IOException e)
-            {
-                e.printStackTrace();
+        Map<String, List<Mob>> mobsByChunk = groupMobsByChunk(mobs.values());
+
+        // Speichere alle Mobs für jeden Chunk
+        for (Map.Entry<String, List<Mob>> entry : mobsByChunk.entrySet()) {
+            String[] parts = entry.getKey().split(":");
+            int chunkX = Integer.parseInt(parts[0]);
+            int chunkY = Integer.parseInt(parts[1]);
+            List<Mob> chunkMobs = entry.getValue();
+
+            if (!chunkMobs.isEmpty()) {
+                saveMobsForChunk(mobRegionManager, chunkX, chunkY, chunkMobs);
             }
         }
+
         mobRegionManager.closeAll();
     }
 
@@ -111,24 +187,23 @@ public class WorldIO
             }
         }
         regionManager.closeAll();
+
+        // Gruppiere Mobs nach Chunk für besseres Speichern
         MobRegionManager mobRegionManager = new MobRegionManager(worldDir);
-        for (Mob mob : mobs.values())
-        {
-            int regionX = Math.floorDiv(mob.getChunkX(), MobRegionManager.REGION_SIZE);
-            int regionY = Math.floorDiv(mob.getChunkY(), MobRegionManager.REGION_SIZE);
-            MobRegionFile mobRegionFile = mobRegionManager.getMobRegionFile(regionX, regionY);
-            int localX = Math.floorMod(mob.getChunkX(), MobRegionManager.REGION_SIZE);
-            int localY = Math.floorMod(mob.getChunkY(), MobRegionManager.REGION_SIZE);
-            String mobJson = MobIO.serializeToJson(mob);
-            byte[] mobData = mobJson.getBytes(StandardCharsets.UTF_8);
-            try
-            {
-                mobRegionFile.writeMobs(localX, localY, mobData);
-            } catch (IOException e)
-            {
-                e.printStackTrace();
+        Map<String, List<Mob>> mobsByChunk = groupMobsByChunk(mobs.values());
+
+        // Speichere alle Mobs für jeden Chunk
+        for (Map.Entry<String, List<Mob>> entry : mobsByChunk.entrySet()) {
+            String[] parts = entry.getKey().split(":");
+            int chunkX = Integer.parseInt(parts[0]);
+            int chunkY = Integer.parseInt(parts[1]);
+            List<Mob> chunkMobs = entry.getValue();
+
+            if (!chunkMobs.isEmpty()) {
+                saveMobsForChunk(mobRegionManager, chunkX, chunkY, chunkMobs);
             }
         }
+
         mobRegionManager.closeAll();
     }
 
@@ -227,31 +302,44 @@ public class WorldIO
                         {
                             for (int localY = 0; localY < MobRegionManager.REGION_SIZE; localY++)
                             {
-                                if (singlePlayerData != null)
-                                {
-                                    int mobChunkX = regionX * MobRegionManager.REGION_SIZE + localX;
-                                    int mobChunkY = regionY * MobRegionManager.REGION_SIZE + localY;
-                                    if (Math.abs(mobChunkX - Globals.toChunkCoords(singlePlayerData.getPlayerX())) <= AbstractTileMap.MOB_DISTANCE && Math.abs(mobChunkY - Globals.toChunkCoords(singlePlayerData.getPlayerY())) <= AbstractTileMap.MOB_DISTANCE)
-                                    {
-                                        byte[] mobData = mobRegionFile.readMobs(localX, localY);
-                                        if (mobData != null)
-                                        {
-                                            String mobJson = new String(mobData, StandardCharsets.UTF_8);
-                                            Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
-                                            loadedMobs.add(mob);
-                                        }
-                                    }
-                                }
                                 int mobChunkX = regionX * MobRegionManager.REGION_SIZE + localX;
                                 int mobChunkY = regionY * MobRegionManager.REGION_SIZE + localY;
-                                if (Math.abs(mobChunkX) <= AbstractTileMap.MOB_DISTANCE && Math.abs(mobChunkY) <= AbstractTileMap.MOB_DISTANCE)
+                                boolean inRangeOfPlayer = false;
+
+                                if (singlePlayerData != null)
+                                {
+                                    inRangeOfPlayer = Math.abs(mobChunkX - Globals.toChunkCoords(singlePlayerData.getPlayerX())) <= AbstractTileMap.MOB_DISTANCE &&
+                                        Math.abs(mobChunkY - Globals.toChunkCoords(singlePlayerData.getPlayerY())) <= AbstractTileMap.MOB_DISTANCE;
+                                }
+                                else
+                                {
+                                    inRangeOfPlayer = Math.abs(mobChunkX) <= AbstractTileMap.MOB_DISTANCE &&
+                                        Math.abs(mobChunkY) <= AbstractTileMap.MOB_DISTANCE;
+                                }
+
+                                if (inRangeOfPlayer)
                                 {
                                     byte[] mobData = mobRegionFile.readMobs(localX, localY);
                                     if (mobData != null)
                                     {
                                         String mobJson = new String(mobData, StandardCharsets.UTF_8);
-                                        Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
-                                        loadedMobs.add(mob);
+
+                                        // Prüfe, ob es sich um ein JSON-Array handelt
+                                        if (mobJson.startsWith("[") && mobJson.endsWith("]")) {
+                                            // Es handelt sich um eine Liste von Mobs
+                                            List<MobIO.MobData> mobDataList = gson.fromJson(mobJson, MOB_LIST_TYPE);
+
+                                            // Erstelle alle Mobs in der Liste
+                                            for (int i = 0; i < mobDataList.size(); i++) {
+                                                String singleMobJson = gson.toJson(mobDataList.get(i));
+                                                Mob mob = MobIO.deserializeFromJson(singleMobJson, physicsWorld);
+                                                loadedMobs.add(mob);
+                                            }
+                                        } else {
+                                            // Es handelt sich um einen einzelnen Mob
+                                            Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
+                                            loadedMobs.add(mob);
+                                        }
                                     }
                                 }
                             }
@@ -291,7 +379,6 @@ public class WorldIO
 
     public static void createWorld(FileHandle path, long seed)
     {
-
         path.mkdirs();
         WorldConfig config = new WorldConfig(seed);
         FileHandle configFile = path.child("worldconfig.txt");

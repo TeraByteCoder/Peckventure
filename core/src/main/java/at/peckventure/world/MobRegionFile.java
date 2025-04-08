@@ -1,10 +1,20 @@
 package at.peckventure.world;
 
+import at.peckventure.entities.mob.Mob;
+import at.peckventure.entities.mob.MobIO;
+import com.badlogic.gdx.physics.box2d.World;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -15,6 +25,9 @@ public class MobRegionFile {
     private final RandomAccessFile file;
     private final FileChannel channel;
     private final int[] offsets = new int[MOB_CELLS_PER_REGION * MOB_CELLS_PER_REGION];
+
+    // Gson-Typ für Listen von MobData-Objekten
+    private static final Type MOB_LIST_TYPE = new TypeToken<List<MobData>>(){}.getType();
 
     public MobRegionFile(java.io.File filePath) throws IOException {
         file = new RandomAccessFile(filePath, "rw");
@@ -32,6 +45,17 @@ public class MobRegionFile {
         }
     }
 
+    // Innere Klasse zum Speichern mehrerer Mobs
+    static class MobData {
+        int id;
+        float x;
+        float y;
+        String extraItem;
+    }
+
+    /**
+     * Speichert eine Liste von Mobs in einem Chunk
+     */
     public void writeMobs(int localX, int localY, byte[] mobData) throws IOException {
         int index = localX + localY * MOB_CELLS_PER_REGION;
         byte[] compressed = compress(mobData);
@@ -57,6 +81,9 @@ public class MobRegionFile {
         channel.write(entryBuffer, index * 4L);
     }
 
+    /**
+     * Liest Mob-Daten aus einem Chunk
+     */
     public byte[] readMobs(int localX, int localY) throws IOException {
         refreshHeader();
         int index = localX + localY * MOB_CELLS_PER_REGION;
@@ -81,6 +108,9 @@ public class MobRegionFile {
         }
     }
 
+    /**
+     * Komprimiert Daten mit Deflater
+     */
     private byte[] compress(byte[] data) throws IOException {
         Deflater deflater = new Deflater();
         deflater.setInput(data);
@@ -95,6 +125,9 @@ public class MobRegionFile {
         return baos.toByteArray();
     }
 
+    /**
+     * Dekomprimiert Daten mit Inflater
+     */
     private byte[] decompress(byte[] data) throws IOException {
         Inflater inflater = new Inflater();
         inflater.setInput(data);
@@ -112,6 +145,9 @@ public class MobRegionFile {
         return baos.toByteArray();
     }
 
+    /**
+     * Aktualisiert den Header
+     */
     public void refreshHeader() throws IOException {
         ByteBuffer header = ByteBuffer.allocate(HEADER_SIZE);
         channel.read(header, 0);
@@ -121,6 +157,9 @@ public class MobRegionFile {
         }
     }
 
+    /**
+     * Löscht alle Mobs in einem Chunk
+     */
     public void clearMobs(int localX, int localY) throws IOException {
         int index = localX + localY * MOB_CELLS_PER_REGION;
         offsets[index] = 0;
@@ -130,6 +169,9 @@ public class MobRegionFile {
         channel.write(entryBuffer, index * 4L);
     }
 
+    /**
+     * Schließt die Datei
+     */
     public void close() throws IOException {
         channel.close();
         file.close();

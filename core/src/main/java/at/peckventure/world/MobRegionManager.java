@@ -1,7 +1,6 @@
 package at.peckventure.world;
 
 import com.badlogic.gdx.files.FileHandle;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

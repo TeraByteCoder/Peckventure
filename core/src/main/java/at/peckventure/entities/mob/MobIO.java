@@ -27,7 +27,7 @@ public class MobIO {
         }
     }
 
-    static class MobData {
+    public static class MobData {
         int id;
         float x;
         float y;

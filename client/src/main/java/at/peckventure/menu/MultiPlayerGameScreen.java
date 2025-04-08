@@ -243,7 +243,7 @@ public class MultiPlayerGameScreen extends GameScreen
         Box2DOperationManager.processOperations();
         physicsWorld.step(delta, 6, 2);
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
-        camera.zoom = 2.0f;
+        camera.zoom = 1.0f;
         camera.update();
         backgroundStage.draw();
         stage.act(delta);
