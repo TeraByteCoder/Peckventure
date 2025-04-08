@@ -44,6 +44,7 @@ public class SinglePlayerGameScreen extends GameScreen {
     private Box2DDebugRenderer debugRenderer;
 
     private boolean paused = false;
+    private boolean debugOverlayVisible = false;
 
     private Texture pauseButtonTexture;
     private Texture whiteTexture;
@@ -113,6 +114,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
         energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
         debugOverlay = new DebugOverlay(uiStage);
+        // Debug Overlay wird erst bei F3-Druck angezeigt
 
         ControlledPlayer.getInstance().getHealthStatus().setCurrent(playerData.getHealth());
         ControlledPlayer.getInstance().getEnergyStatus().setCurrent(playerData.getEnergy());
@@ -206,6 +208,18 @@ public class SinglePlayerGameScreen extends GameScreen {
         // ESC zum Pausieren/Fortsetzen
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             paused = !paused;
+        }
+
+        // F3 zum Umschalten des Debug-Overlays
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+            debugOverlayVisible = !debugOverlayVisible;
+            if (debugOverlayVisible) {
+                // Debug-Overlay zur Stage hinzufügen, wenn es sichtbar sein soll
+                debugOverlay.show();
+            } else {
+                // Debug-Overlay von der Stage entfernen, wenn es nicht sichtbar sein soll
+                debugOverlay.hide();
+            }
         }
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
