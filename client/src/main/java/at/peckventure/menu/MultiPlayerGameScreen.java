@@ -12,12 +12,16 @@ import at.peckventure.entities.RemotePlayer;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.MultiplayerInventoryManager;
 import at.peckventure.multiplayer.NetworkPackets;
+import at.peckventure.ui.DebugOverlay;
+import at.peckventure.ui.EnergyUI;
+import at.peckventure.ui.HealthUI;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.MultiPlayerMap;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.ChunkIO;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
@@ -30,7 +34,7 @@ public class MultiPlayerGameScreen extends GameScreen
 {
     private Map<String, RemotePlayer> players = new HashMap<>();
     private MultiPlayerMap tilemap;
-
+    private boolean debugOverlayVisible = false;
 
     private String serverHost;
     private int serverPort;
@@ -83,6 +87,10 @@ public class MultiPlayerGameScreen extends GameScreen
 
 
         inventoryUI = new InventoryUI(uiStage, new MultiplayerInventoryManager());
+        healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
+        energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
+        debugOverlay = new DebugOverlay(uiStage);
+        // Debug Overlay wird erst bei F3-Druck angezeigt
 
 
         NetworkClient.init(serverHost, serverPort, serverPort + 222);
@@ -239,6 +247,18 @@ public class MultiPlayerGameScreen extends GameScreen
     @Override
     public void render(float delta)
     {
+        // F3 zum Umschalten des Debug-Overlays
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+            debugOverlayVisible = !debugOverlayVisible;
+            if (debugOverlayVisible) {
+                // Debug-Overlay zur Stage hinzufügen, wenn es sichtbar sein soll
+                debugOverlay.show();
+            } else {
+                // Debug-Overlay von der Stage entfernen, wenn es nicht sichtbar sein soll
+                debugOverlay.hide();
+            }
+        }
+
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         Box2DOperationManager.processOperations();
         physicsWorld.step(delta, 6, 2);
