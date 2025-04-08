@@ -12,12 +12,28 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 
 public class DebugOverlay extends Actor {
     private final BitmapFont font;
+    private final Stage stage;
 
     public DebugOverlay(Stage stage) {
+        this.stage = stage;
         font = new BitmapFont(); // Default-Schriftart
         font.setColor(Color.WHITE);
         // Optional: Schriftgröße und andere Einstellungen anpassen
+        // Konstruktor fügt Actor nicht automatisch zur Stage hinzu
+    }
+
+    /**
+     * Fügt das DebugOverlay zur Stage hinzu
+     */
+    public void show() {
         stage.addActor(this);
+    }
+
+    /**
+     * Entfernt das DebugOverlay von der Stage
+     */
+    public void hide() {
+        this.remove();
     }
 
     @Override
@@ -50,8 +66,8 @@ public class DebugOverlay extends Actor {
 
         StringBuilder sb = new StringBuilder();
         sb.append("FPS: ").append(fps).append("\n")
-                .append(mobcount).append(" mobs\n")
-                .append("Position: ").append(posX).append(" ").append(posY);
+            .append(mobcount).append(" mobs\n")
+            .append("Position: ").append(posX).append(" ").append(posY);
         return sb.toString();
     }
 }
