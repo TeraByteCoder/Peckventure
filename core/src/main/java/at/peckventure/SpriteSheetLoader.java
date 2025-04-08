@@ -1,5 +1,6 @@
 package at.peckventure;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -8,6 +9,9 @@ import com.badlogic.gdx.utils.Array;
 public class SpriteSheetLoader {
 
     public static Animation<TextureRegion> loadRow(String path, int totalCols, int totalRows, int rowIndex, float frameDuration) {
+        if(Gdx.gl == null){
+            return null;
+        }
         Texture sheet = new Texture(path);
         TextureRegion[][] tmp = TextureRegion.split(sheet, sheet.getWidth() / totalCols, sheet.getHeight() / totalRows);
 

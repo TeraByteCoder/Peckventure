@@ -25,6 +25,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -40,6 +41,7 @@ public class SinglePlayerGameScreen extends GameScreen {
     private WorldConfig worldConfig;
     private PlayerData playerData;
     private Player player;
+    private Box2DDebugRenderer debugRenderer;
 
     private boolean paused = false;
 
@@ -241,6 +243,12 @@ public class SinglePlayerGameScreen extends GameScreen {
         stage.draw();
         uiStage.draw();
 
+        //todo debugrenderer
+        //Gdx.gl.glEnable(GL20.GL_BLEND);
+        //debugRenderer.render(physicsWorld, camera.combined);
+        //Gdx.gl.glDisable(GL20.GL_BLEND);
+
+
         if (paused) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             batch.begin();
@@ -273,6 +281,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         tilemap.dispose();
         whiteTexture.dispose();
         pauseButtonTexture.dispose();
+        debugRenderer.dispose();
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
     }
 }

@@ -19,7 +19,7 @@ public class MobRegistration {
         Gdx.app.log("MobRegistration", "Registered Beetle with int ID " + BEETLE_ID + " and string ID " + BEETLE_STRING_ID);
 
         MobRegistry.registerMob(PHYTON_ID, PHYTON_STRING_ID, Phyton.class, (world, x, y, args) -> new Phyton(world, x, y, 10));
-        Gdx.app.log("MobRegistration", "Registered Beetle with int ID " + PHYTON_ID + " and string ID " + PHYTON_STRING_ID);
+        Gdx.app.log("MobRegistration", "Registered Phyton with int ID " + PHYTON_ID + " and string ID " + PHYTON_STRING_ID);
 
         MobRegistry.registerMob(ITEMACTOR_ID, ITEMACTOR_STRING_ID, ItemActor.class, (world, x, y, args) -> {
             if(args != null && args.length > 0 && args[0] instanceof Item) {

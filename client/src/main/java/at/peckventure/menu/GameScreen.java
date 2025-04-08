@@ -2,7 +2,6 @@ package at.peckventure.menu;
 
 import at.peckventure.*;
 import at.peckventure.chat.ChatUI;
-import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
@@ -20,6 +19,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -30,6 +30,8 @@ public abstract class GameScreen implements Screen
     protected final Game game;
     protected ParallaxBackgroundActor background;
     protected OrthographicCamera camera;
+    private Box2DDebugRenderer debugRenderer;
+
     protected SpriteBatch batch;
 
     // Gemeinsame Stages
@@ -61,6 +63,7 @@ public abstract class GameScreen implements Screen
     {
         this.game = game;
         this.physicsWorld = new World(new Vector2(0, -19.81f), true);
+        debugRenderer = new Box2DDebugRenderer(true, true, true, true, true, true);
     }
 
     /**

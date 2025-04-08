@@ -14,6 +14,8 @@ import com.badlogic.gdx.physics.box2d.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static at.peckventure.Textures.*;
+
 public class Phyton extends Mob {
 
     private enum State {
@@ -38,20 +40,17 @@ public class Phyton extends Mob {
 
     public Phyton(World world, float x, float y, float maxHealth) {
         super(world, x, y);
-        setSize(128, 512);
+        setSize(128, 128);
         this.maxHealth = maxHealth;
         this.currentHealth = maxHealth;
 
         direction = Math.random() < 0.5 ? 1f : -1f;
         facingRight = direction > 0;
 
-        int cols = 6; // Anzahl der Frames pro Zeile
-        int rows = 4; // Anzahl der Animationsarten (z. B. idle, walk, attack, death)
-
-        animations.put(State.IDLE, SpriteSheetLoader.loadRow("textures/mobs/cobra.png", cols, rows, 0, 0.2f));
-        animations.put(State.MOVING, SpriteSheetLoader.loadRow("textures/mobs/cobra.png", cols, rows, 1, 0.1f));
-        animations.put(State.ATTACKING, SpriteSheetLoader.loadRow("textures/mobs/cobra.png", cols, rows, 2, 0.08f));
-        animations.put(State.DYING, SpriteSheetLoader.loadRow("textures/mobs/cobra.png", cols, rows, 3, 0.12f));
+        animations.put(State.IDLE, PHYTON_IDLE.getAnimation());
+        animations.put(State.MOVING, PHYTON_MOVING.getAnimation());
+        animations.put(State.ATTACKING, PHYTON_ATTACKING.getAnimation());
+        animations.put(State.DYING, PHYTON_DYING.getAnimation());
 
         Box2DOperationManager.queueOperation(() -> {
             BodyDef bodyDef = new BodyDef();
