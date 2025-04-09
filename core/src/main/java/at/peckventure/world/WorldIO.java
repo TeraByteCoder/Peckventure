@@ -214,8 +214,16 @@ public class WorldIO
         {
             createWorld(worldDir, new Random().nextInt());
         }
-        FileHandle configFile = worldDir.child("worldconfig.txt");
 
+        FileHandle configFile = worldDir.child("worldconfig.txt");
+        // Prüfe, ob die Konfigurationsdatei existiert
+        if (!configFile.exists())
+        {
+            // Wenn nicht, erstelle eine neue Welt mit zufälligem Seed
+            createWorld(worldDir, new Random().nextInt());
+        }
+
+        // Rest der Methode bleibt unverändert
         FileHandle playerdataFolder = worldDir.child("playerData");
         HashSet<String> uuids = PlayerData.getPlayerUUIDs(playerdataFolder);
         Set<PlayerData> players = new HashSet<>();
@@ -228,7 +236,6 @@ public class WorldIO
                 singlePlayerData = playerData;
             }
         }
-
 
         WorldConfig config = WorldConfig.load(configFile);
         Set<Chunk> loadedChunks = new HashSet<>();
