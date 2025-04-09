@@ -38,7 +38,7 @@ import java.util.Set;
 public class GameServer
 {
     public static GameServer instance;
-    private static final String SERVER_FOLDER = "C:\\Users\\Lukas\\Desktop\\peckserver";
+    private static final String DEFAULT_SERVER_FOLDER = System.getenv("APPDATA") + "\\peckventure_server";
     Server server;
     public Set<ServerPlayer> players = new HashSet<>();
     private World physicsWorld;
@@ -57,7 +57,8 @@ public class GameServer
         this.executor = new ChatExecutor();
         physicsWorld = new World(new Vector2(0, -19.81f), true);
         Globals.physicsWorld = physicsWorld;
-        worldFolder = new FileHandle(new File(SERVER_FOLDER + "/world"));
+        String serverFolder = System.getProperty("peckventure.server.folder", DEFAULT_SERVER_FOLDER);
+        worldFolder = new FileHandle(new File(serverFolder + "/world"));
         WorldIO.LoadedWorld loaded = WorldIO.loadWorld(worldFolder, physicsWorld);
         worldConfig = loaded.getConfig();
         WorldGenerator generator = new WorldGenerator(worldConfig.getSeed(), physicsWorld);
