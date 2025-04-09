@@ -10,6 +10,7 @@ import at.peckventure.world.block.Block;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.World;
 import at.peckventure.InputManager;
 
@@ -64,26 +65,75 @@ public class ControlledPlayer extends Player {
     private float accelerationTime = 0f;
     private int lastDirection = 0; // -1 für links, 1 für rechts
 
-    private ControlledPlayer(World world, float x, float y)
-    {
+    private ControlledPlayer(World world, float x, float y) {
         super(world, x, y);
         this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
     }
 
-    public static ControlledPlayer getInstance(World world, float x, float y)
-    {
-        if (instance == null)
-        {
+    /**
+     * Gibt die Singleton-Instanz zurück oder erstellt eine neue, falls keine existiert.
+     * Diese Methode sollte zuerst aufgerufen werden, bevor getInstance() ohne Parameter verwendet wird.
+     */
+    public static ControlledPlayer getInstance(World world, float x, float y) {
+        if (instance == null) {
             instance = new ControlledPlayer(world, x, y);
+        } else {
+            // Wenn eine Instanz bereits existiert, aber neu positioniert werden soll
+            if (instance.getBody() != null) {
+                instance.getBody().setTransform(x / Block.BLOCK_SIZE, y / Block.BLOCK_SIZE, instance.getBody().getAngle());
+            }
         }
         return instance;
     }
 
+    /**
+     * Gibt die existierende Singleton-Instanz zurück.
+     * Wirft eine Exception, wenn die Instanz nicht initialisiert wurde.
+     */
     public static ControlledPlayer getInstance() {
         if (instance == null) {
             throw new IllegalStateException("ControlledPlayer not initialized. Call getInstance(world, x, y) first.");
         }
         return instance;
+    }
+
+    /**
+     * Prüft, ob bereits eine Singleton-Instanz existiert.
+     */
+    public static boolean hasInstance() {
+        return instance != null;
+    }
+
+    /**
+     * Setzt die Singleton-Instanz zurück und gibt alle zugehörigen Ressourcen frei.
+     * Diese Methode sollte aufgerufen werden, wenn man zum Hauptmenü zurückkehrt.
+     */
+    public static void reset() {
+        if (instance != null) {
+            // Den Body aus der Physics-Welt entfernen, falls er noch existiert
+            if (instance.getBody() != null && instance.getBody().getWorld() != null) {
+                // Einfacherer Ansatz ohne getBodyList() und getNext() zu verwenden
+                final Body bodyToDestroy = instance.getBody();
+                Box2DOperationManager.queueOperation(() -> {
+                    try {
+                        if (bodyToDestroy != null && bodyToDestroy.getWorld() != null) {
+                            bodyToDestroy.getWorld().destroyBody(bodyToDestroy);
+                        }
+                    } catch (Exception e) {
+                        // Fehler beim Zerstören des Körpers abfangen
+                        System.err.println("Error destroying player body: " + e.getMessage());
+                    }
+                });
+            }
+
+            // Textur freigeben, falls vorhanden
+            if (instance.sprite != null && instance.sprite.getTexture() != null) {
+                instance.sprite.getTexture().dispose();
+            }
+
+            // Die Instanz auf null setzen
+            instance = null;
+        }
     }
 
     @Override
@@ -179,7 +229,7 @@ public class ControlledPlayer extends Player {
 
         // SPACE-Taste: Je nach Situation wird entweder gehupft oder der Flugmodus aktiviert.
         if (InputManager.getInstance().isJumpPressed()) {
-            regenerationEnergy=0;
+            regenerationEnergy = 0;
             if (onGround) {
                 if (!groundJumpUsed) {
                     body.setLinearVelocity(body.getLinearVelocity().x, GROUND_HOP_FORCE / Block.BLOCK_SIZE);
@@ -221,7 +271,6 @@ public class ControlledPlayer extends Player {
         setRotation(facingRight ? 0 : 180);
     }
 
-
     public void setOnGround(boolean onGround) {
         this.onGround = onGround;
         if (onGround) {
@@ -253,14 +302,12 @@ public class ControlledPlayer extends Player {
     }
 
     @Override
-    public void setSpeed(float speed)
-    {
+    public void setSpeed(float speed) {
         BASE_HORIZONTAL_SPEED = speed;
     }
 
     @Override
-    public float getSpeed()
-    {
+    public float getSpeed() {
         return BASE_HORIZONTAL_SPEED;
     }
 }

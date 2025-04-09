@@ -54,10 +54,11 @@ public class SinglePlayerGameScreen extends GameScreen {
         this.worldName = worldName;
     }
 
-
-
     @Override
     public void show() {
+        // Initialisiere den debugRenderer
+        debugRenderer = new Box2DDebugRenderer();
+
         DiscordPresence.updateToIngameSP(worldName);
 
         super.show();
@@ -103,7 +104,14 @@ public class SinglePlayerGameScreen extends GameScreen {
             spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
         }
 
-        ControlledPlayer.getInstance().getBody().setTransform(spawnX / Block.BLOCK_SIZE, spawnY / Block.BLOCK_SIZE, ControlledPlayer.getInstance().getBody().getAngle());
+        // Stelle sicher, dass der Player komplett neu initialisiert wird
+        // Zuerst prüfen, ob bereits eine Instanz existiert und diese zurücksetzen
+        if (ControlledPlayer.hasInstance()) {
+            ControlledPlayer.getInstance().remove();
+            ControlledPlayer.reset(); // Diese Methode wird in ControlledPlayer implementiert
+        }
+
+        // Jetzt den Player neu initialisieren
         player = ControlledPlayer.getInstance(physicsWorld, spawnX, spawnY);
         player.getEnergyStatus().setMax(playerData.getMaxEnergy());
         player.getHealthStatus().setMax(playerData.getMaxHealth());
@@ -173,24 +181,29 @@ public class SinglePlayerGameScreen extends GameScreen {
                 // Welt speichern
                 WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
 
+                // WICHTIG: Erst Thread stoppen, dann Ressourcen freigeben
                 tilemap.stopChunkUpdateThread();
 
+                // Player zurücksetzen und entfernen
                 ControlledPlayer.getInstance().remove();
 
-                dispose();
+                // WICHTIG: Die Singleton-Instanz komplett zurücksetzen
+                ControlledPlayer.reset();
 
+                // Weitere Manager zurücksetzen
+                Box2DOperationManager.clear();
+
+                // Alle Ressourcen freigeben
+                dispose();
 
                 // Discord Presence zurücksetzen
                 DiscordPresence.start();
 
-
-
+                // Zum Hauptmenü wechseln
                 game.setScreen(new MainMenu(game));
             }
         });
         pauseStage.addActor(returnToMenuButton);
-
-
 
         // Dynamisch weiße Textur erzeugen
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -232,8 +245,6 @@ public class SinglePlayerGameScreen extends GameScreen {
             stage.act(delta);
             uiStage.act(delta);
             DiscordPresence.updateToIngameSP(worldName);
-
-
         }
 
         camera.position.set(
@@ -262,7 +273,6 @@ public class SinglePlayerGameScreen extends GameScreen {
         //debugRenderer.render(physicsWorld, camera.combined);
         //Gdx.gl.glDisable(GL20.GL_BLEND);
 
-
         if (paused) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             batch.begin();
@@ -287,15 +297,69 @@ public class SinglePlayerGameScreen extends GameScreen {
 
     @Override
     public void hide() {
+        // Überschreiben, um möglicherweise nötige Aufräumarbeiten durchzuführen
+        // wenn der Screen versteckt wird (aber nicht disposed)
     }
 
     @Override
     public void dispose() {
-        super.dispose();
-        tilemap.dispose();
-        whiteTexture.dispose();
-        pauseButtonTexture.dispose();
-        debugRenderer.dispose();
-        WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
+        try {
+            // Speicher den Spielstand beim Beenden
+            if (worldName != null && worldConfig != null && tilemap != null && tilemap.getLoadedChunks() != null) {
+                WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
+            }
+
+            // Beende Thread sicher
+            if (tilemap != null) {
+                tilemap.stopChunkUpdateThread();
+            }
+
+            // Rufe die übergeordnete dispose-Methode auf
+            super.dispose();
+
+            // Überprüfe und räume jede Ressource separat auf
+            if (tilemap != null) {
+                tilemap.dispose();
+                tilemap = null;
+            }
+
+            if (whiteTexture != null) {
+                whiteTexture.dispose();
+                whiteTexture = null;
+            }
+
+            if (pauseButtonTexture != null) {
+                pauseButtonTexture.dispose();
+                pauseButtonTexture = null;
+            }
+
+            if (debugRenderer != null) {
+                debugRenderer.dispose();
+                debugRenderer = null;
+            }
+
+            // UI-Komponenten nicht versuchen zu dispose(), da die Methode nicht existiert
+            // Stattdessen nur die Referenzen auf null setzen
+            chatUI = null;
+            inventoryUI = null;
+            healthUI = null;
+            energyUI = null;
+            debugOverlay = null;
+
+            // Weitere Referenzen auf null setzen
+            player = null;
+            worldConfig = null;
+            playerData = null;
+
+            // System.gc() aufrufen, um Garbage Collection zu ermutigen
+            System.gc();
+
+        } catch (Exception e) {
+            // Fehler beim Aufräumen protokollieren
+            System.err.println("Error during dispose: " + e.getMessage());
+            if (Gdx.app != null) {
+                Gdx.app.error("SinglePlayerGameScreen", "Error during dispose", e);
+            }
+        }
     }
 }
