@@ -7,13 +7,18 @@ import com.badlogic.gdx.InputAdapter;
 public class InputManager extends InputAdapter {
     private static InputManager instance;
     private boolean leftPressed, rightPressed, jumpPressed, wPressed, sPressed;
-    // Referenz auf den Chat, die du beim Setup setzen kannst
     private ChatToggle chatToggle;
+    private EscapeHandler escapeHandler;
 
     public interface ChatToggle {
         void toggleChat();
         void cancelChat();
         boolean isChatActive();
+    }
+
+    public interface EscapeHandler {
+        void handleEscape();
+        boolean isMenuActive();
     }
 
     private InputManager() {
@@ -28,6 +33,10 @@ public class InputManager extends InputAdapter {
 
     public void setChatToggle(ChatToggle chatToggle) {
         this.chatToggle = chatToggle;
+    }
+
+    public void setEscapeHandler(EscapeHandler escapeHandler) {
+        this.escapeHandler = escapeHandler;
     }
 
     @Override
@@ -49,14 +58,19 @@ public class InputManager extends InputAdapter {
         }
 
         if (keycode == Input.Keys.ESCAPE) {
-            if (chatToggle != null) {
+            if (escapeHandler != null) {
+                escapeHandler.handleEscape();
+                return true;
+            } else if (chatToggle != null) {
                 chatToggle.cancelChat();
+                return true;
             }
-            return true;
         }
+
         if (inputsPaused) {
             return true;
         }
+
         if (keycode == Input.Keys.A) {
             leftPressed = true;
         }
@@ -84,8 +98,6 @@ public class InputManager extends InputAdapter {
     public void resumeInputs() {
         inputsPaused = false;
     }
-
-
 
     @Override
     public boolean keyUp(int keycode) {

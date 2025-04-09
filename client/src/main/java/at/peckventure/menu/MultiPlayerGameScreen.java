@@ -5,7 +5,6 @@ import at.peckventure.InputManager;
 import at.peckventure.NetworkClient;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.chat.MultiPlayerChatExecutor;
-import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
 import at.peckventure.entities.Player;
 import at.peckventure.entities.RemotePlayer;
@@ -35,6 +34,7 @@ public class MultiPlayerGameScreen extends GameScreen
     private Map<String, RemotePlayer> players = new HashMap<>();
     private MultiPlayerMap tilemap;
     private boolean debugOverlayVisible = false;
+    private MultiplayerEscapeMenu escapeMenu;
 
     private String serverHost;
     private int serverPort;
@@ -56,10 +56,19 @@ public class MultiPlayerGameScreen extends GameScreen
         }
     }
 
+    public String getServerHost() {
+        return serverHost;
+    }
+
+    public int getServerPort() {
+        return serverPort;
+    }
+
     @Override
     public void show()
     {
         super.show();
+
         // Chat initialisieren
         chatUI = new ChatUI(uiStage, new MultiPlayerChatExecutor());
         InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
@@ -82,16 +91,35 @@ public class MultiPlayerGameScreen extends GameScreen
                 return chatUI.isChatActive();
             }
         });
+
+        // Initialize escape menu after uiStage is created
+        escapeMenu = new MultiplayerEscapeMenu(game, this, uiStage);
+
+        // Register ESC key handler
+        InputManager.getInstance().setEscapeHandler(new InputManager.EscapeHandler() {
+            @Override
+            public void handleEscape() {
+                if (!chatUI.isChatActive()) {
+                    escapeMenu.toggleMenu();
+                } else {
+                    chatUI.cancelChat();
+                }
+            }
+
+            @Override
+            public boolean isMenuActive() {
+                return escapeMenu.isVisible();
+            }
+        });
+
         tilemap = new MultiPlayerMap(physicsWorld);
         stage.addActor(player);
-
 
         inventoryUI = new InventoryUI(uiStage, new MultiplayerInventoryManager());
         healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
         energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
         debugOverlay = new DebugOverlay(uiStage);
         // Debug Overlay wird erst bei F3-Druck angezeigt
-
 
         NetworkClient.init(serverHost, serverPort, serverPort + 222);
 
@@ -265,6 +293,7 @@ public class MultiPlayerGameScreen extends GameScreen
         camera.position.set(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2, 0);
         camera.zoom = 1.0f;
         camera.update();
+
         backgroundStage.draw();
         stage.act(delta);
         batch.setProjectionMatrix(camera.combined);
@@ -287,6 +316,12 @@ public class MultiPlayerGameScreen extends GameScreen
     }
 
     @Override
+    public void resize(int width, int height) {
+        super.resize(width, height);
+        escapeMenu.resize(width, height);
+    }
+
+    @Override
     public void pause()
     {
     }
@@ -300,5 +335,4 @@ public class MultiPlayerGameScreen extends GameScreen
     public void hide()
     {
     }
-
 }

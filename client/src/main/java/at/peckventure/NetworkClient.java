@@ -61,4 +61,18 @@ public class NetworkClient {
         return client.isConnected();
     }
 
+    // Add method to close the client connection
+    public void close() {
+        if (client != null && client.isConnected()) {
+            client.close();
+        }
+    }
+
+    // Reset the instance when closing
+    public static void reset() {
+        if (instance != null && instance.client != null) {
+            instance.client.close();
+        }
+        instance = null;
+    }
 }
