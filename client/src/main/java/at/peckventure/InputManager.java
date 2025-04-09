@@ -120,22 +120,22 @@ public class InputManager extends InputAdapter {
     }
 
     public boolean isLeftPressed() {
-        return leftPressed;
+        return leftPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isRightPressed() {
-        return rightPressed;
+        return rightPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isJumpPressed() {
-        return jumpPressed;
+        return jumpPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isWPressed() {
-        return wPressed;
+        return wPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isSPressed() {
-        return sPressed;
+        return sPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 }
