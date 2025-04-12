@@ -83,6 +83,7 @@ public class ControlledPlayer extends Player {
                 instance.getBody().setTransform(x / Block.BLOCK_SIZE, y / Block.BLOCK_SIZE, instance.getBody().getAngle());
             }
         }
+        Globals.controlledPlayer=instance;
         return instance;
     }
 

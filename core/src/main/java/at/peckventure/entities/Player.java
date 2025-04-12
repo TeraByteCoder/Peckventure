@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class Player extends Actor
-{
+public abstract class Player extends Actor {
     protected World world;
 
     private Status health;
@@ -42,33 +41,27 @@ public abstract class Player extends Actor
 
     private List<StatusEffect> effects = new ArrayList<>();
 
-    public void addEffect(StatusEffect effect)
-    {
+    public void addEffect(StatusEffect effect) {
         effect.apply(this);
         effects.add(effect);
     }
 
-    public void setSpeed(float speed)
-    {
+    public void setSpeed(float speed) {
+        // Implementierung nach Bedarf
     }
 
-    public float getSpeed()
-    {
-        return 0f;
+    public float getSpeed() {
+        return speed;
     }
 
-    public Inventory getInventory()
-    {
+    public Inventory getInventory() {
         return inventory;
     }
 
-
-    public Player(World world, float x, float y)
-    {
+    public Player(World world, float x, float y) {
         this.inventory = new Inventory();
         this.world = world;
-        if (Gdx.gl != null)
-        {
+        if (Gdx.gl != null) {
             this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
         }
         this.startY = y;
@@ -77,8 +70,7 @@ public abstract class Player extends Actor
         energy = new Status("Energy", Const.MAXENERGY);
 
         setSize(64, 64);
-        Box2DOperationManager.queueOperation(() ->
-        {
+        Box2DOperationManager.queueOperation(() -> {
             BodyDef bodyDef = new BodyDef();
             bodyDef.type = BodyDef.BodyType.DynamicBody;
             bodyDef.position.set((x + getWidth() / 2f) / Block.BLOCK_SIZE, (y + getHeight() / 2f) / Block.BLOCK_SIZE);
@@ -92,8 +84,7 @@ public abstract class Player extends Actor
             fixtureDef.density = 1f;
             fixtureDef.friction = 0.5f;
             fixtureDef.restitution = 0f;
-            if (rectHeight > 0)
-            {
+            if (rectHeight > 0) {
                 PolygonShape rectShape = new PolygonShape();
                 rectShape.setAsBox(radius, rectHeight / 2f, new Vector2(0, 0), 0);
                 fixtureDef.shape = rectShape;
@@ -119,8 +110,7 @@ public abstract class Player extends Actor
     protected abstract void handleInput(float delta);
 
     @Override
-    public void act(float delta)
-    {
+    public void act(float delta) {
         Iterator<StatusEffect> it = effects.iterator();
         while (it.hasNext()) {
             StatusEffect e = it.next();
@@ -135,44 +125,37 @@ public abstract class Player extends Actor
         setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
     }
 
-    public void draw(Batch batch)
-    {
+    public void draw(Batch batch) {
         if (sprite != null)
             batch.draw(sprite, getX(), getY(), getWidth(), getHeight());
     }
 
     // Wird vom PlayerManager aufgerufen, wenn ein Update-Paket eintrifft.
-    public void updateFromPacket(NetworkPackets.PlayerUpdatePacket packet)
-    {
+    public void updateFromPacket(NetworkPackets.PlayerUpdatePacket packet) {
         setPosition(packet.x, packet.y);
         this.getEnergyStatus().setCurrent(packet.energy);
         body.setTransform(packet.x / Block.BLOCK_SIZE, packet.y / Block.BLOCK_SIZE, body.getAngle());
     }
 
-    public Body getBody()
-    {
+    public Body getBody() {
         return body;
     }
 
-    public int getChunkX()
-    {
+    public int getChunkX() {
         return (int) getX() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
-    public int getChunkY()
-    {
+    public int getChunkY() {
         return (int) getY() / Block.BLOCK_SIZE / Chunk.CHUNK_SIZE;
     }
 
     public abstract void dropItemOutside(Item item, int amount);
 
-    public Status getHealthStatus()
-    {
+    public Status getHealthStatus() {
         return health;
     }
 
-    public Status getEnergyStatus()
-    {
+    public Status getEnergyStatus() {
         return energy;
     }
 

@@ -1,5 +1,6 @@
 package at.peckventure;
 
+import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.world.AbstractTileMap;
 import at.peckventure.world.block.Block;
@@ -14,6 +15,7 @@ public class Globals
     public static MobMap mobs;
 
     public static String uuid;
+    public static Player controlledPlayer; // todo anders lösen
 
     public static String username;
     public static AbstractTileMap tileMap;
