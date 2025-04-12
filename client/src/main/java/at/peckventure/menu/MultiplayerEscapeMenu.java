@@ -8,7 +8,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 public class MultiplayerEscapeMenu {
@@ -22,13 +27,13 @@ public class MultiplayerEscapeMenu {
         this.game = game;
         this.gameScreen = gameScreen;
 
-        // Load skin for UI elements
+        // Skin für UI-Elemente laden
         skin = new Skin();
         skin.addRegions(new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
-        skin.add("default-font", new BitmapFont(Gdx.files.internal("ui/default.fnt")));
+        skin.add("default-font", new BitmapFont(Gdx.files.internal("ui/font.fnt")));
         skin.load(Gdx.files.internal("ui/uiskin.json"));
 
-        // Create and setup the menu window
+        // Menüfenster erstellen und konfigurieren
         createMenuWindow(uiStage);
     }
 
@@ -36,31 +41,32 @@ public class MultiplayerEscapeMenu {
         menuWindow = new Window("Menu", skin);
         menuWindow.setMovable(false);
 
-        // Position the window in the top-right corner with some padding
+        // Fenstergröße festlegen
         float menuWidth = 200;
         float menuHeight = 250;
         menuWindow.setSize(menuWidth, menuHeight);
+        // Das Menü mittig positionieren
         menuWindow.setPosition(
-            Gdx.graphics.getWidth() - menuWidth - 20,
-            Gdx.graphics.getHeight() - menuHeight - 20
+            (Gdx.graphics.getWidth() - menuWidth) / 2,
+            (Gdx.graphics.getHeight() - menuHeight) / 2
         );
 
-        // Add a container for better layout
+        // Table für das Layout der Elemente erstellen
         Table contentTable = new Table();
         contentTable.pad(10);
-        contentTable.defaults().fillX().space(8);
+        contentTable.defaults().fillX().space(8).center();
 
-        // Add server info
+        // Server-Info hinzufügen
         Label serverInfoLabel = new Label("Server: " + gameScreen.getServerHost(), skin);
         contentTable.add(serverInfoLabel);
         contentTable.row();
 
-        // Add player info
+        // Spieler-Info hinzufügen
         Label playerInfoLabel = new Label("Player: " + Globals.username, skin);
         contentTable.add(playerInfoLabel).padBottom(15);
         contentTable.row();
 
-        // Add buttons
+        // Buttons erstellen
         TextButton resumeButton = new TextButton("Continue", skin);
         TextButton disconnectButton = new TextButton("Disconnect", skin);
         TextButton quitButton = new TextButton("Quit Game", skin);
@@ -71,7 +77,7 @@ public class MultiplayerEscapeMenu {
         contentTable.row();
         contentTable.add(quitButton).height(40);
 
-        // Setup button listeners
+        // Button-Listener einrichten
         resumeButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -82,12 +88,12 @@ public class MultiplayerEscapeMenu {
         disconnectButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // Show confirmation dialog
+                // Bestätigungsdialog anzeigen
                 Dialog dialog = new Dialog("Confirm", skin) {
                     @Override
                     protected void result(Object object) {
                         if ((Boolean) object) {
-                            // If confirmed, disconnect and return to multiplayer menu
+                            // Bei Bestätigung trennen und zurück zum Multiplayer-Menü wechseln
                             NetworkClient.getInstance().close();
                             game.setScreen(new MultiPlayer(game));
                         }
@@ -103,12 +109,12 @@ public class MultiplayerEscapeMenu {
         quitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // Show confirmation dialog
+                // Bestätigungsdialog anzeigen
                 Dialog dialog = new Dialog("Confirm", skin) {
                     @Override
                     protected void result(Object object) {
                         if ((Boolean) object) {
-                            // If confirmed, disconnect and exit the game
+                            // Bei Bestätigung trennen und das Spiel beenden
                             NetworkClient.getInstance().close();
                             Gdx.app.exit();
                         }
@@ -138,9 +144,10 @@ public class MultiplayerEscapeMenu {
     public void resize(int width, int height) {
         float menuWidth = 200;
         float menuHeight = 250;
+        // Beim Resizen ebenfalls zentriert positionieren
         menuWindow.setPosition(
-            width - menuWidth - 20,
-            height - menuHeight - 20
+            (width - menuWidth) / 2,
+            (height - menuHeight) / 2
         );
     }
 }
