@@ -12,6 +12,7 @@ public class PrintCommand extends Command
     @Override
     public String execute(String[] args,  Player executor)
     {
+        if(!executor.isOperator()) return "You do not have permission to perform this command!";
         String output = String.join(" ", args);
         System.out.println(output);
         return "Console: " + output;

@@ -16,6 +16,13 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  }
+}
+
+
 allprojects {
   apply plugin: 'eclipse'
   apply plugin: 'idea'
@@ -31,8 +38,6 @@ allprojects {
 
 configure(subprojects) {
   apply plugin: 'java-library'
-  sourceCompatibility = 8
-
   // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
   // The article can be helpful when using assets.txt in your project.
   tasks.register('generateAssetList') {
@@ -52,7 +57,6 @@ configure(subprojects) {
     }
   }
   processResources.dependsOn 'generateAssetList'
-
   compileJava {
     options.incremental = true
   }
@@ -77,6 +81,23 @@ subprojects {
   }
 
 }
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs += [
+    '--add-opens=java.base/java.lang=ALL-UNNAMED',
+    '--add-opens=java.base/sun.misc=ALL-UNNAMED'
+  ]
+}
+
+tasks.withType(Test).configureEach {
+  jvmArgs += [
+    '--add-opens=java.base/java.lang=ALL-UNNAMED',
+    '--add-opens=java.base/sun.misc=ALL-UNNAMED'
+  ]
+}
+tasks.withType(JavaCompile).configureEach {
+  options.release.set(17)
+}
+
 
 
 eclipse.project.name = 'Peckventure' + '-parent'

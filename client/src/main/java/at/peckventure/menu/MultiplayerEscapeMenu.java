@@ -30,7 +30,7 @@ public class MultiplayerEscapeMenu {
         // Skin für UI-Elemente laden
         skin = new Skin();
         skin.addRegions(new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
-        skin.add("default-font", new BitmapFont(Gdx.files.internal("ui/font.fnt")));
+        //skin.add("default-font", new BitmapFont(Gdx.files.internal("ui/font.fnt")));
         skin.load(Gdx.files.internal("ui/uiskin.json"));
 
         // Menüfenster erstellen und konfigurieren

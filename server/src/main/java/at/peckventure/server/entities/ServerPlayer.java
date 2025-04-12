@@ -26,12 +26,13 @@ public class ServerPlayer extends Player
         this.username = username;
     }
 
-    public ServerPlayer(World world, float x, float y, String uuid, Connection connection, String username, int energy, int health)
+    public ServerPlayer(World world, float x, float y, String uuid, Connection connection, String username, int energy, int health, boolean operator)
     {
         super(world, x, y);
         this.uuid = uuid;
         this.connection = connection;
         this.username = username;
+        this.operator = operator;
         this.getEnergyStatus().setCurrent(energy);
         this.getHealthStatus().setCurrent(health);
     }

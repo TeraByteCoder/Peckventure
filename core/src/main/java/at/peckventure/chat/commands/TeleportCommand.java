@@ -13,6 +13,7 @@ public class TeleportCommand extends Command {
     }
 
     public String execute(String[] args, Player executor) {
+        if(!executor.isOperator()) return "You do not have permission to perform this command!";
         if (args.length < 2) {
             return "Usage: /teleport <x> <y>";
         }

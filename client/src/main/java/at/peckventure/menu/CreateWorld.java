@@ -13,11 +13,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
@@ -36,13 +32,15 @@ public class CreateWorld implements Screen {
     private BitmapFont font;
     private Texture textFieldTexture;
     private JsonValue texts;
-
+    private Skin skin;
     public CreateWorld(Game game) {
         this.game = game;
     }
 
     @Override
     public void show() {
+        // Load the skin like in the Settings class
+        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         // Sprachdatei laden
         String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
         JsonReader reader = new JsonReader();
@@ -86,6 +84,12 @@ public class CreateWorld implements Screen {
         textFieldStyle.font = font;
         textFieldStyle.fontColor = Color.WHITE;
 
+// Create "Allow Cheats" checkbox with translation
+        String allowCheatsText = texts.has("menu.allow_cheats") ? texts.getString("menu.allow_cheats") : "Allow Cheats";
+        final CheckBox allowCheatsCheckBox = new CheckBox(" " + allowCheatsText, skin);
+// Make the checkbox bigger
+        allowCheatsCheckBox.getLabel().setFontScale(1.5f);  // Increase font size
+
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.DARK_GRAY);
         pixmap.fill();
@@ -108,6 +112,10 @@ public class CreateWorld implements Screen {
         inputTable.center();
         inputTable.add(worldNameLabel).pad(10).center();
         inputTable.add(worldNameInput).width(600).height(80).pad(10).center();
+        // Add after the inputTable definition
+        inputTable.row();
+        inputTable.row();
+        inputTable.add(allowCheatsCheckBox).colspan(2).pad(20).left();  // Increased padding for more space
         inputTable.row();
         inputTable.add(seedLabel).pad(10).center();
         inputTable.add(seedInput).width(600).height(80).pad(10).center();
@@ -157,7 +165,7 @@ public class CreateWorld implements Screen {
                 FileHandle configFile = newWorldDir.child("worldconfig.txt");
                 config.save(configFile);
 
-                game.setScreen(new SinglePlayerGameScreen(game, worldName));
+                game.setScreen(new SinglePlayerGameScreen(game, worldName, allowCheatsCheckBox.isChecked()));
             }
         });
 
@@ -195,6 +203,9 @@ public class CreateWorld implements Screen {
         font.dispose();
         if (textFieldTexture != null) {
             textFieldTexture.dispose();
+        }
+        if (skin != null) {
+            skin.dispose();
         }
     }
 }

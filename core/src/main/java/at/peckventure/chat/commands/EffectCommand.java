@@ -14,6 +14,7 @@ public class EffectCommand extends Command {
 
     @Override
     public String execute(String[] args, Player executor) {
+        if(!executor.isOperator()) return "You do not have permission to perform this command!";
         // Prüfe, ob mindestens Name und Level angegeben wurden.
         if (args.length < 2) {
             return "Usage: effect <name> <level> [duration]";

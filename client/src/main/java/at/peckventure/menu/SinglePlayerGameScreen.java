@@ -48,10 +48,17 @@ public class SinglePlayerGameScreen extends GameScreen {
 
     private Texture pauseButtonTexture;
     private Texture whiteTexture;
+    private Boolean operator;
 
     public SinglePlayerGameScreen(Game game, String worldName) {
         super(game);
         this.worldName = worldName;
+    }
+
+    public SinglePlayerGameScreen(Game game, String worldName, boolean operator) {
+        super(game);
+        this.worldName = worldName;
+        this.operator = operator;
     }
 
     @Override
@@ -116,6 +123,10 @@ public class SinglePlayerGameScreen extends GameScreen {
         player.getEnergyStatus().setMax(playerData.getMaxEnergy());
         player.getHealthStatus().setMax(playerData.getMaxHealth());
         player.deserializeEffects(playerData.getEffects());
+        if (operator!= null)
+            player.setOperator(operator);
+        else
+            player.setOperator(playerData.isOperator());
         stage.addActor(player);
 
         inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());

@@ -12,6 +12,7 @@ public class HealCommand extends Command {
 
     @Override
     public String execute(String[] args, Player executor) {
+        if(!executor.isOperator()) return "You do not have permission to perform this command!";
         int amount;
         if (args.length < 1) {
             amount = executor.getHealthStatus().getMax();

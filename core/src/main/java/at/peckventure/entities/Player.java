@@ -36,10 +36,21 @@ public abstract class Player extends Actor {
     protected final float maxHeight = 1000;
     protected final float hoverDampening = 200;
     protected final float startY;
+    protected boolean operator;
     Inventory inventory;
     protected boolean rotation;
 
     private List<StatusEffect> effects = new ArrayList<>();
+
+    public boolean isOperator()
+    {
+        return operator;
+    }
+
+    public void setOperator(boolean operator)
+    {
+        this.operator = operator;
+    }
 
     public void addEffect(StatusEffect effect) {
         effect.apply(this);

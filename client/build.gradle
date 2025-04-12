@@ -7,11 +7,22 @@ def appName = 'PeckventureClient'
 group = 'at.peckventure'
 version = 'unspecified'
 
-java.sourceCompatibility = '24.PREVIEW'
-java.targetCompatibility = '24.PREVIEW'
 if (JavaVersion.current().isJava9Compatible()) {
   compileJava.options.release.set(8)
 }
+// Entferne oder ersetze die veralteten PREVIEW-Einstellungen
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  }
+}
+
+// Und setze den Release-Wert auch auf 17:
+tasks.withType(JavaCompile).configureEach {
+  options.release.set(17)
+}
+
+
 
 mainClassName = 'at.peckventure.Main'
 application.setMainClass(mainClassName)

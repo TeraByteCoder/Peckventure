@@ -1,12 +1,6 @@
 apply plugin: 'application'
 
 
-java.sourceCompatibility = 8
-java.targetCompatibility = 8
-if (JavaVersion.current().isJava9Compatible()) {
-        compileJava.options.release.set(8)
-}
-
 mainClassName = 'at.peckventure.ServerLauncher'
 application.setMainClass(mainClassName)
 eclipse.project.name = appName + '-server'

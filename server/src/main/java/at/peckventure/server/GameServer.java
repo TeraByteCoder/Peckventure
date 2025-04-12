@@ -103,7 +103,7 @@ public class GameServer
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
                 if(player != null)
                 {
-                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), false, (int) player.getEnergyStatus().getCurrent(),(int)  player.getHealthStatus().getCurrent(), player.getHealthStatus().getMax(), player.getEnergyStatus().getMax(), "");
+                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), player.isOperator(), (int) player.getEnergyStatus().getCurrent(),(int)  player.getHealthStatus().getCurrent(), player.getHealthStatus().getMax(), player.getEnergyStatus().getMax(), "");
                     playerData.save(worldFolder);
                     tilemap.removePlayer(player);
                     players.remove(player);
@@ -165,7 +165,7 @@ public class GameServer
                         connectPacket.effects.effects = "";
                     } else
                     {
-                        ServerPlayer player = new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username, playerData.getEnergy(), playerData.getHealth());
+                        ServerPlayer player = new ServerPlayer(physicsWorld, playerData.getPlayerX(), playerData.getPlayerY(), packet.uuid, connection, packet.username, playerData.getEnergy(), playerData.getHealth(), playerData.isOperator());
                         player.getInventory().deserialize(playerData.getInventoryHotbar(), playerData.getInventoryMain());
                         player.deserializeEffects(playerData.getEffects());
                         players.add(player);
