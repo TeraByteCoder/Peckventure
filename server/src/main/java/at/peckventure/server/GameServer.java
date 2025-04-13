@@ -3,6 +3,8 @@ package at.peckventure.server;
 import at.peckventure.Const;
 import at.peckventure.GameContactListener;
 import at.peckventure.Globals;
+import at.peckventure.entities.MobSpawner;
+import at.peckventure.entities.Player;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.Inventory;
@@ -41,6 +43,8 @@ public class GameServer
     private static final String DEFAULT_SERVER_FOLDER = System.getenv("APPDATA") + "\\peckventure_server";
     Server server;
     public Set<ServerPlayer> players = new HashSet<>();
+
+    private MobSpawner mobSpawner;
     private World physicsWorld;
     private ServerTileMap tilemap;
     private WorldConfig worldConfig;
@@ -65,6 +69,7 @@ public class GameServer
         at.peckventure.world.RegionManager regionManager = new at.peckventure.world.RegionManager(worldFolder);
         at.peckventure.world.MobRegionManager mobRegionManager = new at.peckventure.world.MobRegionManager(worldFolder);
         tilemap = new ServerTileMap(physicsWorld, generator, loaded.getLoadedChunks(), regionManager, mobRegionManager);
+        this.mobSpawner = new MobSpawner(physicsWorld, players);
         spawnX = 0;
         int terrainHeight = generator.getHeight((int) spawnX);
         spawnY = terrainHeight * Block.BLOCK_SIZE + 400;
@@ -321,7 +326,7 @@ public class GameServer
                 long now = System.nanoTime();
                 float delta = (now - lastTime) / 1_000_000_000f; // delta in Sekunden
                 lastTime = now;
-
+                mobSpawner.update(delta);
                 Box2DOperationManager.processOperations();
                 physicsWorld.step(1f / 60f, 6, 2);
                 tilemap.updateChunksForAllPlayers();

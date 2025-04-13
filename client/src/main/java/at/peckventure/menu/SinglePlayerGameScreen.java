@@ -5,6 +5,7 @@ import at.peckventure.InputManager;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
+import at.peckventure.entities.MobSpawner;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.SinglePlayerInventoryManager;
@@ -35,6 +36,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 
 public class SinglePlayerGameScreen extends GameScreen {
+
+    private MobSpawner mobSpawner;
 
     private final String worldName;
     private SinglePlayerMap tilemap;
@@ -143,7 +146,7 @@ public class SinglePlayerGameScreen extends GameScreen {
                 playerData.getInventoryMain()
             );
         }
-
+        mobSpawner = new MobSpawner(physicsWorld, player);
         tilemap.startChunkUpdateThread(player);
         Box2DOperationManager.processOperations();
         createPauseOverlay();
@@ -249,6 +252,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (!paused) {
+            mobSpawner.update(delta);
             Box2DOperationManager.processOperations();
             physicsWorld.step(delta, 6, 2);
 

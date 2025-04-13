@@ -3,6 +3,7 @@ package at.peckventure.menu;
 import at.peckventure.*;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.entities.ControlledPlayer;
+import at.peckventure.entities.MobSpawner;
 import at.peckventure.entities.mob.MobMap;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.ui.DebugOverlay;
@@ -82,6 +83,7 @@ public abstract class GameScreen implements Screen
         whiteTexture = new Texture(pixmap);
         pixmap.dispose();
 
+
         // Kamera und Stage für die Spielwelt
         float worldWidth = Gdx.graphics.getWidth() / 2f;
         float worldHeight = Gdx.graphics.getHeight() / 2f;
@@ -118,6 +120,7 @@ public abstract class GameScreen implements Screen
         physicsWorld.setContactListener(new GameContactListener());
 
         player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
+
 
         // InputMultiplexer: pauseStage hat höchste Priorität
         InputMultiplexer multiplexer = new InputMultiplexer();
