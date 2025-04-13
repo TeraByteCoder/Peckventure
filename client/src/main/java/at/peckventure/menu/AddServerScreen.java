@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
+import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -32,7 +33,6 @@ public class AddServerScreen implements Screen {
     private BitmapFont font;
     private Texture textFieldTexture;
     private FileHandle serverDataFile;
-    private JsonValue texts;
 
     public AddServerScreen(Game game) {
         this.game = game;
@@ -43,7 +43,6 @@ public class AddServerScreen implements Screen {
         // Sprachdatei laden
         String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
         JsonReader reader = new JsonReader();
-        texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
 
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
@@ -61,8 +60,7 @@ public class AddServerScreen implements Screen {
         labelStyle.fontColor = Color.WHITE;
 
         // Titel mit Übersetzung
-        String titleText = texts.has("menu.add_server") ? texts.getString("menu.add_server") : "Add Server";
-        Label titleLabel = new Label(titleText, labelStyle);
+        Label titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.title"), labelStyle);
         titleLabel.setFontScale(3f);
         titleLabel.setAlignment(Align.center);
 
@@ -75,8 +73,8 @@ public class AddServerScreen implements Screen {
         buttonStyle.font = font;
 
         // Übersetzte Buttons
-        String addButtonText = texts.has("menu.add_server") ? texts.getString("menu.add_server") : "Add Server";
-        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
+        String addButtonText = LanguageManager.INSTANCE.getText("menu.add_server");
+        String backButtonText = LanguageManager.INSTANCE.getText("menu.back");
         TextButton addButton = new TextButton(addButtonText, buttonStyle);
         TextButton backButton = new TextButton(backButtonText, buttonStyle);
 
@@ -93,14 +91,14 @@ public class AddServerScreen implements Screen {
         textFieldStyle.background = new TextureRegionDrawable(new TextureRegion(textFieldTexture));
 
         // Textfelder mit Platzhaltern
-        String serverNamePlaceholder = texts.has("menu.server_name") ? texts.getString("menu.server_name") : "Server Name";
-        String addressPlaceholder = texts.has("menu.address") ? texts.getString("menu.address") : "ip:port";
+        String serverNamePlaceholder = LanguageManager.INSTANCE.getText("menu.server_name");
+        String addressPlaceholder = LanguageManager.INSTANCE.getText("menu.address");
         final TextField nameInput = new TextField(serverNamePlaceholder, textFieldStyle);
         final TextField addressInput = new TextField(addressPlaceholder, textFieldStyle);
 
         // Labels mit Übersetzungen
-        String serverNameLabelText = texts.has("menu.server_name_label") ? texts.getString("menu.server_name_label") : "Server Name:";
-        String addressLabelText = texts.has("menu.address") ? texts.getString("menu.address") : "Address:";
+        String serverNameLabelText = LanguageManager.INSTANCE.getText("menu.server_name_label");
+        String addressLabelText = LanguageManager.INSTANCE.getText("menu.address");
         Label nameLabel = new Label(serverNameLabelText, labelStyle);
         Label addressLabel = new Label(addressLabelText, labelStyle);
 

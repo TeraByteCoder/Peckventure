@@ -1,5 +1,8 @@
 package at.peckventure.menu;
 
+import at.peckventure.Globals;
+import at.peckventure.LanguageManager;
+import at.peckventure.SettingsManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -23,7 +26,6 @@ public class MainMenu implements Screen {
     private Texture backgroundTexture;
     private Image backgroundImage;
     private Skin skin;
-    private JsonValue texts;
 
     public MainMenu(Game game) {
         this.game = game;
@@ -43,9 +45,6 @@ public class MainMenu implements Screen {
         // Skin laden
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
-        // Sprachdatei laden wie im Settings-Menü
-        String langCode = GameSettings.getLanguage(); // z. B. "de_at"
-        texts = new JsonReader().parse(Gdx.files.internal("lang/" + langCode + ".json"));
 
         // Tabelle für Layout
         Table rootTable = new Table();
@@ -60,12 +59,14 @@ public class MainMenu implements Screen {
         rootTable.add(titleLabel).padTop(50).expandX().center();
         rootTable.row();
 
+        LanguageManager.INSTANCE.setLangcode(GameSettings.getLanguage());
+
         // Buttons
-        final TextButton singlePlayerButton = new TextButton(getText("menu.singleplayer", "Einzelspieler"), skin);
-        final TextButton multiPlayerButton = new TextButton(getText("menu.multiplayer", "Mehrspieler"), skin);
-        final TextButton creditsButton = new TextButton(getText("menu.credits", "Mitwirkende"), skin);
-        final TextButton settingsButton = new TextButton(getText("menu.settings", "Einstellungen"), skin);
-        final TextButton exitButton = new TextButton(getText("menu.quit", "Beenden"), skin);
+        final TextButton singlePlayerButton = new TextButton(LanguageManager.INSTANCE.getText("menu.singleplayer"), skin);
+        final TextButton multiPlayerButton = new TextButton(LanguageManager.INSTANCE.getText("menu.multiplayer"), skin);
+        final TextButton creditsButton = new TextButton(LanguageManager.INSTANCE.getText("menu.credits"), skin);
+        final TextButton settingsButton = new TextButton(LanguageManager.INSTANCE.getText("menu.settings"), skin);
+        final TextButton exitButton = new TextButton(LanguageManager.INSTANCE.getText("menu.quit"), skin);
 
         // Button-Tabelle
         Table buttonTable = new Table();
@@ -110,10 +111,6 @@ public class MainMenu implements Screen {
                 Gdx.app.exit();
             }
         });
-    }
-
-    private String getText(String key, String fallback) {
-        return texts.has(key) ? texts.getString(key) : fallback;
     }
 
     @Override

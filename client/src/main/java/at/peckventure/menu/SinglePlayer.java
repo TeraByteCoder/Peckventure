@@ -1,5 +1,6 @@
 package at.peckventure.menu;
 
+import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -26,7 +27,6 @@ public class SinglePlayer implements Screen {
     private Label titleLabel;
     private Table worldTable;
     private BitmapFont font;
-    private JsonValue texts;
 
     public SinglePlayer(Game game) {
         this.game = game;
@@ -46,14 +46,11 @@ public class SinglePlayer implements Screen {
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Sprachdatei laden
-        String langCode = GameSettings.getLanguage();
-        texts = new JsonReader().parse(Gdx.files.internal("lang/" + langCode + ".json"));
 
         // Titel
         Label.LabelStyle titleStyle = new Label.LabelStyle();
         titleStyle.font = font;
-        titleLabel = new Label(getText("menu.singleplayer", "Singleplayer"), titleStyle);
+        titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.singleplayer"), titleStyle);
         titleLabel.setFontScale(2f);
         titleLabel.setAlignment(Align.center);
 
@@ -66,8 +63,8 @@ public class SinglePlayer implements Screen {
         buttonStyle.font = font;
 
         // Buttons
-        TextButton createWorldButton = new TextButton(getText("menu.create_world", "Create World"), buttonStyle);
-        TextButton backButton = new TextButton(getText("menu.back", "Back"), buttonStyle);
+        TextButton createWorldButton = new TextButton(LanguageManager.INSTANCE.getText("menu.create_world"), buttonStyle);
+        TextButton backButton = new TextButton(LanguageManager.INSTANCE.getText("menu.back"), buttonStyle);
 
         // Welten-Liste
         worldTable = new Table();
@@ -110,10 +107,6 @@ public class SinglePlayer implements Screen {
                 game.setScreen(new MainMenu(game));
             }
         });
-    }
-
-    private String getText(String key, String fallback) {
-        return texts.has(key) ? texts.getString(key) : fallback;
     }
 
     private void loadWorlds(FileHandle savesDir) {

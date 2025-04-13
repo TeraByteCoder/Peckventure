@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
+import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -30,7 +31,6 @@ public class MultiPlayer implements Screen {
     private Table serverTable;
     private BitmapFont font;
     private FileHandle serverDataFile;
-    private JsonValue texts;
 
     public MultiPlayer(Game game) {
         this.game = game;
@@ -39,9 +39,9 @@ public class MultiPlayer implements Screen {
     @Override
     public void show() {
         // Sprachdatei laden
-        String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
-        JsonReader reader = new JsonReader();
-        texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
+
+
+
 
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
@@ -53,7 +53,7 @@ public class MultiPlayer implements Screen {
 
         Label.LabelStyle titleStyle = new Label.LabelStyle();
         titleStyle.font = font;
-        String titleText = texts.has("menu.multiplayer") ? texts.getString("menu.multiplayer") : "Multiplayer";
+        String titleText = LanguageManager.INSTANCE.getText("menu.multiplayer");
         titleLabel = new Label(titleText, titleStyle);
         titleLabel.setFontScale(2f);
         titleLabel.setAlignment(Align.center);
@@ -66,8 +66,8 @@ public class MultiPlayer implements Screen {
         buttonStyle.font = font;
 
         // Übersetzte Buttons
-        String addServerText = texts.has("menu.add_server") ? texts.getString("menu.add_server") : "Add Server";
-        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
+        String addServerText = LanguageManager.INSTANCE.getText("menu.add_server");
+        String backButtonText = LanguageManager.INSTANCE.getText("menu.back");
         TextButton addServerButton = new TextButton(addServerText, buttonStyle);
         TextButton backButton = new TextButton(backButtonText, buttonStyle);
 

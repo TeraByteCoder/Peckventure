@@ -1,5 +1,6 @@
 package at.peckventure.menu;
 
+import at.peckventure.LanguageManager;
 import at.peckventure.world.WorldConfig;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -31,7 +32,6 @@ public class CreateWorld implements Screen {
     private Image backgroundImage;
     private BitmapFont font;
     private Texture textFieldTexture;
-    private JsonValue texts;
     private Skin skin;
     public CreateWorld(Game game) {
         this.game = game;
@@ -41,10 +41,6 @@ public class CreateWorld implements Screen {
     public void show() {
         // Load the skin like in the Settings class
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
-        // Sprachdatei laden
-        String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
-        JsonReader reader = new JsonReader();
-        texts = reader.parse(Gdx.files.internal("lang/" + langCode + ".json"));
 
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
@@ -62,7 +58,7 @@ public class CreateWorld implements Screen {
         labelStyle.fontColor = Color.WHITE;
 
         // Titel mit Übersetzung
-        String titleText = texts.has("menu.create_world") ? texts.getString("menu.create_world") : "Create World";
+        String titleText = LanguageManager.INSTANCE.getText("menu.create_world");
         Label titleLabel = new Label(titleText, labelStyle);
         titleLabel.setFontScale(3f);
         titleLabel.setAlignment(Align.center);
@@ -75,8 +71,8 @@ public class CreateWorld implements Screen {
         buttonStyle.font = font;
 
         // Übersetzte Buttons
-        String createWorldText = texts.has("menu.create_world_button") ? texts.getString("menu.create_world_button") : "Create World";
-        String backButtonText = texts.has("menu.back") ? texts.getString("menu.back") : "Back";
+        String createWorldText = LanguageManager.INSTANCE.getText("menu.create_world_button");
+        String backButtonText =LanguageManager.INSTANCE.getText("menu.back");
         TextButton createWorldButton = new TextButton(createWorldText, buttonStyle);
         TextButton backButton = new TextButton(backButtonText, buttonStyle);
 
@@ -85,7 +81,7 @@ public class CreateWorld implements Screen {
         textFieldStyle.fontColor = Color.WHITE;
 
 // Create "Allow Cheats" checkbox with translation
-        String allowCheatsText = texts.has("menu.allow_cheats") ? texts.getString("menu.allow_cheats") : "Allow Cheats";
+        String allowCheatsText = LanguageManager.INSTANCE.getText("menu.allow_cheats");
         final CheckBox allowCheatsCheckBox = new CheckBox(" " + allowCheatsText, skin);
 // Make the checkbox bigger
         allowCheatsCheckBox.getLabel().setFontScale(1.5f);  // Increase font size
@@ -98,13 +94,13 @@ public class CreateWorld implements Screen {
         textFieldStyle.background = new TextureRegionDrawable(new TextureRegion(textFieldTexture));
 
         // Übersetzte Labels und Platzhalter
-        String worldNamePlaceholder = texts.has("menu.world_name_placeholder") ? texts.getString("menu.world_name_placeholder") : "New World";
-        String seedPlaceholder = texts.has("menu.world_seed_placeholder") ? texts.getString("menu.world_seed_placeholder") : "Seed";
+        String worldNamePlaceholder = LanguageManager.INSTANCE.getText("menu.world_name_placeholder");
+        String seedPlaceholder = LanguageManager.INSTANCE.getText("menu.world_seed_placeholder");
         final TextField worldNameInput = new TextField(worldNamePlaceholder, textFieldStyle);
         final TextField seedInput = new TextField(seedPlaceholder, textFieldStyle);
 
-        String worldNameLabelText = texts.has("menu.world_name") ? texts.getString("menu.world_name") : "World Name:";
-        String seedLabelText = texts.has("menu.world_seed") ? texts.getString("menu.world_seed") : "World Seed:";
+        String worldNameLabelText = LanguageManager.INSTANCE.getText("menu.world_name");
+        String seedLabelText = LanguageManager.INSTANCE.getText("menu.world_seed");
         Label worldNameLabel = new Label(worldNameLabelText, labelStyle);
         Label seedLabel = new Label(seedLabelText, labelStyle);
 
