@@ -9,6 +9,7 @@ import at.peckventure.entities.MobSpawner;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.InventoryUI;
 import at.peckventure.inventory.SinglePlayerInventoryManager;
+import at.peckventure.light.LightSystem;
 import at.peckventure.rpc.DiscordPresence;
 import at.peckventure.ui.DebugOverlay;
 import at.peckventure.ui.EnergyUI;
@@ -52,7 +53,7 @@ public class SinglePlayerGameScreen extends GameScreen {
     private Texture pauseButtonTexture;
     private Texture whiteTexture;
     private Boolean operator;
-
+    private LightSystem lightSystem;
     public SinglePlayerGameScreen(Game game, String worldName) {
         super(game);
         this.worldName = worldName;
@@ -131,6 +132,9 @@ public class SinglePlayerGameScreen extends GameScreen {
         else
             player.setOperator(playerData.isOperator());
         stage.addActor(player);
+        // Lichtsystem initialisieren
+        lightSystem = new LightSystem(physicsWorld, player);
+// Nach dem Erstellen des Players:
 
         inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());
         healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
@@ -150,6 +154,11 @@ public class SinglePlayerGameScreen extends GameScreen {
         tilemap.startChunkUpdateThread(player);
         Box2DOperationManager.processOperations();
         createPauseOverlay();
+
+
+        float playerX = player.getX();
+        float playerY = player.getY();
+
     }
 
     private void createPauseOverlay() {
@@ -241,16 +250,22 @@ public class SinglePlayerGameScreen extends GameScreen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             debugOverlayVisible = !debugOverlayVisible;
             if (debugOverlayVisible) {
-                // Debug-Overlay zur Stage hinzufügen, wenn es sichtbar sein soll
                 debugOverlay.show();
             } else {
-                // Debug-Overlay von der Stage entfernen, wenn es nicht sichtbar sein soll
                 debugOverlay.hide();
             }
         }
 
+        // L-Taste zum Umschalten des Terraria-Lichtsystems (Tag/Nacht)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
+            lightSystem.toggleDarkMode();
+        }
+
+        // Clear the screen
+        Gdx.gl.glClearColor(0.1f, 0.1f, 0.3f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Update game state if not paused
         if (!paused) {
             mobSpawner.update(delta);
             Box2DOperationManager.processOperations();
@@ -262,6 +277,7 @@ public class SinglePlayerGameScreen extends GameScreen {
             DiscordPresence.updateToIngameSP(worldName);
         }
 
+        // Update the camera position to follow the player
         camera.position.set(
             player.getX() + player.getWidth() / 2,
             player.getY() + player.getHeight() / 2,
@@ -269,25 +285,36 @@ public class SinglePlayerGameScreen extends GameScreen {
         );
         camera.zoom = 1.0f;
         camera.update();
+
+        // Draw background
         backgroundStage.draw();
 
+        // Draw the world and player
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-
-        // Falls tilemap.render() Fehler wirft, einfach auskommentieren
         tilemap.render(batch);
-
         player.draw(batch);
         batch.end();
 
+        // Debug-Renderer optional anzeigen, um zu sehen, ob Box2D-Bodies vorhanden sind
+        if (debugOverlayVisible) {
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            debugRenderer.render(physicsWorld, camera.combined);
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
+
+        // Andere Spielelemente zeichnen
         stage.draw();
+
+        // WICHTIG: Lichtsystem NACH allem anderen rendern
+        // damit es wie in Terraria über allem liegt
+        if (!paused) {
+            //lightSystem.updateAndRender(camera);
+        }
+        // UI-Elemente zeichnen
         uiStage.draw();
 
-        //todo debugrenderer
-        //Gdx.gl.glEnable(GL20.GL_BLEND);
-        //debugRenderer.render(physicsWorld, camera.combined);
-        //Gdx.gl.glDisable(GL20.GL_BLEND);
-
+        // Wenn pausiert, Pause-Overlay zeichnen
         if (paused) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             batch.begin();
@@ -300,7 +327,6 @@ public class SinglePlayerGameScreen extends GameScreen {
             DiscordPresence.updateToPaused();
         }
     }
-
     @Override
     public void pause() {
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
@@ -351,6 +377,10 @@ public class SinglePlayerGameScreen extends GameScreen {
             if (debugRenderer != null) {
                 debugRenderer.dispose();
                 debugRenderer = null;
+            }
+            if (lightSystem != null) {
+                lightSystem.dispose();
+                lightSystem = null;
             }
 
             // UI-Komponenten nicht versuchen zu dispose(), da die Methode nicht existiert

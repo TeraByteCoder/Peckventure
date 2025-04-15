@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerTileMap extends AbstractTileMap {
     private final WorldGenerator worldGenerator;
@@ -34,18 +35,18 @@ public class ServerTileMap extends AbstractTileMap {
     public static final int MOB_UNLOAD_DISTANCE = MOB_LOAD_DISTANCE + 2;
 
     private static final int LOAD_DISTANCE = 6;  // Größerer Radius zum Vorladen
-    private static final int SEND_DISTANCE = 3;  // Kleinerer Radius zum Sendenprivate static final int MOB_SEND_DISTANCE = 4;
+    private static final int SEND_DISTANCE = 3;  // Kleinerer Radius zum Senden
 
-    // Globaler Chunk-Pool (wird z. B. zum Caching genutzt – stammt aus der Oberklasse)
-    // protected Set<Chunk> loadedChunks;
+    // Map zum per-Spieler-Tracking der aktuell geladenen Chunks - using ConcurrentHashMap for thread safety
+    private Map<ServerPlayer, Set<Chunk>> playerLoadedChunks = new ConcurrentHashMap<>();
 
-    // Map zum per-Spieler-Tracking der aktuell geladenen Chunks
-    private Map<ServerPlayer, Set<Chunk>> playerLoadedChunks = new HashMap<>();
-
-    // Speichert Informationen über geladene Mobs nach Chunk-Position
-    private final Map<String, Set<Integer>> mobsByChunk = new HashMap<>();
+    // Speichert Informationen über geladene Mobs nach Chunk-Position - using ConcurrentHashMap for thread safety
+    private final Map<String, Set<Integer>> mobsByChunk = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
     private static final Type LIST_TYPE = new TypeToken<List<MobIO.MobData>>(){}.getType();
+
+    // Track chunks that have had their mobs loaded
+    private final Set<String> loadedMobChunks = ConcurrentHashMap.newKeySet();
 
     public ServerTileMap(World world, WorldGenerator generator, Set<Chunk> preLoadedChunks, RegionManager regionManager, MobRegionManager mobRegionManager) {
         super(world);
@@ -135,7 +136,7 @@ public class ServerTileMap extends AbstractTileMap {
             String chunkKey = getChunkKey(mob.getChunkX(), mob.getChunkY());
 
             if (!mobsByChunk.containsKey(chunkKey)) {
-                mobsByChunk.put(chunkKey, new HashSet<>());
+                mobsByChunk.put(chunkKey, ConcurrentHashMap.newKeySet());
             }
             mobsByChunk.get(chunkKey).add(mobId);
         }
@@ -202,6 +203,11 @@ public class ServerTileMap extends AbstractTileMap {
                     continue; // Dieser Chunk hat bereits Mobs geladen
                 }
 
+                // Überprüfen, ob wir bereits die Mobs für diesen Chunk geladen haben
+                if (loadedMobChunks.contains(chunkKey)) {
+                    continue; // Wir haben bereits die Mobs aus diesem Chunk geladen
+                }
+
                 // Lade Mobs aus der Regionsdatei
                 int regionX = Math.floorDiv(targetChunkX, MobRegionManager.REGION_SIZE);
                 int regionY = Math.floorDiv(targetChunkY, MobRegionManager.REGION_SIZE);
@@ -229,7 +235,7 @@ public class ServerTileMap extends AbstractTileMap {
 
                                 // Füge Mob zur Chunk-Liste hinzu
                                 if (!mobsByChunk.containsKey(chunkKey)) {
-                                    mobsByChunk.put(chunkKey, new HashSet<>());
+                                    mobsByChunk.put(chunkKey, ConcurrentHashMap.newKeySet());
                                 }
                                 mobsByChunk.get(chunkKey).add(newId);
                             }
@@ -241,10 +247,14 @@ public class ServerTileMap extends AbstractTileMap {
 
                             // Füge Mob zur Chunk-Liste hinzu
                             if (!mobsByChunk.containsKey(chunkKey)) {
-                                mobsByChunk.put(chunkKey, new HashSet<>());
+                                mobsByChunk.put(chunkKey, ConcurrentHashMap.newKeySet());
                             }
                             mobsByChunk.get(chunkKey).add(newId);
                         }
+
+                        // Markiere diesen Chunk als geladen und lösche die Mobs aus der Datei
+                        loadedMobChunks.add(chunkKey);
+                        mobRegionFile.clearMobs(localX, localY);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -289,6 +299,9 @@ public class ServerTileMap extends AbstractTileMap {
                         mobsByChunk.remove(chunkKey);
                     }
                 }
+
+                // Entferne aus loadedMobChunks, da wir den Chunk jetzt entladen
+                loadedMobChunks.remove(chunkKey);
 
                 // Entferne den Mob aus dem Spiel
                 mob.dispose();
@@ -422,7 +435,7 @@ public class ServerTileMap extends AbstractTileMap {
      * Fehlende Chunks werden geladen und an den Spieler gesendet, nicht mehr benötigte werden aus seinem Set entfernt.
      */
     public void updateChunksForPlayer(ServerPlayer player) {
-        Set<Chunk> loadedForPlayer = playerLoadedChunks.computeIfAbsent(player, k -> new HashSet<>());
+        Set<Chunk> loadedForPlayer = playerLoadedChunks.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet());
 
         // 1. Lade alle Chunks im großen Radius (LOAD_DISTANCE)
         Set<Chunk> chunksToLoad = calculateChunkRadius(player, LOAD_DISTANCE);
@@ -447,13 +460,7 @@ public class ServerTileMap extends AbstractTileMap {
         }
 
         // Entferne nicht mehr benötigte Chunks aus dem Spieler-Set
-        Iterator<Chunk> it = loadedForPlayer.iterator();
-        while (it.hasNext()) {
-            Chunk chunk = it.next();
-            if (!chunksToSend.contains(chunk)) {
-                it.remove();
-            }
-        }
+        loadedForPlayer.removeIf(chunk -> !chunksToSend.contains(chunk));
     }
 
     /**
@@ -497,6 +504,9 @@ public class ServerTileMap extends AbstractTileMap {
     public void removePlayer(ServerPlayer player) {
         Set<Chunk> chunksOfPlayer = playerLoadedChunks.remove(player);
         if (chunksOfPlayer != null) {
+            // Sammle alle Chunks, die nur von diesem Spieler verwendet wurden
+            Set<Chunk> chunksToRemove = new HashSet<>();
+
             for (Chunk chunk : chunksOfPlayer) {
                 boolean inUse = false;
                 for (Set<Chunk> otherChunks : playerLoadedChunks.values()) {
@@ -506,20 +516,25 @@ public class ServerTileMap extends AbstractTileMap {
                     }
                 }
                 if (!inUse) {
-                    int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
-                    int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
-                    RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
-                    int localX = Math.floorMod(chunk.getChunkX(), RegionManager.REGION_SIZE);
-                    int localY = Math.floorMod(chunk.getChunkY(), RegionManager.REGION_SIZE);
-                    byte[] data = ChunkIO.serialize(chunk);
-                    try {
-                        regionFile.writeChunk(localX, localY, data);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    chunk.dispose();
-                    loadedChunks.remove(chunk);
+                    chunksToRemove.add(chunk);
                 }
+            }
+
+            // Speichere und entferne die nicht mehr benötigten Chunks
+            for (Chunk chunk : chunksToRemove) {
+                int regionX = Math.floorDiv(chunk.getChunkX(), RegionManager.REGION_SIZE);
+                int regionY = Math.floorDiv(chunk.getChunkY(), RegionManager.REGION_SIZE);
+                RegionFile regionFile = regionManager.getRegionFile(regionX, regionY);
+                int localX = Math.floorMod(chunk.getChunkX(), RegionManager.REGION_SIZE);
+                int localY = Math.floorMod(chunk.getChunkY(), RegionManager.REGION_SIZE);
+                byte[] data = ChunkIO.serialize(chunk);
+                try {
+                    regionFile.writeChunk(localX, localY, data);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                chunk.dispose();
+                loadedChunks.remove(chunk);
             }
         }
     }
@@ -529,7 +544,10 @@ public class ServerTileMap extends AbstractTileMap {
      * updateChunksForPlayer für jeden Spieler aufgerufen wird.
      */
     public void updateChunksForAllPlayers() {
-        for (ServerPlayer player : GameServer.instance.players) {
+        // Kopie der Spielerliste erstellen, um ConcurrentModificationException zu vermeiden
+        List<ServerPlayer> playersCopy = new ArrayList<>(GameServer.instance.players);
+
+        for (ServerPlayer player : playersCopy) {
             updateChunksForPlayer(player);
             updateMobsForPlayer(player);
         }
@@ -545,7 +563,7 @@ public class ServerTileMap extends AbstractTileMap {
     }
 
     private Set<Chunk> calculateChunkRadius(ServerPlayer player, int distance) {
-        Set<Chunk> chunks = new HashSet<>();
+        Set<Chunk> chunks = ConcurrentHashMap.newKeySet();
         for (int x = -distance; x <= distance; x++) {
             for (int y = -distance; y <= distance; y++) {
                 chunks.add(new Chunk(

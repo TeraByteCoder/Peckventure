@@ -36,13 +36,14 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GameServer
 {
     public static GameServer instance;
     private static final String DEFAULT_SERVER_FOLDER = System.getenv("APPDATA") + "\\peckventure_server";
     Server server;
-    public Set<ServerPlayer> players = new HashSet<>();
+    public Set<ServerPlayer> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private MobSpawner mobSpawner;
     private World physicsWorld;
@@ -104,25 +105,46 @@ public class GameServer
             @Override
             public void disconnected(Connection connection)
             {
-
                 ServerPlayer player = ServerPlayer.findPlayer(connection);
                 if(player != null)
                 {
-                    PlayerData playerData = new PlayerData(player.getUuid(), player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), player.isOperator(), (int) player.getEnergyStatus().getCurrent(),(int)  player.getHealthStatus().getCurrent(), player.getHealthStatus().getMax(), player.getEnergyStatus().getMax(), "");
-                    playerData.save(worldFolder);
-                    tilemap.removePlayer(player);
-                    players.remove(player);
+                    try {
+                        // Force save any active mob data around this player before disconnect
+                        ((ServerTileMap)tilemap).unloadMobsOutsideRenderDistance();
 
-                    NetworkPackets.ChatMessagePacket leavemessage = new NetworkPackets.ChatMessagePacket();
-                    leavemessage.message = player.getUsername() + " left the Game";
-                    server.sendToAllTCP(leavemessage);
+                        // Save player data
+                        PlayerData playerData = new PlayerData(
+                            player.getUuid(),
+                            player.getX(),
+                            player.getY(),
+                            player.getInventory().serializeHotbar(),
+                            player.getInventory().serializeMain(),
+                            player.isOperator(),
+                            (int) player.getEnergyStatus().getCurrent(),
+                            (int) player.getHealthStatus().getCurrent(),
+                            player.getHealthStatus().getMax(),
+                            player.getEnergyStatus().getMax(),
+                            player.serializeEffects()
+                        );
+                        playerData.save(worldFolder);
 
-                    NetworkPackets.ClientDisconnectPacket packet = new NetworkPackets.ClientDisconnectPacket();
-                    packet.uuid = player.getUuid();
-                    server.sendToAllUDP(packet);
+                        // Make sure tilemap handles player cleanup properly
+                        tilemap.removePlayer(player);
+                        players.remove(player);
 
+                        // Notify other players
+                        NetworkPackets.ChatMessagePacket leavemessage = new NetworkPackets.ChatMessagePacket();
+                        leavemessage.message = player.getUsername() + " left the Game";
+                        server.sendToAllTCP(leavemessage);
+
+                        NetworkPackets.ClientDisconnectPacket packet = new NetworkPackets.ClientDisconnectPacket();
+                        packet.uuid = player.getUuid();
+                        server.sendToAllUDP(packet);
+                    } catch (Exception e) {
+                        System.err.println("Error during player disconnection: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
-
             }
 
             public void received(Connection connection, Object object)

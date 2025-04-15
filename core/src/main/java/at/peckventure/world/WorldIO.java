@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static at.peckventure.Const.savesDir;
 import static at.peckventure.Globals.mobs;
@@ -105,20 +106,34 @@ public class WorldIO
         {
             worldDir.mkdirs();
         }
-        Set<String> uuids = players.keySet();
-        for (String uuid : uuids)
-        {
-            Player player = players.get(uuid);
-            PlayerData playerData = new PlayerData(uuid);
 
-            playerData.setPlayerX(player.getX());
-            playerData.setPlayerY(player.getY());
-            playerData.setInventoryHotbar(player.getInventory().serializeHotbar());
-            playerData.setInventoryMain((player.getInventory().serializeMain()));
-            playerData.setOperator(false);
+        // Speichere alle Spielerdaten
+        for (Map.Entry<String, Player> entry : players.entrySet())
+        {
+            String playerUuid = entry.getKey();
+            Player player = entry.getValue();
+
+            PlayerData playerData = new PlayerData(
+                playerUuid,
+                player.getX(),
+                player.getY(),
+                player.getInventory().serializeHotbar(),
+                player.getInventory().serializeMain(),
+                player.isOperator(),
+                (int) player.getEnergyStatus().getCurrent(),
+                (int) player.getHealthStatus().getCurrent(),
+                player.getHealthStatus().getMax(),
+                player.getEnergyStatus().getMax(),
+                player.serializeEffects()
+            );
+            playerData.save(worldDir);
         }
+
+        // Speichere Weltkonfiguration
         FileHandle configFile = worldDir.child("worldconfig.txt");
         config.save(configFile);
+
+        // Speichere alle Chunks
         RegionManager regionManager = new RegionManager(worldDir);
         for (Chunk chunk : loadedChunks)
         {
@@ -164,11 +179,28 @@ public class WorldIO
         {
             worldDir.mkdirs();
         }
-        PlayerData playerData = new PlayerData(uuid, player.getX(), player.getY(), player.getInventory().serializeHotbar(), player.getInventory().serializeMain(), player.isOperator(), (int) player.getEnergyStatus().getCurrent(), (int) player.getHealthStatus().getCurrent(), player.getHealthStatus().getMax(), player.getEnergyStatus().getMax(), player.serializeEffects());
+
+        // Speichere Spielerdaten
+        PlayerData playerData = new PlayerData(
+            uuid,
+            player.getX(),
+            player.getY(),
+            player.getInventory().serializeHotbar(),
+            player.getInventory().serializeMain(),
+            player.isOperator(),
+            (int) player.getEnergyStatus().getCurrent(),
+            (int) player.getHealthStatus().getCurrent(),
+            player.getHealthStatus().getMax(),
+            player.getEnergyStatus().getMax(),
+            player.serializeEffects()
+        );
         playerData.save(worldDir);
 
+        // Speichere Weltkonfiguration
         FileHandle configFile = worldDir.child("worldconfig.txt");
         config.save(configFile);
+
+        // Speichere alle Chunks
         RegionManager regionManager = new RegionManager(worldDir);
         for (Chunk chunk : loadedChunks)
         {
@@ -223,22 +255,24 @@ public class WorldIO
             createWorld(worldDir, new Random().nextInt());
         }
 
-        // Rest der Methode bleibt unverändert
+        // Spielerdaten laden
         FileHandle playerdataFolder = worldDir.child("playerData");
         HashSet<String> uuids = PlayerData.getPlayerUUIDs(playerdataFolder);
         Set<PlayerData> players = new HashSet<>();
-        for (String uuid : uuids)
+        for (String playerUuid : uuids)
         {
-            PlayerData playerData = new PlayerData(uuid);
+            PlayerData playerData = PlayerData.load(worldDir, playerUuid);
             players.add(playerData);
-            if (uuid == Globals.uuid && Globals.uuid != null)
+            if (playerUuid.equals(Globals.uuid) && Globals.uuid != null)
             {
                 singlePlayerData = playerData;
             }
         }
 
         WorldConfig config = WorldConfig.load(configFile);
-        Set<Chunk> loadedChunks = new HashSet<>();
+        Set<Chunk> loadedChunks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        // Chunks laden
         FileHandle regionsDir = worldDir.child("regions");
         if (regionsDir.exists())
         {
@@ -260,7 +294,9 @@ public class WorldIO
                                 int chunkY = regionY * RegionManager.REGION_SIZE + localY;
                                 if (singlePlayerData != null)
                                 {
-                                    if (Math.abs(chunkX - Globals.toChunkCoords(singlePlayerData.getPlayerX())) <= AbstractTileMap.RENDER_DISTANCE && Math.abs(chunkY - Globals.toChunkCoords(singlePlayerData.getPlayerY())) <= AbstractTileMap.RENDER_DISTANCE)
+                                    // Wenn Spieler bekannt ist, lade Chunks um den Spieler
+                                    if (Math.abs(chunkX - Globals.toChunkCoords(singlePlayerData.getPlayerX())) <= AbstractTileMap.RENDER_DISTANCE &&
+                                        Math.abs(chunkY - Globals.toChunkCoords(singlePlayerData.getPlayerY())) <= AbstractTileMap.RENDER_DISTANCE)
                                     {
                                         byte[] data = regionFile.readChunk(localX, localY);
                                         if (data != null)
@@ -271,6 +307,7 @@ public class WorldIO
                                     }
                                 } else
                                 {
+                                    // Wenn kein Spieler bekannt ist, lade Chunks um den Weltmittelpunkt
                                     if (Math.abs(chunkX) <= AbstractTileMap.RENDER_DISTANCE && Math.abs(chunkY) <= AbstractTileMap.RENDER_DISTANCE)
                                     {
                                         byte[] data = regionFile.readChunk(localX, localY);
@@ -291,6 +328,8 @@ public class WorldIO
                 }
             }
         }
+
+        // Mobs laden
         Set<Mob> loadedMobs = new HashSet<>();
         FileHandle mobRegionsDir = worldDir.child("mob_regions");
         if (mobRegionsDir.exists())
@@ -347,6 +386,9 @@ public class WorldIO
                                             Mob mob = MobIO.deserializeFromJson(mobJson, physicsWorld);
                                             loadedMobs.add(mob);
                                         }
+
+                                        // Diese Zeile nicht anwenden für Multiplayer-Server!
+                                        // mobRegionFile.clearMobs(localX, localY);
                                     }
                                 }
                             }
@@ -359,6 +401,8 @@ public class WorldIO
                 }
             }
         }
+
+        // Alle geladenen Mobs der Globals.mobs Map hinzufügen
         for (Mob mob : loadedMobs) {
             int newId = MobMap.getNextId();
             mobs.put(newId, mob);
@@ -416,7 +460,6 @@ public class WorldIO
             this.players = new HashSet<>();
             players.add(player);
         }
-
 
         public WorldConfig getConfig()
         {
