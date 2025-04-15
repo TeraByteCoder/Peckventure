@@ -1,5 +1,6 @@
 package at.peckventure.entities.mob;
 
+import at.peckventure.Globals;
 import at.peckventure.Textures;
 import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.world.Box2DOperationManager;
@@ -14,7 +15,7 @@ import java.util.Random;
 public class Beetle extends Mob {
     private final Texture texture;
     private float direction;
-    private float speed = 1.5f;
+    private final float speed = 1.5f;
     private float checkTime;
     private float lastX;
     private boolean facingRight;
@@ -124,6 +125,7 @@ public class Beetle extends Mob {
         {
             MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("wood"));
         }
+        Globals.mobs.removeMob(this);
         dispose();
     }
 }

@@ -208,4 +208,11 @@ public abstract class Player extends Actor {
             }
         }
     }
+
+    public void dispose() {
+        // Ressourcen freigeben, falls vorhanden
+        if (sprite != null && sprite.getTexture() != null) {
+            sprite.getTexture().dispose();
+        }
+    }
 }

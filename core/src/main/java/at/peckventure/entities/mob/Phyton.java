@@ -1,8 +1,8 @@
 package at.peckventure.entities.mob;
 
 import at.peckventure.Globals;
-import at.peckventure.SpriteSheetLoader;
 import at.peckventure.entities.Player;
+import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 
@@ -15,6 +15,7 @@ import com.badlogic.gdx.physics.box2d.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import static at.peckventure.Textures.*;
 
@@ -32,19 +33,19 @@ public class Phyton extends Mob {
     private float stateTime = 0f;
 
     private float direction;
-    private float speed = 10.0f;
+    private final float speed = 10.0f;
     private float checkTime;
     private float lastX;
     private boolean facingRight;
 
-    private float maxHealth;
+    private final float maxHealth;
     private float currentHealth;
 
     // New AI-related fields
     private Player targetPlayer;
     private float detectionRange = 100f; // Blocks
     private float attackRange = 3.5f; // Blocks
-    private float attackCooldown = 0.8f; // Seconds between attacks
+    private final float attackCooldown = 0.8f; // Seconds between attacks
     private float currentAttackCooldown = 0f;
     private float attackDamage = 10f;
 
@@ -344,5 +345,17 @@ public class Phyton extends Mob {
 
     public AggressionLevel getAggressionLevel() {
         return this.aggressionLevel;
+    }
+
+    @Override
+    public void onDeath()
+    {
+        Random rand = new Random();
+        int randNum = rand.nextInt();
+        if (randNum % 2 == 0)
+        {
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"));
+        }
+        dispose();
     }
 }

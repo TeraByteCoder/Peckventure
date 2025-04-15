@@ -43,8 +43,6 @@ public abstract class Block extends Actor
             // Positioniere den Body in der Mitte des Blocks (Umrechnung in Meter: Pixel / BLOCK_SIZE)
             bodyDef.position.set((x + getWidth() / 2f) / BLOCK_SIZE, (y + getHeight() / 2f) / BLOCK_SIZE);
             body = world.createBody(bodyDef);
-            body.setLinearDamping(2f);   // erhöht die lineare Dämpfung
-            body.setAngularDamping(2f);  // erhöht die Drehungsdämpfung
 
             // Erzeuge die Kollisionsform. Der Default ist ein Rechteck.
             PolygonShape shape = createShape();

@@ -6,9 +6,10 @@ import com.badlogic.gdx.InputAdapter;
 
 public class InputManager extends InputAdapter {
     private static InputManager instance;
-    private boolean leftPressed, rightPressed, jumpPressed, wPressed, sPressed;
+    private boolean leftPressed, rightPressed, jumpPressed, wPressed, sPressed, peckPressed;
     private ChatToggle chatToggle;
     private EscapeHandler escapeHandler;
+
 
     public interface ChatToggle {
         void toggleChat();
@@ -30,6 +31,8 @@ public class InputManager extends InputAdapter {
         }
         return instance;
     }
+
+
 
     public void setChatToggle(ChatToggle chatToggle) {
         this.chatToggle = chatToggle;
@@ -86,6 +89,9 @@ public class InputManager extends InputAdapter {
         if (keycode == Input.Keys.S) {
             sPressed = true;
         }
+        if (keycode == Input.Keys.F) {
+            peckPressed = true;
+        }
         return false;
     }
 
@@ -116,6 +122,9 @@ public class InputManager extends InputAdapter {
         if (keycode == Input.Keys.S) {
             sPressed = false;
         }
+        if (keycode == Input.Keys.F) {
+            peckPressed = false;
+        }
         return false;
     }
 
@@ -137,5 +146,8 @@ public class InputManager extends InputAdapter {
 
     public boolean isSPressed() {
         return sPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+    }
+    public boolean isPeckPressed() {
+        return peckPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 }
