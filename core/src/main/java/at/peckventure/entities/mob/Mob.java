@@ -109,4 +109,9 @@ public abstract class Mob extends Actor
     {
         return direction;
     }
+
+    public void onDeath()
+    {
+
+    }
 }

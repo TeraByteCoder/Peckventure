@@ -1,12 +1,15 @@
 package at.peckventure.entities.mob;
 
 import at.peckventure.Textures;
+import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+
+import java.util.Random;
 
 public class Beetle extends Mob {
     private final Texture texture;
@@ -108,4 +111,19 @@ public class Beetle extends Mob {
         }
     }
 
+    @Override
+    public void onDeath()
+    {
+        Random rand = new Random();
+        int randNum = rand.nextInt();
+        if (randNum % 100 == 0)
+        {
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"));
+        }
+        if (randNum % 4 == 0)
+        {
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("wood"));
+        }
+        dispose();
+    }
 }
