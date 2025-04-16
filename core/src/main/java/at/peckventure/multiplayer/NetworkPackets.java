@@ -134,4 +134,17 @@ public class NetworkPackets
         public int slot;
     }
 
+    public static class PeckRequestPacket {
+        public String uuid;        // UUID of the pecking player
+        public float targetX;      // X coordinate of the target
+        public float targetY;      // Y coordinate of the target
+    }
+
+    public static class PeckResponsePacket {
+        public String uuid;        // UUID of the pecking player
+        public String targetUuid;  // UUID of the target (if it's a player, empty otherwise)
+        public float targetX;      // X coordinate of the target
+        public float targetY;      // Y coordinate of the target
+    }
+
 }

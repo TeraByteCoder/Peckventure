@@ -1,5 +1,6 @@
 package at.peckventure.menu;
 
+import at.peckventure.FontManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -8,14 +9,14 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
@@ -60,8 +61,9 @@ public class Settings implements Screen {
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Skin laden
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         // Sprachdatei laden anhand der in den Preferences gesetzten Sprache
         String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
@@ -153,7 +155,7 @@ public class Settings implements Screen {
             new LanguageOption("de_de", texts.has("menu.language_de") ? texts.getString("menu.language_de") : "Deutsch"),
             new LanguageOption("de_at", texts.has("menu.language_de_at") ? texts.getString("menu.language_de_at") : "Österreichisch"),
             new LanguageOption("de_ch", texts.has("menu.language_de_ch") ? texts.getString("menu.language_de_ch") : "Schweizerisch"),
-            new LanguageOption("ru_ru", texts.has("menu.language_ru_ru") ? texts.getString("menu.language_ru_ru") : "Russich")
+            new LanguageOption("ru_ru", texts.has("menu.language_ru_ru") ? texts.getString("menu.language_ru_ru") : "Russisch")
         };
         languageSelect.setItems(options);
         // Vorbelegung anhand des gespeicherten Sprachcodes
@@ -312,5 +314,8 @@ public class Settings implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
+        if (skin != null) {
+            skin.dispose();
+        }
     }
 }

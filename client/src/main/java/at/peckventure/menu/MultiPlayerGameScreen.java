@@ -250,6 +250,27 @@ public class MultiPlayerGameScreen extends GameScreen
                     {
                         ControlledPlayer.getInstance().deserializeEffects(packet.effects);
                     });
+                } else if (object instanceof NetworkPackets.PeckResponsePacket)
+                {
+                    final NetworkPackets.PeckResponsePacket packet = (NetworkPackets.PeckResponsePacket) object;
+                    Gdx.app.postRunnable(() -> {
+                        if (packet.uuid.equals(Globals.uuid))
+                        {
+                            // This is our own peck, we are already displaying the animation
+                            // Just ensure that we're targeting the right position
+                            ControlledPlayer.getInstance().tongueTarget.set(packet.targetX, packet.targetY);
+                            System.out.println("Client received peck response for player: " + packet.uuid);
+                        }
+                        else
+                        {
+                            // This is another player's peck, trigger animation on RemotePlayer
+                            RemotePlayer remotePlayer = players.get(packet.uuid);
+                            if (remotePlayer != null)
+                            {
+                                remotePlayer.startPeckAnimation(packet.targetX, packet.targetY);
+                            }
+                        }
+                    });
                 }
 
 

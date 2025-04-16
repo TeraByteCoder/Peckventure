@@ -1,37 +1,31 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
+import at.peckventure.FontManager;
 import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
 
 public class AddServerScreen implements Screen {
     private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
-    private BitmapFont font;
-    private Texture textFieldTexture;
+    private Skin skin;
     private FileHandle serverDataFile;
 
     public AddServerScreen(Game game) {
@@ -40,67 +34,40 @@ public class AddServerScreen implements Screen {
 
     @Override
     public void show() {
-        // Sprachdatei laden
-        String langCode = GameSettings.getLanguage(); // z. B. "en_us", "de_de", "de_at", "de_ch"
-        JsonReader reader = new JsonReader();
-
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
-        font = new BitmapFont();
-        font.getData().setScale(2f);
+
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Label Style
-        Label.LabelStyle labelStyle = new Label.LabelStyle();
-        labelStyle.font = font;
-        labelStyle.fontColor = Color.WHITE;
-
         // Titel mit Übersetzung
-        Label titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.title"), labelStyle);
+        Label titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.title"), skin);
         titleLabel.setFontScale(3f);
         titleLabel.setAlignment(Align.center);
-
-        // Button Styles
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font;
 
         // Übersetzte Buttons
         String addButtonText = LanguageManager.INSTANCE.getText("menu.add_server");
         String backButtonText = LanguageManager.INSTANCE.getText("menu.back");
-        TextButton addButton = new TextButton(addButtonText, buttonStyle);
-        TextButton backButton = new TextButton(backButtonText, buttonStyle);
-
-        // TextField Style
-        TextField.TextFieldStyle textFieldStyle = new TextField.TextFieldStyle();
-        textFieldStyle.font = font;
-        textFieldStyle.fontColor = Color.WHITE;
-
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.DARK_GRAY);
-        pixmap.fill();
-        textFieldTexture = new Texture(pixmap);
-        pixmap.dispose();
-        textFieldStyle.background = new TextureRegionDrawable(new TextureRegion(textFieldTexture));
+        TextButton addButton = new TextButton(addButtonText, skin);
+        TextButton backButton = new TextButton(backButtonText, skin);
 
         // Textfelder mit Platzhaltern
         String serverNamePlaceholder = LanguageManager.INSTANCE.getText("menu.server_name");
         String addressPlaceholder = LanguageManager.INSTANCE.getText("menu.address");
-        final TextField nameInput = new TextField(serverNamePlaceholder, textFieldStyle);
-        final TextField addressInput = new TextField(addressPlaceholder, textFieldStyle);
+        final TextField nameInput = new TextField(serverNamePlaceholder, skin);
+        final TextField addressInput = new TextField(addressPlaceholder, skin);
 
         // Labels mit Übersetzungen
         String serverNameLabelText = LanguageManager.INSTANCE.getText("menu.server_name_label");
         String addressLabelText = LanguageManager.INSTANCE.getText("menu.address");
-        Label nameLabel = new Label(serverNameLabelText, labelStyle);
-        Label addressLabel = new Label(addressLabelText, labelStyle);
+        Label nameLabel = new Label(serverNameLabelText, skin);
+        Label addressLabel = new Label(addressLabelText, skin);
 
         // Layout
         Table inputTable = new Table();
@@ -165,7 +132,9 @@ public class AddServerScreen implements Screen {
     }
 
     @Override
-    public void resize(int width, int height) {}
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
 
     @Override
     public void pause() {}
@@ -180,8 +149,6 @@ public class AddServerScreen implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
-        font.dispose();
-        if (textFieldTexture != null)
-            textFieldTexture.dispose();
+        if (skin != null) skin.dispose();
     }
 }

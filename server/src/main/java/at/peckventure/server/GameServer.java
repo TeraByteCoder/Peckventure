@@ -330,7 +330,20 @@ public class GameServer
                         }
                     }
 
-                } else if (object instanceof NetworkPackets.PingRequestPacket)
+                }
+                else if (object instanceof NetworkPackets.PeckRequestPacket)
+                {
+                    NetworkPackets.PeckRequestPacket packet = (NetworkPackets.PeckRequestPacket) object;
+                    ServerPlayer player = ServerPlayer.findPlayerUUID(packet.uuid);
+
+                    if (player != null)
+                    {
+                        // Process the peck request
+                        player.peck(packet.targetX, packet.targetY);
+                        System.out.println("Server received peck request from: " + player.getUsername());
+                    }
+                }
+                else if (object instanceof NetworkPackets.PingRequestPacket)
                 {
                     connection.sendTCP(new NetworkPackets.PingResponsePacket());
                 }

@@ -36,6 +36,15 @@ public class NetworkClient {
         return instance;
     }
 
+    public static boolean hasInstance()
+    {
+        if(instance == null)
+        {
+            return false;
+        }
+        return true;
+    }
+
     public void connect(int timeout) {
         client.start();
         try {

@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
+import at.peckventure.FontManager;
 import at.peckventure.Globals;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -8,19 +9,17 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 public class FirstStartScreen implements Screen {
     private final Game game;
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
+    private Skin skin;
 
     public FirstStartScreen(Game game) {
         this.game = game;
@@ -31,36 +30,22 @@ public class FirstStartScreen implements Screen {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
+
         // Hintergrund wie im MainMenu
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Erstelle einen Skin (oder verwende den existierenden, falls du schon einen hast)
-        Skin skin = new Skin();
-        BitmapFont font = new BitmapFont();
-        skin.add("default", font);
-
-        // TextField-Stil ähnlich wie im MainMenu (hier können weitere Anpassungen erfolgen)
-        TextField.TextFieldStyle textFieldStyle = new TextField.TextFieldStyle();
-        textFieldStyle.font = font;
-        textFieldStyle.fontColor = Color.WHITE;
-        // Optional: Setze hier einen Hintergrund für das Textfeld, falls vorhanden
-        // textFieldStyle.background = new TextureRegionDrawable(new Texture("textures/gui/textfield.png"));
-
-        final TextField usernameField = new TextField("", textFieldStyle);
+        // Username-Eingabefeld
+        final TextField usernameField = new TextField("", skin);
         usernameField.setMessageText("Username");
 
-        // Button-Stil analog zum MainMenu
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font;
-
-        TextButton submitButton = new TextButton("Submit", buttonStyle);
+        // Submit-Button
+        TextButton submitButton = new TextButton("Submit", skin);
 
         // Table-Layout: Zentriere das Textfeld und den Button
         Table table = new Table();
@@ -105,7 +90,7 @@ public class FirstStartScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        // Optional: Bei Bedarf das Table-Layout oder die Stage anpassen
+        stage.getViewport().update(width, height, true);
     }
 
     @Override
@@ -121,5 +106,8 @@ public class FirstStartScreen implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
+        if (skin != null) {
+            skin.dispose();
+        }
     }
 }

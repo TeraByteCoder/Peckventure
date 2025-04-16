@@ -1,5 +1,6 @@
 package at.peckventure.menu;
 
+import at.peckventure.FontManager;
 import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -7,15 +8,11 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
 
 import static at.peckventure.Const.savesDir;
 
@@ -26,7 +23,7 @@ public class SinglePlayer implements Screen {
     private Image backgroundImage;
     private Label titleLabel;
     private Table worldTable;
-    private BitmapFont font;
+    private Skin skin;
 
     public SinglePlayer(Game game) {
         this.game = game;
@@ -37,8 +34,9 @@ public class SinglePlayer implements Screen {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
-        // Schriftart
-        font = new BitmapFont();
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         // Hintergrund
         backgroundTexture = new Texture("textures/background/forest.png");
@@ -46,31 +44,20 @@ public class SinglePlayer implements Screen {
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-
         // Titel
-        Label.LabelStyle titleStyle = new Label.LabelStyle();
-        titleStyle.font = font;
-        titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.singleplayer"), titleStyle);
+        titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.singleplayer"), skin);
         titleLabel.setFontScale(2f);
         titleLabel.setAlignment(Align.center);
 
-        // Button-Stil
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font;
-
-        // Buttons
-        TextButton createWorldButton = new TextButton(LanguageManager.INSTANCE.getText("menu.create_world"), buttonStyle);
-        TextButton backButton = new TextButton(LanguageManager.INSTANCE.getText("menu.back"), buttonStyle);
+        // Buttons mit Skin erstellen
+        TextButton createWorldButton = new TextButton(LanguageManager.INSTANCE.getText("menu.create_world"), skin);
+        TextButton backButton = new TextButton(LanguageManager.INSTANCE.getText("menu.back"), skin);
 
         // Welten-Liste
         worldTable = new Table();
         worldTable.top().pad(20);
 
-        ScrollPane scrollPane = new ScrollPane(worldTable);
+        ScrollPane scrollPane = new ScrollPane(worldTable, skin);
         scrollPane.setScrollingDisabled(true, false);
 
         loadWorlds(savesDir);
@@ -119,15 +106,7 @@ public class SinglePlayer implements Screen {
     }
 
     private void addWorldButton(final String worldName) {
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-
-        TextButton.TextButtonStyle worldButtonStyle = new TextButton.TextButtonStyle();
-        worldButtonStyle.up = buttonDrawable;
-        worldButtonStyle.down = buttonDrawable;
-        worldButtonStyle.font = font;
-
-        TextButton worldButton = new TextButton(worldName, worldButtonStyle);
+        TextButton worldButton = new TextButton(worldName, skin);
         worldButton.getLabel().setFontScale(1.5f);
         worldButton.pad(10);
         worldButton.setSize(300, 60);
@@ -150,7 +129,9 @@ public class SinglePlayer implements Screen {
     }
 
     @Override
-    public void resize(int i, int i1) { }
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
 
     @Override
     public void pause() { }
@@ -165,6 +146,5 @@ public class SinglePlayer implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
-        font.dispose();
     }
 }

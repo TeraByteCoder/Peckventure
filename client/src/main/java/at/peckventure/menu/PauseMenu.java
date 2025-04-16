@@ -1,16 +1,15 @@
 package at.peckventure.menu;
 
+import at.peckventure.FontManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 
@@ -19,6 +18,7 @@ public class PauseMenu implements Screen {
     private final Screen previousScreen;
     private Stage stage;
     private Texture buttonTexture;
+    private Skin skin;
 
     public PauseMenu(Game game, Screen previousScreen) {
         this.game = game;
@@ -30,20 +30,14 @@ public class PauseMenu implements Screen {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
-        // Button-Textur laden
-        buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-
-        // TextButtonStyle mit der geladenen Textur und einem Standard-Font
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = new BitmapFont();
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         // Buttons erstellen
-        TextButton settingsButton = new TextButton("Settings", buttonStyle);
-        TextButton mainMenuButton = new TextButton("Main Menu", buttonStyle);
-        TextButton resumeButton = new TextButton("Back to Game", buttonStyle);
+        TextButton settingsButton = new TextButton("Settings", skin);
+        TextButton mainMenuButton = new TextButton("Main Menu", skin);
+        TextButton resumeButton = new TextButton("Back to Game", skin);
 
         // ClickListener für Settings: Nur Log-Ausgabe
         settingsButton.addListener(new ClickListener() {
@@ -75,9 +69,7 @@ public class PauseMenu implements Screen {
         table.center();
 
         // Überschrift "Paused" hinzufügen
-        Label.LabelStyle labelStyle = new Label.LabelStyle();
-        labelStyle.font = new BitmapFont();
-        Label pausedLabel = new Label("Paused", labelStyle);
+        Label pausedLabel = new Label("Paused", skin);
         pausedLabel.setFontScale(2f);
         pausedLabel.setAlignment(Align.center);
 
@@ -131,6 +123,9 @@ public class PauseMenu implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
-        buttonTexture.dispose();
+        if (buttonTexture != null) {
+            buttonTexture.dispose();
+        }
+        // Skin wird vom FontManager verwaltet und sollte nicht hier disposed werden
     }
 }

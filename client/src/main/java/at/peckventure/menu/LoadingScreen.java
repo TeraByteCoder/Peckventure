@@ -1,5 +1,6 @@
 package at.peckventure.menu;
 
+import at.peckventure.FontManager;
 import at.peckventure.multiplayer.Network;
 import at.peckventure.multiplayer.NetworkPackets;
 import com.badlogic.gdx.Game;
@@ -8,16 +9,14 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.esotericsoftware.kryonet.Client;
@@ -35,9 +34,9 @@ public class LoadingScreen implements Screen {
     private int serverPort;
 
     private Stage stage;
-    private BitmapFont font;
     private Texture backgroundTexture;
     private Image backgroundImage;
+    private Skin skin;
 
     private Label titleLabel;
     private Label statusLabel;
@@ -72,9 +71,9 @@ public class LoadingScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
 
-        // Schriftart initialisieren
-        font = new BitmapFont();
-        font.getData().setScale(2f);
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         // Hintergrund laden
         backgroundTexture = new Texture("textures/background/forest.png");
@@ -83,25 +82,18 @@ public class LoadingScreen implements Screen {
         stage.addActor(backgroundImage);
 
         // UI-Elemente erstellen
-        titleLabel = new Label("Connecting to Server", new Label.LabelStyle(font, Color.WHITE));
+        titleLabel = new Label("Connecting to Server", skin);
         titleLabel.setFontScale(3f);
-        statusLabel = new Label("Connecting...", new Label.LabelStyle(font, Color.WHITE));
+        statusLabel = new Label("Connecting...", skin);
         statusLabel.setFontScale(2f);
-        errorLabel = new Label("", new Label.LabelStyle(font, Color.RED));
+        errorLabel = new Label("", skin);
+        errorLabel.setColor(Color.RED);
         errorLabel.setFontScale(2f);
         errorLabel.setVisible(false);
 
-        // Button-Styling
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(new TextureRegion(buttonTexture));
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font;
-
-        retryButton = new TextButton("Retry", buttonStyle);
+        retryButton = new TextButton("Retry", skin);
         retryButton.setVisible(false);
-        backButton = new TextButton("Back", buttonStyle);
+        backButton = new TextButton("Back", skin);
         backButton.setVisible(false);
 
         // Listener für Retry
@@ -179,9 +171,8 @@ public class LoadingScreen implements Screen {
             }
 
             @Override
-            public void idle(Connection connection)
-            {
-
+            public void idle(Connection connection) {
+                // Nötig für den Listener
             }
 
             @Override
@@ -260,7 +251,9 @@ public class LoadingScreen implements Screen {
     public void dispose() {
         stage.dispose();
         backgroundTexture.dispose();
-        font.dispose();
+        if (skin != null) {
+            skin.dispose();
+        }
         if (client != null) {
             client.stop();
         }

@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.Const;
+import at.peckventure.FontManager;
 import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -8,19 +9,16 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
 
 public class MultiPlayer implements Screen {
     private final Game game;
@@ -29,7 +27,7 @@ public class MultiPlayer implements Screen {
     private Image backgroundImage;
     private Label titleLabel;
     private Table serverTable;
-    private BitmapFont font;
+    private Skin skin;
     private FileHandle serverDataFile;
 
     public MultiPlayer(Game game) {
@@ -38,42 +36,32 @@ public class MultiPlayer implements Screen {
 
     @Override
     public void show() {
-        // Sprachdatei laden
-
-
-
-
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
-        font = new BitmapFont();
+
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
+
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        Label.LabelStyle titleStyle = new Label.LabelStyle();
-        titleStyle.font = font;
         String titleText = LanguageManager.INSTANCE.getText("menu.multiplayer");
-        titleLabel = new Label(titleText, titleStyle);
+        titleLabel = new Label(titleText, skin);
         titleLabel.setFontScale(2f);
         titleLabel.setAlignment(Align.center);
-
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font;
 
         // Übersetzte Buttons
         String addServerText = LanguageManager.INSTANCE.getText("menu.add_server");
         String backButtonText = LanguageManager.INSTANCE.getText("menu.back");
-        TextButton addServerButton = new TextButton(addServerText, buttonStyle);
-        TextButton backButton = new TextButton(backButtonText, buttonStyle);
+        TextButton addServerButton = new TextButton(addServerText, skin);
+        TextButton backButton = new TextButton(backButtonText, skin);
 
         serverTable = new Table();
         serverTable.top().pad(20);
-        ScrollPane scrollPane = new ScrollPane(serverTable);
+        ScrollPane scrollPane = new ScrollPane(serverTable, skin);
         scrollPane.setScrollingDisabled(true, false);
         serverDataFile = Const.gameDir.child("serverdata.txt");
         if (!serverDataFile.exists()) {
@@ -122,13 +110,7 @@ public class MultiPlayer implements Screen {
     }
 
     private void addServerButton(final String serverName, final String serverAddress) {
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle serverButtonStyle = new TextButton.TextButtonStyle();
-        serverButtonStyle.up = buttonDrawable;
-        serverButtonStyle.down = buttonDrawable;
-        serverButtonStyle.font = font;
-        TextButton serverButton = new TextButton(serverName + " (" + serverAddress + ")", serverButtonStyle);
+        TextButton serverButton = new TextButton(serverName + " (" + serverAddress + ")", skin);
         serverButton.getLabel().setFontScale(1.5f);
         serverButton.pad(10);
         serverButton.setSize(300, 60);
@@ -149,7 +131,9 @@ public class MultiPlayer implements Screen {
     }
 
     @Override
-    public void resize(int width, int height) {}
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
 
     @Override
     public void pause() {}
@@ -164,6 +148,5 @@ public class MultiPlayer implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
-        font.dispose();
     }
 }

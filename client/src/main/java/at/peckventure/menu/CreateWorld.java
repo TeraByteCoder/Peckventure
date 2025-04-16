@@ -1,25 +1,19 @@
 package at.peckventure.menu;
 
+import at.peckventure.FontManager;
 import at.peckventure.LanguageManager;
 import at.peckventure.world.WorldConfig;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
 
 import java.util.Random;
 
@@ -30,86 +24,59 @@ public class CreateWorld implements Screen {
     private Stage stage;
     private Texture backgroundTexture;
     private Image backgroundImage;
-    private BitmapFont font;
-    private Texture textFieldTexture;
     private Skin skin;
+
     public CreateWorld(Game game) {
         this.game = game;
     }
 
     @Override
     public void show() {
-        // Load the skin like in the Settings class
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
-
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
-        font = new BitmapFont();
-        font.getData().setScale(2f);
+
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         backgroundTexture = new Texture("textures/background/forest.png");
         backgroundImage = new Image(backgroundTexture);
         backgroundImage.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         stage.addActor(backgroundImage);
 
-        // Label Style
-        Label.LabelStyle labelStyle = new Label.LabelStyle();
-        labelStyle.font = font;
-        labelStyle.fontColor = Color.WHITE;
-
         // Titel mit Übersetzung
         String titleText = LanguageManager.INSTANCE.getText("menu.create_world");
-        Label titleLabel = new Label(titleText, labelStyle);
+        Label titleLabel = new Label(titleText, skin);
         titleLabel.setFontScale(3f);
         titleLabel.setAlignment(Align.center);
 
-        Texture buttonTexture = new Texture("textures/gui/button1.png");
-        TextureRegionDrawable buttonDrawable = new TextureRegionDrawable(buttonTexture);
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.up = buttonDrawable;
-        buttonStyle.down = buttonDrawable;
-        buttonStyle.font = font;
-
         // Übersetzte Buttons
         String createWorldText = LanguageManager.INSTANCE.getText("menu.create_world_button");
-        String backButtonText =LanguageManager.INSTANCE.getText("menu.back");
-        TextButton createWorldButton = new TextButton(createWorldText, buttonStyle);
-        TextButton backButton = new TextButton(backButtonText, buttonStyle);
+        String backButtonText = LanguageManager.INSTANCE.getText("menu.back");
+        TextButton createWorldButton = new TextButton(createWorldText, skin);
+        TextButton backButton = new TextButton(backButtonText, skin);
 
-        TextField.TextFieldStyle textFieldStyle = new TextField.TextFieldStyle();
-        textFieldStyle.font = font;
-        textFieldStyle.fontColor = Color.WHITE;
-
-// Create "Allow Cheats" checkbox with translation
+        // Create "Allow Cheats" checkbox with translation
         String allowCheatsText = LanguageManager.INSTANCE.getText("menu.allow_cheats");
         final CheckBox allowCheatsCheckBox = new CheckBox(" " + allowCheatsText, skin);
-// Make the checkbox bigger
+        // Make the checkbox bigger
         allowCheatsCheckBox.getLabel().setFontScale(1.5f);  // Increase font size
-
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.DARK_GRAY);
-        pixmap.fill();
-        textFieldTexture = new Texture(pixmap);
-        pixmap.dispose();
-        textFieldStyle.background = new TextureRegionDrawable(new TextureRegion(textFieldTexture));
 
         // Übersetzte Labels und Platzhalter
         String worldNamePlaceholder = LanguageManager.INSTANCE.getText("menu.world_name_placeholder");
         String seedPlaceholder = LanguageManager.INSTANCE.getText("menu.world_seed_placeholder");
-        final TextField worldNameInput = new TextField(worldNamePlaceholder, textFieldStyle);
-        final TextField seedInput = new TextField(seedPlaceholder, textFieldStyle);
+        final TextField worldNameInput = new TextField(worldNamePlaceholder, skin);
+        final TextField seedInput = new TextField(seedPlaceholder, skin);
 
         String worldNameLabelText = LanguageManager.INSTANCE.getText("menu.world_name");
         String seedLabelText = LanguageManager.INSTANCE.getText("menu.world_seed");
-        Label worldNameLabel = new Label(worldNameLabelText, labelStyle);
-        Label seedLabel = new Label(seedLabelText, labelStyle);
+        Label worldNameLabel = new Label(worldNameLabelText, skin);
+        Label seedLabel = new Label(seedLabelText, skin);
 
         Table inputTable = new Table();
         inputTable.center();
         inputTable.add(worldNameLabel).pad(10).center();
         inputTable.add(worldNameInput).width(600).height(80).pad(10).center();
-        // Add after the inputTable definition
-        inputTable.row();
         inputTable.row();
         inputTable.add(allowCheatsCheckBox).colspan(2).pad(20).left();  // Increased padding for more space
         inputTable.row();
@@ -181,7 +148,9 @@ public class CreateWorld implements Screen {
     }
 
     @Override
-    public void resize(int width, int height) {}
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
 
     @Override
     public void pause() {}
@@ -196,10 +165,6 @@ public class CreateWorld implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         stage.dispose();
-        font.dispose();
-        if (textFieldTexture != null) {
-            textFieldTexture.dispose();
-        }
         if (skin != null) {
             skin.dispose();
         }

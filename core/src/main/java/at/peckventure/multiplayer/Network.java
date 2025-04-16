@@ -40,5 +40,9 @@ public class Network {
         //status
         kryo.register(NetworkPackets.PlayerStatusUpdatePacket.class);
         kryo.register(NetworkPackets.EffectUpdatePacket.class);
+
+        //pecken
+        kryo.register(NetworkPackets.PeckRequestPacket.class);
+        kryo.register(NetworkPackets.PeckResponsePacket.class);
     }
 }

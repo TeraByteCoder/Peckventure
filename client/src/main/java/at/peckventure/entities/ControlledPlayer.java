@@ -3,9 +3,11 @@ package at.peckventure.entities;
 import at.peckventure.ClientGlobal;
 import at.peckventure.Globals;
 import at.peckventure.InputManager;
+import at.peckventure.entities.mob.ItemActor;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
 import at.peckventure.inventory.item.Item;
+import at.peckventure.multiplayer.NetworkPackets;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import com.badlogic.gdx.graphics.Color;
@@ -76,7 +78,7 @@ public class ControlledPlayer extends Player {
     private boolean isPecking = false; // Ist der Specht gerade beim Pecken?
     private float tongueLength = 0f;
     private boolean isExtending = false;
-    private Vector2 tongueTarget = new Vector2();
+    public Vector2 tongueTarget = new Vector2();
     private volatile Mob targetMob = null; // Volatile für Thread-Sicherheit
     private static final float TONGUE_EXTEND_SPEED = 800f; // Pixel pro Sekunde
     private static final float TONGUE_RETRACT_SPEED = 1000f; // Pixel pro Sekunde
@@ -146,6 +148,30 @@ public class ControlledPlayer extends Player {
         }
     }
 
+    /**
+     * Sends a peck notification to the server in multiplayer mode
+     * This method is called after a successful peck is initiated
+     */
+    private void sendPeckToServer(float targetX, float targetY) {
+        try {
+            // Check if NetworkClient exists and is connected (multiplayer mode)
+            if (at.peckventure.NetworkClient.hasInstance() &&
+                at.peckventure.NetworkClient.getInstance().isConnected()) {
+
+                // Create and send the peck request packet
+                NetworkPackets.PeckRequestPacket packet = new NetworkPackets.PeckRequestPacket();
+                packet.uuid = Globals.uuid;
+                packet.targetX = targetX;
+                packet.targetY = targetY;
+                at.peckventure.NetworkClient.getInstance().sendTCP(packet);
+                System.out.println("Sending peck request to server: target(" + targetX + "," + targetY + ")");
+            }
+        } catch (Exception e) {
+            // Silently handle any errors to ensure pecking still works in singleplayer
+            System.err.println("Error sending peck packet: " + e.getMessage());
+        }
+    }
+
     // Sucht nach Mobs in Peck-Reichweite und startet die Animation nur, wenn ein Mob gefunden wird
     private void searchForMobsToAttack(float peckX, float peckY) {
         // Suchrichtung basierend auf Blickrichtung
@@ -169,7 +195,7 @@ public class ControlledPlayer extends Player {
         Box2DOperationManager.queueOperation(() -> {
             // Suche nach Mobs im definierten Bereich
             world.QueryAABB(fixture -> {
-                if (fixture.getBody().getUserData() instanceof Mob) {
+                if (fixture.getBody().getUserData() instanceof Mob && !( fixture.getBody().getUserData() instanceof ItemActor)) {
                     Mob mob = (Mob) fixture.getBody().getUserData();
 
                     // Überprüfe, ob der Mob in der richtigen Richtung liegt
@@ -195,6 +221,7 @@ public class ControlledPlayer extends Player {
 
                                 // Energiekosten abziehen
                                 getEnergyStatus().consume(PECK_ENERGY_COST);
+                                sendPeckToServer(mobCenterX, mobCenterY);
 
                                 System.out.println("Pecking at mob: " + mob);
                             }

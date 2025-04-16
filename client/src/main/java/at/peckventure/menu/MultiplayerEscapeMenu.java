@@ -1,11 +1,10 @@
 package at.peckventure.menu;
 
+import at.peckventure.FontManager;
 import at.peckventure.NetworkClient;
 import at.peckventure.Globals;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
@@ -27,11 +26,9 @@ public class MultiplayerEscapeMenu {
         this.game = game;
         this.gameScreen = gameScreen;
 
-        // Skin für UI-Elemente laden
-        skin = new Skin();
-        skin.addRegions(new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
-        //skin.add("default-font", new BitmapFont(Gdx.files.internal("ui/font.fnt")));
-        skin.load(Gdx.files.internal("ui/uiskin.json"));
+        // FontManager und Skin verwenden
+        FontManager fontManager = FontManager.getInstance();
+        skin = fontManager.getSkin();
 
         // Menüfenster erstellen und konfigurieren
         createMenuWindow(uiStage);
