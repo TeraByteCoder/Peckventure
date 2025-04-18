@@ -273,7 +273,7 @@ public class ControlledPlayer extends Player {
 
                 // Mob töten, wenn er noch existiert
                 if (targetMob != null) {
-                    targetMob.onDeath();
+                    targetMob.onPeck(this);
 
                     // Spieler bekommt etwas Energie zurück fürs Pecken
                     getEnergyStatus().regenerate(5.0f);

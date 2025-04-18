@@ -3,6 +3,7 @@ package at.peckventure.entities.mob;
 import at.peckventure.Globals;
 import at.peckventure.entities.Player;
 import at.peckventure.inventory.ItemRegistry;
+import at.peckventure.status.Status;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 
@@ -38,8 +39,7 @@ public class Phyton extends Mob {
     private float lastX;
     private boolean facingRight;
 
-    private final float maxHealth;
-    private float currentHealth;
+    private Status health;
 
     // New AI-related fields
     private Player targetPlayer;
@@ -62,8 +62,7 @@ public class Phyton extends Mob {
     public Phyton(World world, float x, float y, float maxHealth) {
         super(world, x, y);
         setSize(128, 128);
-        this.maxHealth = maxHealth;
-        this.currentHealth = maxHealth;
+        this.health = new Status("Health", 30);
         this.targetPlayer = Globals.controlledPlayer;
 
         direction = Math.random() < 0.5 ? 1f : -1f;
@@ -289,35 +288,13 @@ public class Phyton extends Mob {
         batch.draw(currentFrame, getX(), getY(), getWidth(), getHeight());
     }
 
-    public void takeDamage(float damage) {
-        currentHealth -= damage;
-        if (currentHealth < 0) {
-            currentHealth = 0;
-        }
-
-        // Potentially change aggression level when attacked
-        if (aggressionLevel == AggressionLevel.NEUTRAL) {
-            aggressionLevel = AggressionLevel.AGGRESSIVE;
-        }
-    }
-
-    public void heal(float amount) {
-        currentHealth += amount;
-        if (currentHealth > maxHealth) {
-            currentHealth = maxHealth;
-        }
-    }
-
     public boolean isDead() {
-        return currentHealth <= 0;
+        return this.health.getCurrent() <= 0;
     }
 
-    public float getCurrentHealth() {
-        return currentHealth;
-    }
-
-    public float getMaxHealth() {
-        return maxHealth;
+    public Status getHealth()
+    {
+        return health;
     }
 
     // Setter for target player (in case it changes)
@@ -357,5 +334,15 @@ public class Phyton extends Mob {
             MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"));
         }
         dispose();
+    }
+
+    @Override
+    public void onPeck(Player player)
+    {
+        health.damage(4);
+        if (aggressionLevel == AggressionLevel.NEUTRAL) {
+            aggressionLevel = AggressionLevel.AGGRESSIVE;
+        }
+        if(isDead()) onDeath();
     }
 }
