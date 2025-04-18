@@ -45,5 +45,6 @@
   "menu.world_save_path": "Welten werden gespeichert unter: ",
   "menu.world_name_placeholder": "Neue Welt",
   "menu.world_seed_placeholder": "Seed",
-  "menu.create_world_button": "Welt erstellen"
+  "menu.create_world_button": "Welt erstellen",
+  "menu.allow_cheats": "cheaten erlauben"
 }

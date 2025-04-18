@@ -42,5 +42,6 @@
   "menu.fullscreen": "Vollbild",
   "menu.video": "Video",
   "menu.audio": "Audio",
-  "menu.world_save_path": "Dini Wälte wärdet da gspeicheret: "
+  "menu.world_save_path": "Dini Wälte wärdet da gspeicheret: ",
+  "menu.allow_cheats": "cheaten erlauben"
 }
