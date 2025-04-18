@@ -42,5 +42,6 @@
   "menu.fullscreen": "Fullscreen",
   "menu.video": "Video",
   "menu.audio": "Audio",
-  "menu.world_save_path": "Worlds are saved in: "
+  "menu.world_save_path": "Worlds are saved in: ",
+  "menu.allow_cheats": "allow cheats"
 }
