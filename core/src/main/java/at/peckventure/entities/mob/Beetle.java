@@ -120,11 +120,11 @@ public class Beetle extends Mob {
         int randNum = rand.nextInt();
         if (randNum % 100 == 0)
         {
-            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"));
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"), 1);
         }
         if (randNum % 4 == 0)
         {
-            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("wood"));
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("wood"), 1);
         }
         dispose();
     }

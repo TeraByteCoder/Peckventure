@@ -48,7 +48,7 @@ public class ServerPlayer extends Player
     public void dropItemOutside(Item item, int amount)
     {
 
-        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
+        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item, amount);
         float dropSpeed = 20f;
         float angle = this.getRotation();
         float vx = com.badlogic.gdx.math.MathUtils.cosDeg(angle) * dropSpeed;

@@ -18,29 +18,30 @@ public class GameContactListener implements ContactListener
         Object userDataA = contact.getFixtureA().getBody().getUserData();
         Object userDataB = contact.getFixtureB().getBody().getUserData();
 
+        // Handle player and item contact
         if (userDataA instanceof Player && userDataB instanceof ItemActor)
         {
             ((ItemActor) userDataB).onPlayerContact((Player) userDataA);
-        } else if (userDataA instanceof ItemActor && userDataB instanceof Player)
+        }
+        else if (userDataA instanceof ItemActor && userDataB instanceof Player)
         {
             ((ItemActor) userDataA).onPlayerContact((Player) userDataB);
         }
 
-        // Checke, ob es sich um Player und Block handelt
+        // Check if it's Player and Block contact
         if ((userDataA instanceof Player && userDataB instanceof Block)
             || (userDataA instanceof Block && userDataB instanceof Player)
             || (userDataA instanceof Mob && userDataB instanceof Mob)
             || (userDataA instanceof Block && userDataB instanceof Mob))
         {
-
             Block block = null;
             if (userDataA instanceof Block) block = (Block) userDataA;
             else if (userDataB instanceof Block) block = (Block) userDataB;
 
-            // Wenn der Block Kollisionen deaktiviert hat: Unterdrücke die Physik-Reaktion
+            // If the block has disabled collisions: suppress the physics reaction
             if (block != null && !block.isCollisionEnabled())
             {
-                contact.setEnabled(false); // Kollision wird ignoriert
+                contact.setEnabled(false); // Collision is ignored
             }
         }
     }
@@ -48,30 +49,53 @@ public class GameContactListener implements ContactListener
     @Override
     public void endContact(Contact contact)
     {
-        // Hier kannst du ggf. Logik implementieren, wenn die Kollision endet.
+        Object userDataA = contact.getFixtureA().getBody().getUserData();
+        Object userDataB = contact.getFixtureB().getBody().getUserData();
+
+        // Handle player leaving item contact
+        if (userDataA instanceof Player && userDataB instanceof ItemActor)
+        {
+            ((ItemActor) userDataB).onPlayerEndContact((Player) userDataA);
+        }
+        else if (userDataA instanceof ItemActor && userDataB instanceof Player)
+        {
+            ((ItemActor) userDataA).onPlayerEndContact((Player) userDataB);
+        }
     }
+
 
     @Override
     public void preSolve(Contact contact, Manifold oldManifold)
     {
-        // Kollision zwischen Player und Block prüfen
+        // Check collision between Player and Block
         Object userDataA = contact.getFixtureA().getBody().getUserData();
         Object userDataB = contact.getFixtureB().getBody().getUserData();
 
+        // Prüfe, ob es eine Kollision zwischen Player und ItemActor ist
+        if ((userDataA instanceof Player && userDataB instanceof ItemActor) ||
+            (userDataA instanceof ItemActor && userDataB instanceof Player)) {
+
+            // Für normale Kollisionen (nicht Sensor) zwischen Player und ItemActor
+            // deaktivieren wir die Kollision
+            if (!contact.getFixtureA().isSensor() && !contact.getFixtureB().isSensor()) {
+                contact.setEnabled(false);
+            }
+        }
+
+        // Originaler Code für Block-Kollisionen
         if ((userDataA instanceof Player && userDataB instanceof Block)
             || (userDataA instanceof Block && userDataB instanceof Player)
             || (userDataA instanceof Mob && userDataB instanceof Mob)
             || (userDataA instanceof Block && userDataB instanceof Mob))
         {
-
             Block block = null;
             if (userDataA instanceof Block) block = (Block) userDataA;
             else if (userDataB instanceof Block) block = (Block) userDataB;
 
-            // Wenn der Block Kollisionen deaktiviert hat: Unterdrücke die Physik-Reaktion
+            // If the block has disabled collisions: suppress the physics reaction
             if (block != null && !block.isCollisionEnabled())
             {
-                contact.setEnabled(false); // Kollision wird ignoriert
+                contact.setEnabled(false); // Collision is ignored
             }
         }
     }
@@ -79,5 +103,6 @@ public class GameContactListener implements ContactListener
     @Override
     public void postSolve(Contact contact, ContactImpulse impulse)
     {
+        // No implementation needed
     }
 }
