@@ -40,7 +40,19 @@ public abstract class Player extends Actor {
     Inventory inventory;
     protected boolean rotation;
 
+    // Tree climbing variables
+    protected boolean attachedToTree = false;
+    protected Block attachedTreeBlock = null;
+    protected static final float TREE_CLIMB_SPEED = 150f;
+    private static final boolean DEBUG = true;
+
     private List<StatusEffect> effects = new ArrayList<>();
+
+    private void debugLog(String message) {
+        if (DEBUG) {
+            System.out.println("[PLAYER_TREE] " + message);
+        }
+    }
 
     public boolean isOperator()
     {
@@ -168,6 +180,78 @@ public abstract class Player extends Actor {
 
     public Status getEnergyStatus() {
         return energy;
+    }
+
+    // Tree climbing methods
+
+    /**
+     * Attaches the player to a tree block
+     * @param treeBlock The tree block to attach to
+     */
+    public void attachToTree(Block treeBlock) {
+        if (!attachedToTree) {
+            attachedToTree = true;
+            attachedTreeBlock = treeBlock;
+
+            // Physics changes will be made by the contact listener
+            debugLog("Player " + this + " attached to tree " + treeBlock);
+        }
+    }
+
+    /**
+     * Detaches the player from the tree
+     */
+    public void detachFromTree() {
+        if (attachedToTree) {
+            debugLog("Player " + this + " detaching from tree");
+            attachedToTree = false;
+            attachedTreeBlock = null;
+
+            // Re-enable gravity
+            Box2DOperationManager.queueOperation(() -> {
+                if (body != null) {
+                    body.setGravityScale(1);
+                    debugLog("Gravity restored for player");
+                }
+            });
+        }
+    }
+
+    /**
+     * Checks if the player is attached to a tree
+     * @return true if attached to a tree, false otherwise
+     */
+    public boolean isAttachedToTree() {
+        return attachedToTree;
+    }
+
+    /**
+     * Handles tree climbing movement
+     * @param upPressed Whether the up button is pressed
+     * @param downPressed Whether the down button is pressed
+     * @param delta The time delta
+     */
+    protected void handleTreeClimbing(boolean upPressed, boolean downPressed, float delta) {
+        if (attachedToTree && body != null) {
+            float currentVelocityX = body.getLinearVelocity().x;
+            float climbVelocity = 0;
+
+            if (upPressed) {
+                climbVelocity = TREE_CLIMB_SPEED / Block.BLOCK_SIZE;
+                debugLog("Climbing up tree at velocity " + climbVelocity);
+            } else if (downPressed) {
+                climbVelocity = -TREE_CLIMB_SPEED / Block.BLOCK_SIZE;
+                debugLog("Climbing down tree at velocity " + climbVelocity);
+            }
+
+            // Apply the climbing velocity
+            final float finalVelocity = climbVelocity;
+            Box2DOperationManager.queueOperation(() -> {
+                if (body != null) {
+                    body.setLinearVelocity(currentVelocityX, finalVelocity);
+                }
+            });
+        }
     }
 
     public String serializeEffects() {

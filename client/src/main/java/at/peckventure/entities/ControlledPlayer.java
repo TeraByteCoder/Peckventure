@@ -55,9 +55,13 @@ public class ControlledPlayer extends Player {
     private static final float HORIZONTAL_SPEED_MULTIPLIER_FLY = 1.5f;
     private static final float HORIZONTAL_SPEED_MULTIPLIER_GROUND = 2.0f;
 
+    // Tree climbing speed multiplier
+    private static final float HORIZONTAL_SPEED_MULTIPLIER_TREE = 0.5f;
+
     // Maximale Beschleunigungszeiten:
     private static final float MAX_ACCEL_TIME_FLY = 1.0f;
     private static final float MAX_ACCEL_TIME_GROUND = 0.5f;
+    private static final float MAX_ACCEL_TIME_TREE = 0.3f;
 
     // Energiekosten (pro Sekunde bzw. pro Aktion)
     private static final float FLUEGELSCHLAG_ENERGY_COST = 8.0f; // pro Sekunde
@@ -66,6 +70,7 @@ public class ControlledPlayer extends Player {
     private static final float AIRROLL_ENERGY_COST = 15.0f;         // pro Aktion
     private static final float REGENERATION_ENERGY = 5.0f;          // pro Sekunde
     private static final float WALK_ENERGY_COST = 3.0f;             // pro Sekunde
+    private static final float TREE_CLIMB_ENERGY_COST = 2.0f;       // pro Sekunde
     private static final float PECK_ENERGY_COST = 5.0f;             // Kosten pro Peck
 
     // Peck-Einstellungen
@@ -273,7 +278,7 @@ public class ControlledPlayer extends Player {
 
                 // Mob töten, wenn er noch existiert
                 if (targetMob != null) {
-                    targetMob.onDeath();
+                    targetMob.onPeck(this);
 
                     // Spieler bekommt etwas Energie zurück fürs Pecken
                     getEnergyStatus().regenerate(5.0f);
@@ -361,11 +366,9 @@ public class ControlledPlayer extends Player {
 
         // Bestimme, ob der Spieler gerade geht (links oder rechts gedrückt)
         boolean isWalking = InputManager.getInstance().isLeftPressed() || InputManager.getInstance().isRightPressed();
+        boolean isFlying = InputManager.getInstance().isJumpPressed();
 
-        // Berechne den zu regenerierenden Energie-Betrag pro Frame:
-        // - Steht der Spieler, wird der normale Regenerationswert verwendet.
-        // - Geht der Spieler, soll er so viel regenerieren, dass nach Abzug des Gehverbrauchs (WALK_ENERGY_COST)
-        //   noch ein Netto-Gewinn von 0,5 Energie pro Sekunde verbleibt.
+        // Berechne den zu regenerierenden Energie-Betrag pro Frame
         float regenerationEnergy;
         if (isWalking) {
             regenerationEnergy = (WALK_ENERGY_COST + 0.5f) * delta;
@@ -373,10 +376,9 @@ public class ControlledPlayer extends Player {
             regenerationEnergy = REGENERATION_ENERGY * delta;
         }
 
-        // Horizontale Eingabe inkl. Luftrolle (Doppeltippen)
-        // Linke Taste
+        // Left button handling
         if (InputManager.getInstance().isLeftPressed()) {
-            if (!wasLeftPressed) { // Taste wurde gerade gedrückt
+            if (!wasLeftPressed) { // Button was just pressed
                 long now = System.currentTimeMillis();
                 if (now - lastLeftTapTime < DOUBLE_TAP_THRESHOLD) {
                     if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
@@ -394,12 +396,9 @@ public class ControlledPlayer extends Player {
             wasLeftPressed = false;
         }
 
-        // Handling für das Pecken
-        handlePecking(delta);
-
-        // Rechte Taste
+        // Right button handling
         if (InputManager.getInstance().isRightPressed()) {
-            if (!wasRightPressed) { // Taste wurde gerade gedrückt
+            if (!wasRightPressed) { // Button was just pressed
                 long now = System.currentTimeMillis();
                 if (now - lastRightTapTime < DOUBLE_TAP_THRESHOLD) {
                     if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
@@ -417,82 +416,135 @@ public class ControlledPlayer extends Player {
             wasRightPressed = false;
         }
 
-        // Horizontale Beschleunigung (unabhängig von Flug oder Boden)
-        Vector2 vel = body.getLinearVelocity();
-        boolean isFlying = InputManager.getInstance().isJumpPressed() && !onGround;
-        float maxSpeed;
-        float maxAccelTime;
-        if (isFlying) {
-            maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_FLY;
-            maxAccelTime = MAX_ACCEL_TIME_FLY;
+        // Pecking handler
+        handlePecking(delta);
+
+        // Tree climbing handling
+        if (isAttachedToTree()) {
+            // Handle vertical tree climbing with W/S keys
+            boolean climbingUp = InputManager.getInstance().isWPressed();
+            boolean climbingDown = InputManager.getInstance().isSPressed();
+
+            // Handle tree climbing
+            handleTreeClimbing(climbingUp, climbingDown, delta);
+
+            // Check for detachment conditions
+
+            // CONDITION 1: Player initiates flight while on the tree
+            if (isFlying) {
+                detachFromTree();
+                // Apply initial flight force (handled in detachFromTree)
+                this.getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
+            }
+
+            // Horizontal movement on the tree
+            if (direction != 0) {
+                // Slower horizontal movement when on a tree
+                Vector2 vel = body.getLinearVelocity();
+                float maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_TREE;
+                float maxAccelTime = MAX_ACCEL_TIME_TREE;
+
+                if (direction != lastDirection) {
+                    accelerationTime = 0f;
+                }
+                lastDirection = direction;
+                accelerationTime += delta;
+                if (accelerationTime > maxAccelTime) {
+                    accelerationTime = maxAccelTime;
+                }
+                float currentHorizontalSpeed = maxSpeed * (float) Math.sqrt(accelerationTime / maxAccelTime);
+                body.setLinearVelocity(direction * currentHorizontalSpeed / Block.BLOCK_SIZE, vel.y);
+
+                // Consume energy for climbing
+                this.getEnergyStatus().consume(TREE_CLIMB_ENERGY_COST * delta);
+            } else {
+                // When not moving horizontally on the tree, keep vertical velocity but zero out horizontal
+                body.setLinearVelocity(0, body.getLinearVelocity().y);
+            }
+
+            // Limit regeneration while on a tree
+            regenerationEnergy = 0.5f * delta;
         } else {
-            maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_GROUND;
-            maxAccelTime = MAX_ACCEL_TIME_GROUND;
-        }
-        if (direction != 0) {
-            if (direction != lastDirection) {
+            // Horizontal acceleration (independent of flying or ground)
+            Vector2 vel = body.getLinearVelocity();
+            boolean isFlightMode = InputManager.getInstance().isJumpPressed() && !onGround;
+            float maxSpeed;
+            float maxAccelTime;
+            if (isFlightMode) {
+                maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_FLY;
+                maxAccelTime = MAX_ACCEL_TIME_FLY;
+            } else {
+                maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_GROUND;
+                maxAccelTime = MAX_ACCEL_TIME_GROUND;
+            }
+            if (direction != 0) {
+                if (direction != lastDirection) {
+                    accelerationTime = 0f;
+                }
+                lastDirection = direction;
+                accelerationTime += delta;
+                if (accelerationTime > maxAccelTime) {
+                    accelerationTime = maxAccelTime;
+                }
+                float currentHorizontalSpeed = maxSpeed * (float) Math.sqrt(accelerationTime / maxAccelTime);
+                body.setLinearVelocity(direction * currentHorizontalSpeed / Block.BLOCK_SIZE, vel.y);
+
+                // Consume walking energy
+                this.getEnergyStatus().consume(WALK_ENERGY_COST * delta);
+            } else {
                 accelerationTime = 0f;
+                lastDirection = 0;
+                body.setLinearVelocity(0, vel.y);
             }
-            lastDirection = direction;
-            accelerationTime += delta;
-            if (accelerationTime > maxAccelTime) {
-                accelerationTime = maxAccelTime;
-            }
-            float currentHorizontalSpeed = maxSpeed * (float) Math.sqrt(accelerationTime / maxAccelTime);
-            body.setLinearVelocity(direction * currentHorizontalSpeed / Block.BLOCK_SIZE, vel.y);
 
-            // Ziehe den Gehenergieverbrauch ab (3 Energie pro Sekunde)
-            this.getEnergyStatus().consume(WALK_ENERGY_COST * delta);
-        } else {
-            accelerationTime = 0f;
-            lastDirection = 0;
-            body.setLinearVelocity(0, vel.y);
-        }
-
-        // SPACE-Taste: Je nach Situation wird entweder gehupft oder der Flugmodus aktiviert.
-        if (InputManager.getInstance().isJumpPressed()) {
-            regenerationEnergy = 0;
-            if (onGround) {
-                if (!groundJumpUsed) {
-                    body.setLinearVelocity(body.getLinearVelocity().x, GROUND_HOP_FORCE / Block.BLOCK_SIZE);
-                    groundJumpUsed = true;
-                }
-            } else if (direction != 0) {
-                if (InputManager.getInstance().isWPressed()) {
-                    // Präzisionsflug (Schweben)
-                    if (this.getEnergyStatus().getCurrent() >= HOVER_ENERGY_COST * delta) {
-                        this.getEnergyStatus().consume(HOVER_ENERGY_COST * delta);
-                        body.setLinearVelocity(body.getLinearVelocity().x, HOVER_FORCE / Block.BLOCK_SIZE);
+            // SPACE key: Depending on situation, either hop or activate flight mode
+            if (InputManager.getInstance().isJumpPressed()) {
+                regenerationEnergy = 0;
+                if (onGround) {
+                    if (!groundJumpUsed) {
+                        body.setLinearVelocity(body.getLinearVelocity().x, GROUND_HOP_FORCE / Block.BLOCK_SIZE);
+                        groundJumpUsed = true;
                     }
-                } else if (InputManager.getInstance().isSPressed()) {
-                    // Steiler Sturzflug & explosiver Auftrieb
-                    if (!diveInitiated) {
-                        body.setLinearVelocity(body.getLinearVelocity().x, DIVE_FORCE / Block.BLOCK_SIZE);
-                        diveInitiated = true;
-                    } else {
-                        if (this.getEnergyStatus().getCurrent() >= STURZFUG_ENERGY_COST) {
-                            this.getEnergyStatus().consume(STURZFUG_ENERGY_COST);
-                            body.setLinearVelocity(body.getLinearVelocity().x, HIGH_UP_FORCE / Block.BLOCK_SIZE);
+                } else if (direction != 0) {
+                    if (InputManager.getInstance().isWPressed()) {
+                        // Precision flight (hovering)
+                        if (this.getEnergyStatus().getCurrent() >= HOVER_ENERGY_COST * delta) {
+                            this.getEnergyStatus().consume(HOVER_ENERGY_COST * delta);
+                            body.setLinearVelocity(body.getLinearVelocity().x, HOVER_FORCE / Block.BLOCK_SIZE);
                         }
-                        diveInitiated = false;
-                    }
-                } else {
-                    // Normaler Flügelschlag (Auftrieb)
-                    if (getY() < maxHeight) {
-                        if (this.getEnergyStatus().getCurrent() >= FLUEGELSCHLAG_ENERGY_COST * delta) {
-                            this.getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
-                            body.setLinearVelocity(body.getLinearVelocity().x, FLY_FORCE / Block.BLOCK_SIZE);
+                    } else if (InputManager.getInstance().isSPressed()) {
+                        // Steep dive & explosive upward flight
+                        if (!diveInitiated) {
+                            body.setLinearVelocity(body.getLinearVelocity().x, DIVE_FORCE / Block.BLOCK_SIZE);
+                            diveInitiated = true;
+                        } else {
+                            if (this.getEnergyStatus().getCurrent() >= STURZFUG_ENERGY_COST) {
+                                this.getEnergyStatus().consume(STURZFUG_ENERGY_COST);
+                                body.setLinearVelocity(body.getLinearVelocity().x, HIGH_UP_FORCE / Block.BLOCK_SIZE);
+                            }
+                            diveInitiated = false;
                         }
                     } else {
-                        body.setLinearVelocity(body.getLinearVelocity().x, hoverDampening / Block.BLOCK_SIZE);
+                        // Normal wing flap (lift)
+                        if (getY() < maxHeight) {
+                            if (this.getEnergyStatus().getCurrent() >= FLUEGELSCHLAG_ENERGY_COST * delta) {
+                                this.getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
+                                body.setLinearVelocity(body.getLinearVelocity().x, FLY_FORCE / Block.BLOCK_SIZE);
+                            }
+                        } else {
+                            body.setLinearVelocity(body.getLinearVelocity().x, hoverDampening / Block.BLOCK_SIZE);
+                        }
                     }
                 }
+            } else {
+                // Reset dive state when letting go of SPACE
+                diveInitiated = false;
             }
         }
+
         this.getEnergyStatus().regenerate(regenerationEnergy);
         setRotation(facingRight ? 0 : 180);
     }
-
     @Override
     public void draw(Batch batch) {
         // Zuerst die Zunge zeichnen, wenn wir am Pecken sind (damit sie hinter dem Spieler erscheint)
@@ -553,10 +605,82 @@ public class ControlledPlayer extends Player {
         this.onGround = onGround;
         if (onGround) {
             groundJumpUsed = false;
+
+            // If we touch the ground while attached to a tree, detach
+            if (isAttachedToTree()) {
+                detachFromTree();
+            }
         }
     }
 
-    protected boolean isOnGround() {
+    /**
+     * Overriding the attachToTree method to add more robust handling
+     */
+    @Override
+    public void attachToTree(Block treeBlock) {
+        if (!attachedToTree) {
+            attachedToTree = true;
+            attachedTreeBlock = treeBlock;
+
+            // Stop falling when attached to the tree and disable gravity
+            Box2DOperationManager.queueOperation(() -> {
+                if (body != null) {
+                    // First stabilize the player by stopping any vertical movement
+                    body.setLinearVelocity(body.getLinearVelocity().x, 0);
+                    body.setGravityScale(0); // Disable gravity when on tree
+
+                    // Move the player slightly to visually attach to the tree edge
+                    // Determine which side of the tree we're on
+                    float playerCenterX = getX() + getWidth() / 2;
+                    float blockCenterX = treeBlock.getX() + treeBlock.getWidth() / 2;
+
+                    // If player is to the left of tree, move slightly right
+                    // If player is to the right of tree, move slightly left
+                    float offsetX = (playerCenterX < blockCenterX) ?
+                        treeBlock.getX() - getWidth() * 0.3f :
+                        treeBlock.getX() + treeBlock.getWidth() - getWidth() * 0.7f;
+
+                    // Use the current Y position
+                    body.setTransform(
+                        offsetX / Block.BLOCK_SIZE,
+                        body.getPosition().y,
+                        body.getAngle()
+                    );
+                }
+            });
+
+            System.out.println("Successfully attached to tree at position: " + getX() + "," + getY());
+        }
+    }
+
+    /**
+     * Overriding the detachFromTree method for more robust handling
+     */
+    @Override
+    public void detachFromTree() {
+        if (attachedToTree) {
+            System.out.println("Detaching from tree");
+            attachedToTree = false;
+            attachedTreeBlock = null;
+
+            // Re-enable gravity and apply a small impulse to ensure the player moves away from the tree
+            Box2DOperationManager.queueOperation(() -> {
+                if (body != null) {
+                    body.setGravityScale(1);
+
+                    // If player is actively trying to fly, add a small upward boost when detaching
+                    if (InputManager.getInstance().isJumpPressed()) {
+                        body.setLinearVelocity(
+                            body.getLinearVelocity().x,
+                            FLY_FORCE / Block.BLOCK_SIZE
+                        );
+                    }
+                }
+            });
+        }
+    }
+
+    public boolean isOnGround() {
         return onGround;
     }
 
@@ -567,7 +691,7 @@ public class ControlledPlayer extends Player {
     @Override
     public void dropItemOutside(Item item, int amount) {
         System.out.println("Dropped " + amount + "x " + item.getName() + " outside inventory.");
-        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item);
+        Mob mob = MobRegistry.createMob("item", Globals.physicsWorld, this.getX(), this.getY() + 40, item, amount);
         ClientGlobal.stage.addActor(mob);
         float dropSpeed = 20f;
         float angle = this.getRotation();

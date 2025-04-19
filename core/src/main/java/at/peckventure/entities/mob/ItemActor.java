@@ -21,14 +21,18 @@ public class ItemActor extends Mob
     private final Texture texture;
     private final Item inventoryItem;
     private float existenceTime = 0f;
+
+    private int amount;
     private boolean destroyed = false;
+    private Player contactingPlayer = null; // Track the player currently in contact
 
 
-    public ItemActor(World world, float x, float y, Item inventoryItem)
+    public ItemActor(World world, float x, float y, Item inventoryItem, int amount)
     {
         super(world, x, y);
         this.inventoryItem = inventoryItem;
         this.texture = inventoryItem.getTexture();
+        this.amount = amount;
         setSize(32, 32);
         Box2DOperationManager.queueOperation(() ->
         {
@@ -40,12 +44,26 @@ public class ItemActor extends Mob
             CircleShape shape = new CircleShape();
             shape.setRadius(getWidth() / 2f / Block.BLOCK_SIZE);
 
-            FixtureDef fixtureDef = new FixtureDef();
-            fixtureDef.shape = shape;
-            fixtureDef.density = 1f;
-            fixtureDef.friction = 1f;
-            fixtureDef.restitution = 0f;
-            body.createFixture(fixtureDef);
+            // Erstelle zwei Fixtures: Eine für normale Kollisionen und eine Sensor-Fixture nur für Player
+
+            // Erstelle normale Kollisions-Fixture für andere Objekte (Blöcke, etc.)
+            FixtureDef normalFixtureDef = new FixtureDef();
+            normalFixtureDef.shape = shape;
+            normalFixtureDef.density = 1f;
+            normalFixtureDef.friction = 1f;
+            normalFixtureDef.restitution = 0f;
+            normalFixtureDef.filter.categoryBits = 0x0002; // Item Kategorie
+            normalFixtureDef.filter.maskBits = 0x0001;     // Kollidiert nur mit der Welt (nicht mit Spielern)
+            body.createFixture(normalFixtureDef);
+
+            // Erstelle Sensor-Fixture für Kollisionserkennung mit Spielern
+            FixtureDef sensorFixtureDef = new FixtureDef();
+            sensorFixtureDef.shape = shape;
+            sensorFixtureDef.isSensor = true;
+            sensorFixtureDef.filter.categoryBits = 0x0004; // Sensor Kategorie
+            sensorFixtureDef.filter.maskBits = 0x0008;     // Kollidiert nur mit Spielern
+            body.createFixture(sensorFixtureDef);
+
             shape.dispose();
 
             body.setUserData(this);
@@ -55,7 +73,7 @@ public class ItemActor extends Mob
     // Optionaler Fallback-Konstruktor für Abwärtskompatibilität:
     public ItemActor(World world, float x, float y)
     {
-        this(world, x, y, ItemRegistry.createItem("sword"));
+        this(world, x, y, ItemRegistry.createItem("sword"),1);
         System.out.println("fallback construcktor used");
     }
 
@@ -86,6 +104,12 @@ public class ItemActor extends Mob
                 }
             }
         }
+
+        // Check if we should pick up the item when the existence timer expires
+        // while the player is still in contact
+        if (existenceTime >= 2f && contactingPlayer != null && !destroyed) {
+            pickupItem(contactingPlayer);
+        }
     }
 
     @Override
@@ -96,14 +120,35 @@ public class ItemActor extends Mob
 
     public void onPlayerContact(Player player)
     {
+        contactingPlayer = player;
+
         if (existenceTime < 2f)
         {
-            return;
+            return; // Still in cooldown period
         }
+
+        pickupItem(player);
+    }
+
+    public int getAmount()
+    {
+        return amount;
+    }
+
+    public void onPlayerEndContact(Player player)
+    {
+        if (contactingPlayer == player) {
+            contactingPlayer = null;
+        }
+    }
+
+    private void pickupItem(Player player)
+    {
         if (!destroyed)
         {
             destroyed = true;
-            player.getInventory().addItem(inventoryItem, 1);
+            player.getInventory().addItem(inventoryItem, amount);  // Use the amount when adding to inventory
+            System.out.println("picking uo");
             try{
                 NetworkPackets.InventoryUpdatePacket updatePacket = new NetworkPackets.InventoryUpdatePacket();
                 updatePacket.hotbarData = player.getInventory().serializeHotbar();
@@ -112,7 +157,7 @@ public class ItemActor extends Mob
             }
             catch (IllegalStateException e)
             {
-
+                // Silent catch
             }
 
             Box2DOperationManager.queueOperation(() ->
@@ -121,9 +166,6 @@ public class ItemActor extends Mob
                 Globals.mobs.removeMob(this);
             });
         }
-
-
     }
-
-
 }
+

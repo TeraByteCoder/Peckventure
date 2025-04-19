@@ -2,6 +2,7 @@ package at.peckventure.entities.mob;
 
 import at.peckventure.Globals;
 import at.peckventure.Textures;
+import at.peckventure.entities.Player;
 import at.peckventure.inventory.ItemRegistry;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
@@ -119,13 +120,18 @@ public class Beetle extends Mob {
         int randNum = rand.nextInt();
         if (randNum % 100 == 0)
         {
-            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"));
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("speed_potion"), 1);
         }
         if (randNum % 4 == 0)
         {
-            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("wood"));
+            MobRegistry.createMob(MobRegistration.ITEMACTOR_ID, world, this.getX(), this.getY(), ItemRegistry.createItem("wood"), 1);
         }
-        Globals.mobs.removeMob(this);
         dispose();
+    }
+
+    @Override
+    public void onPeck(Player player)
+    {
+        onDeath();
     }
 }

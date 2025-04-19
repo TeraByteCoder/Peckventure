@@ -1,6 +1,7 @@
 package at.peckventure.entities.mob;
 
 import at.peckventure.Globals;
+import at.peckventure.entities.Player;
 import at.peckventure.world.Box2DOperationManager;
 import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
@@ -62,6 +63,7 @@ public abstract class Mob extends Actor
                 }
             });
             body = null;
+            Globals.mobs.removeMob(this);
         }
     }
 
@@ -111,6 +113,11 @@ public abstract class Mob extends Actor
     }
 
     public void onDeath()
+    {
+
+    }
+
+    public void onPeck(Player player)
     {
 
     }

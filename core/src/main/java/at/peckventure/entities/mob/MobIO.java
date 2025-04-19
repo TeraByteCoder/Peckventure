@@ -13,6 +13,7 @@ public class MobIO {
         data.y = mob.getY();
         if (mob instanceof ItemActor) {
             data.extraItem = ((ItemActor) mob).getInventoryItem().getId();
+            data.amount = ((ItemActor) mob).getAmount();  // Save the amount
         }
         return gson.toJson(data);
     }
@@ -21,7 +22,9 @@ public class MobIO {
         Gson gson = new Gson();
         MobData data = gson.fromJson(json, MobData.class);
         if (data.id == MobRegistration.ITEMACTOR_ID && data.extraItem != null) {
-            return MobRegistry.createMobObject(data.id, world, data.x, data.y, ItemRegistry.createItem(data.extraItem));
+            int amount = (data.amount > 0) ? data.amount : 1;  // Use 1 as default if amount is not set
+            return MobRegistry.createMobObject(data.id, world, data.x, data.y,
+                ItemRegistry.createItem(data.extraItem), amount);
         } else {
             return MobRegistry.createMobObject(data.id, world, data.x, data.y);
         }
@@ -31,7 +34,8 @@ public class MobIO {
         int id;
         float x;
         float y;
-        String extraItem; // Neuer Parameter für ItemActor; bei anderen Mobs null
+        String extraItem; // For ItemActor; null for other mobs
+        int amount = 1;   // Default value is 1
     }
 
 }

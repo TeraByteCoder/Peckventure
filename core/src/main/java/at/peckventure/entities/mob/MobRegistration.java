@@ -23,7 +23,14 @@ public class MobRegistration {
 
         MobRegistry.registerMob(ITEMACTOR_ID, ITEMACTOR_STRING_ID, ItemActor.class, (world, x, y, args) -> {
             if(args != null && args.length > 0 && args[0] instanceof Item) {
-                return new ItemActor(world, x, y, (Item) args[0]);
+                int amount = 1;  // Default amount
+
+                // Check if amount parameter was provided
+                if(args.length > 1 && args[1] instanceof Integer) {
+                    amount = (Integer) args[1];
+                }
+
+                return new ItemActor(world, x, y, (Item) args[0], amount);
             } else {
                 return new ItemActor(world, x, y);
             }
