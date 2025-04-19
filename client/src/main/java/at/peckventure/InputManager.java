@@ -32,8 +32,6 @@ public class InputManager extends InputAdapter {
         return instance;
     }
 
-
-
     public void setChatToggle(ChatToggle chatToggle) {
         this.chatToggle = chatToggle;
     }
@@ -44,28 +42,29 @@ public class InputManager extends InputAdapter {
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.T) {
-            // Nur aktivieren, wenn der Chat noch nicht offen ist
-            if (chatToggle != null && !chatToggle.isChatActive()) {
-                chatToggle.toggleChat();
+        // WICHTIG: Wenn Chat aktiv ist, ALLE Tasten blockieren außer ESC
+        // Dies verhindert, dass E das Inventar öffnet, während der Chat aktiv ist
+        if (chatToggle != null && chatToggle.isChatActive()) {
+            if (keycode == Input.Keys.ESCAPE) {
+                chatToggle.cancelChat();
+                return true;
             }
-            return true;
+            // Wichtig: Alle anderen Eingaben blockieren und an das Textfeld weiterleiten
+            return true; // Hier ist die Änderung: true statt false
         }
 
-        if (keycode == Input.Keys.UP) {
-            ChatUI.getInstance().loadLastMessage(true);
-            return true;
-        }
-        if (keycode == Input.Keys.DOWN) {
-            ChatUI.getInstance().loadLastMessage(false);
+        // Chat ist nicht aktiv, normales Verhalten
+        if (keycode == Input.Keys.T) {
+            if (chatToggle != null) {
+                // Chat öffnen
+                chatToggle.toggleChat();
+                return true;
+            }
         }
 
         if (keycode == Input.Keys.ESCAPE) {
             if (escapeHandler != null) {
                 escapeHandler.handleEscape();
-                return true;
-            } else if (chatToggle != null) {
-                chatToggle.cancelChat();
                 return true;
             }
         }
@@ -107,6 +106,11 @@ public class InputManager extends InputAdapter {
 
     @Override
     public boolean keyUp(int keycode) {
+        // Auch hier: Wenn Chat aktiv ist, alle keyUp-Events blockieren
+        if (chatToggle != null && chatToggle.isChatActive()) {
+            return true; // Änderung hier: true statt false
+        }
+
         if (keycode == Input.Keys.A) {
             leftPressed = false;
         }
@@ -128,26 +132,42 @@ public class InputManager extends InputAdapter {
         return false;
     }
 
+    // Diese Methoden werden unverändert gelassen, da sie bereits
+    // den Chat-Status berücksichtigen
+
     public boolean isLeftPressed() {
-        return leftPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+        return leftPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isRightPressed() {
-        return rightPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+        return rightPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isJumpPressed() {
-        return jumpPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+        return jumpPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isWPressed() {
-        return wPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+        return wPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 
     public boolean isSPressed() {
-        return sPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+        return sPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
     }
+
     public boolean isPeckPressed() {
-        return peckPressed && !inputsPaused && (escapeHandler == null || !escapeHandler.isMenuActive());
+        return peckPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
     }
 }

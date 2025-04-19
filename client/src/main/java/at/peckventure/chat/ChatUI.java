@@ -73,11 +73,9 @@ public class ChatUI
             @Override
             public boolean keyDown(com.badlogic.gdx.scenes.scene2d.InputEvent event, int keycode)
             {
-                if (keycode == Input.Keys.T)
-                {
-                    toggleChat(); // Schließt den Chat, wenn er offen ist
-                    return true;  // Event verbrauchen, damit T nicht ins Textfeld gelangt
-                }
+                // Entferne die T-Taste-Überprüfung, damit T im Chat verwendet werden kann
+                // ohne dass der Chat geschlossen wird
+
                 if (keycode == Input.Keys.ESCAPE)
                 {
                     cancelChat();
@@ -265,4 +263,12 @@ public class ChatUI
         return chatInput.isVisible();
     }
 
+    // Neue Methode zum Öffnen des Chats, ohne ihn zu schließen
+    public void openChatOnly()
+    {
+        if (!chatInput.isVisible())
+        {
+            openChat();
+        }
+    }
 }

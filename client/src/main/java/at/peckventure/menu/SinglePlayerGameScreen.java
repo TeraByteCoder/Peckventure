@@ -20,6 +20,8 @@ import at.peckventure.world.generator.WorldGenerator;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -29,12 +31,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-
 
 public class SinglePlayerGameScreen extends GameScreen {
 
@@ -54,6 +56,117 @@ public class SinglePlayerGameScreen extends GameScreen {
     private Texture whiteTexture;
     private Boolean operator;
     private LightSystem lightSystem;
+
+    private boolean isDead = false;
+    private Stage deathStage;
+    private Texture blackOverlayTexture;
+
+    // InputProcessor für Chat-Steuerung
+    private final InputProcessor chatInputProcessor = new InputProcessor() {
+        @Override
+        public boolean keyDown(int keycode) {
+            // ESC schließt den Chat
+            if (keycode == Input.Keys.ESCAPE) {
+                chatUI.cancelChat();
+                updateInputProcessors();
+                return true;
+            }
+
+            // Alle anderen Tasten werden weitergeleitet
+            return false;
+        }
+
+        @Override
+        public boolean keyUp(int keycode) { return false; }
+
+        @Override
+        public boolean keyTyped(char character) { return false; }
+
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) { return false; }
+
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
+
+        @Override
+        public boolean touchCancelled(int i, int i1, int i2, int i3) {
+            return false;
+        }
+
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
+
+        @Override
+        public boolean mouseMoved(int screenX, int screenY) { return false; }
+
+        @Override
+        public boolean scrolled(float amountX, float amountY) { return false; }
+    };
+
+    // InputProcessor für Spiel-Steuerung
+    private final InputProcessor gameInputProcessor = new InputProcessor() {
+        @Override
+        public boolean keyDown(int keycode) {
+            // T öffnet den Chat
+            if (keycode == Input.Keys.T) {
+                chatUI.toggleChat();
+                updateInputProcessors();
+                return true;
+            }
+            // ESC pausiert das Spiel
+            else if (keycode == Input.Keys.ESCAPE) {
+                paused = !paused;
+                return true;
+            }
+            // F3 für Debug-Overlay
+            else if (keycode == Input.Keys.F3) {
+                debugOverlayVisible = !debugOverlayVisible;
+                if (debugOverlayVisible) {
+                    debugOverlay.show();
+                } else {
+                    debugOverlay.hide();
+                }
+                return true;
+            }
+            // L für Licht-Modus
+            else if (keycode == Input.Keys.L) {
+                lightSystem.toggleDarkMode();
+                return true;
+            }
+
+            return false; // Andere Tasten werden weitergeleitet
+        }
+
+        @Override
+        public boolean keyUp(int keycode) { return false; }
+
+        @Override
+        public boolean keyTyped(char character) { return false; }
+
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) { return false; }
+
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
+
+        @Override
+        public boolean touchCancelled(int i, int i1, int i2, int i3) {
+            return false;
+        }
+
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
+
+        @Override
+        public boolean mouseMoved(int screenX, int screenY) { return false; }
+
+        @Override
+        public boolean scrolled(float amountX, float amountY) { return false; }
+    };
+
+    // InputMultiplexer für dynamisches Umschalten
+    private InputMultiplexer inputMultiplexer;
+
     public SinglePlayerGameScreen(Game game, String worldName) {
         super(game);
         this.worldName = worldName;
@@ -76,24 +189,40 @@ public class SinglePlayerGameScreen extends GameScreen {
 
         // Chat initialisieren
         chatUI = new ChatUI(uiStage, new SinglePlayerChatExecutor());
-        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle()
-        {
+
+        // InputManager-Integration für Rückwärtskompatibilität
+        InputManager.getInstance().setChatToggle(new InputManager.ChatToggle() {
             @Override
-            public void toggleChat()
-            {
+            public void toggleChat() {
                 chatUI.toggleChat();
+                updateInputProcessors();
             }
 
             @Override
-            public void cancelChat()
-            {
+            public void cancelChat() {
                 chatUI.cancelChat();
+                updateInputProcessors();
             }
 
             @Override
-            public boolean isChatActive()
-            {
+            public boolean isChatActive() {
                 return chatUI.isChatActive();
+            }
+        });
+
+        // EscapeHandler für das Pausensystem
+        InputManager.getInstance().setEscapeHandler(new InputManager.EscapeHandler() {
+            @Override
+            public void handleEscape() {
+                // Wenn der Chat aktiv ist, wird dies in chatInputProcessor behandelt
+                if (!chatUI.isChatActive()) {
+                    paused = !paused;
+                }
+            }
+
+            @Override
+            public boolean isMenuActive() {
+                return paused;
             }
         });
 
@@ -132,10 +261,11 @@ public class SinglePlayerGameScreen extends GameScreen {
         else
             player.setOperator(playerData.isOperator());
         stage.addActor(player);
+
         // Lichtsystem initialisieren
         lightSystem = new LightSystem(physicsWorld, player);
-// Nach dem Erstellen des Players:
 
+        // Nach dem Erstellen des Players:
         inventoryUI = new InventoryUI(uiStage, new SinglePlayerInventoryManager());
         healthUI = new HealthUI(uiStage, ControlledPlayer.getInstance().getHealthStatus());
         energyUI = new EnergyUI(uiStage, ControlledPlayer.getInstance().getEnergyStatus());
@@ -154,11 +284,36 @@ public class SinglePlayerGameScreen extends GameScreen {
         tilemap.startChunkUpdateThread(player);
         Box2DOperationManager.processOperations();
         createPauseOverlay();
+        createDeathOverlay();
 
+        // InputMultiplexer initialisieren
+        inputMultiplexer = new InputMultiplexer();
+        updateInputProcessors();
+        Gdx.input.setInputProcessor(inputMultiplexer);
 
         float playerX = player.getX();
         float playerY = player.getY();
+    }
 
+    // Diese Methode aktualisiert die Input-Prozessoren basierend auf dem Spielzustand
+    private void updateInputProcessors() {
+        inputMultiplexer.clear();
+
+        // Death und Pause-Stages haben immer höchste Priorität
+        inputMultiplexer.addProcessor(deathStage);
+        inputMultiplexer.addProcessor(pauseStage);
+
+        if (chatUI.isChatActive()) {
+            // Chat ist aktiv: UI-Stages + Chat-Input haben Priorität
+            inputMultiplexer.addProcessor(uiStage);
+            inputMultiplexer.addProcessor(chatInputProcessor);
+        } else {
+            // Chat ist nicht aktiv: Game-Input + normales UI
+            inputMultiplexer.addProcessor(gameInputProcessor);
+            inputMultiplexer.addProcessor(uiStage);
+            inputMultiplexer.addProcessor(stage);
+            inputMultiplexer.addProcessor(InputManager.getInstance());
+        }
     }
 
     private void createPauseOverlay() {
@@ -239,26 +394,73 @@ public class SinglePlayerGameScreen extends GameScreen {
         pauseStage.addActor(resumeButton);
     }
 
+    private void createDeathOverlay() {
+        // halbtransparente schwarze Textur
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap.setColor(0, 0, 0, 0.7f);
+        pixmap.fill();
+        blackOverlayTexture = new Texture(pixmap);
+        pixmap.dispose();
+
+        deathStage = new Stage(uiStage.getViewport(), batch);
+        Label.LabelStyle style = new Label.LabelStyle(new BitmapFont(), Color.RED);
+        Label diedLabel = new Label("You Died", style);
+        diedLabel.setFontScale(3f);
+        diedLabel.setPosition(
+            (deathStage.getViewport().getWorldWidth() - diedLabel.getPrefWidth()) / 2f,
+            (deathStage.getViewport().getWorldHeight() - diedLabel.getPrefHeight()) / 2f + 50
+        );
+        deathStage.addActor(diedLabel);
+
+        // Button-Stil wie im Pause-Overlay
+        TextButton.TextButtonStyle btnStyle = new TextButton.TextButtonStyle();
+        btnStyle.up = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("textures/gui/button1.png"))));
+        btnStyle.down = btnStyle.up;
+        btnStyle.font = new BitmapFont();
+
+        TextButton respawn = new TextButton("Respawn", btnStyle);
+        respawn.setSize(300, 80);
+        respawn.setPosition(
+            (deathStage.getViewport().getWorldWidth() - respawn.getWidth()) / 2f,
+            diedLabel.getY() - 100
+        );
+        respawn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Welt neu starten: dieselbe Screen-Instanz neu setzen
+                game.setScreen(new SinglePlayerGameScreen(game, worldName, operator));
+            }
+        });
+        deathStage.addActor(respawn);
+
+        TextButton toMenu = new TextButton("Return to Main Menu", btnStyle);
+        toMenu.setSize(300, 80);
+        toMenu.setPosition(
+            (deathStage.getViewport().getWorldWidth() - toMenu.getWidth()) / 2f,
+            respawn.getY() - 100
+        );
+        toMenu.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Welt speichern und zurück zum Menü
+                WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
+                tilemap.stopChunkUpdateThread();
+                ControlledPlayer.getInstance().remove();
+                ControlledPlayer.reset();
+                Box2DOperationManager.clear();
+                dispose();
+                DiscordPresence.start();
+                game.setScreen(new MainMenu(game));
+            }
+        });
+        deathStage.addActor(toMenu);
+    }
+
     @Override
     public void render(float delta) {
-        // ESC zum Pausieren/Fortsetzen
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            paused = !paused;
-        }
-
-        // F3 zum Umschalten des Debug-Overlays
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
-            debugOverlayVisible = !debugOverlayVisible;
-            if (debugOverlayVisible) {
-                debugOverlay.show();
-            } else {
-                debugOverlay.hide();
-            }
-        }
-
-        // L-Taste zum Umschalten des Terraria-Lichtsystems (Tag/Nacht)
-        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
-            lightSystem.toggleDarkMode();
+        // Überprüfen, ob sich der Chat-Status geändert hat
+        if (chatUI.isChatActive() != inputMultiplexer.getProcessors().contains(chatInputProcessor, true)) {
+            updateInputProcessors();
         }
 
         // Clear the screen
@@ -314,6 +516,27 @@ public class SinglePlayerGameScreen extends GameScreen {
         // UI-Elemente zeichnen
         uiStage.draw();
 
+        if (!isDead) {
+            int currentHealth = (int) ControlledPlayer.getInstance().getHealthStatus().getCurrent();
+            if (currentHealth <= 0) {
+                isDead = true;
+                updateInputProcessors(); // Input-Prozessoren für Todes-Status aktualisieren
+            }
+        }
+
+        if (isDead) {
+            // Schwarze halbtransparente Fläche
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            batch.begin();
+            batch.draw(blackOverlayTexture, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            batch.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+
+            deathStage.act(delta);
+            deathStage.draw();
+            return; // nichts weiter zeichnen
+        }
+
         // Wenn pausiert, Pause-Overlay zeichnen
         if (paused) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -327,6 +550,7 @@ public class SinglePlayerGameScreen extends GameScreen {
             DiscordPresence.updateToPaused();
         }
     }
+
     @Override
     public void pause() {
         WorldIO.saveWorld(worldName, worldConfig, tilemap.getLoadedChunks(), ControlledPlayer.getInstance());
