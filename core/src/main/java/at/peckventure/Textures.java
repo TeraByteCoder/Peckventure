@@ -21,13 +21,22 @@ public enum Textures {
     SPRUCE_LOG("textures/blocks/log_spruce.png", false),
     SPRUCE_LEAVES("textures/blocks/leaves_spruce.png", false),
     PHYTON("textures/mobs/cobra.png", false),
+    FOX("textures/mobs/cobra.png", false),
 
     // Animated textures
     PHYTON_IDLE("textures/mobs/cobra.png", true, 8, 5, 0, 0.2f),
     PHYTON_MOVING("textures/mobs/cobra.png", true, 8, 5, 1, 0.2f),
-    PHYTON_ATTACKING("textures/mobs/cobra.png", true, 6, 5, 2, 0.2f),
+    PHYTON_ATTACKING("textures/mobs/cobra.png", true, 11, 5, 2, 0.2f),
     PHYTON_DAMAGE("textures/mobs/cobra.png", true, 4, 5, 3, 0.2f),
     PHYTON_DYING("textures/mobs/cobra.png", true, 6, 5, 4, 0.2f),
+
+
+    FOX_IDLE("textures/mobs/fox.png", true, 8, 5, 0, 0.2f),
+    FOX_MOVING("textures/mobs/fox.png", true, 14, 7, 2, 0.3f),
+    FOX_ATTACKING("textures/mobs/fox.png", true, 6, 5, 2, 0.2f),
+    FOX_DAMAGE("textures/mobs/fox.png", true, 4, 5, 3, 0.2f),
+
+    FOX_DYING("textures/mobs/cobra.png", true, 6, 5, 4, 0.2f),
 
         ;
     private Texture texture;

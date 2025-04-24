@@ -2,6 +2,7 @@ package at.peckventure.menu;
 
 import at.peckventure.Globals;
 import at.peckventure.InputManager;
+import at.peckventure.LanguageManager;
 import at.peckventure.chat.ChatUI;
 import at.peckventure.chat.SinglePlayerChatExecutor;
 import at.peckventure.entities.ControlledPlayer;
@@ -303,6 +304,12 @@ public class SinglePlayerGameScreen extends GameScreen {
         inputMultiplexer.addProcessor(deathStage);
         inputMultiplexer.addProcessor(pauseStage);
 
+        if (isDead) {
+            // Wenn tot, nur die Death-Stage als Input-Processor hinzufügen
+            inputMultiplexer.addProcessor(deathStage);
+            return;
+        }
+
         if (chatUI.isChatActive()) {
             // Chat ist aktiv: UI-Stages + Chat-Input haben Priorität
             inputMultiplexer.addProcessor(uiStage);
@@ -318,7 +325,7 @@ public class SinglePlayerGameScreen extends GameScreen {
 
     private void createPauseOverlay() {
         Label.LabelStyle labelStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
-        Label pausedLabel = new Label("Paused", labelStyle);
+        Label pausedLabel = new Label(LanguageManager.INSTANCE.getText("menu.game.paused"), labelStyle);
         pausedLabel.setFontScale(2f);
         pausedLabel.setPosition(
             (pauseStage.getViewport().getWorldWidth() - pausedLabel.getPrefWidth()) / 2f,
@@ -334,7 +341,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         buttonStyle.down = buttonDrawable;
         buttonStyle.font = new BitmapFont();
 
-        TextButton resumeButton = new TextButton("Back to Game", buttonStyle);
+        TextButton resumeButton = new TextButton(LanguageManager.INSTANCE.getText("menu.back.to.game"), buttonStyle);
         resumeButton.setSize(300, 80);
         resumeButton.setPosition(
             (pauseStage.getViewport().getWorldWidth() - resumeButton.getWidth()) / 2f,
@@ -347,7 +354,7 @@ public class SinglePlayerGameScreen extends GameScreen {
             }
         });
 
-        TextButton returnToMenuButton = new TextButton("Return to Main Menu", buttonStyle);
+        TextButton returnToMenuButton = new TextButton(LanguageManager.INSTANCE.getText("menu.return.to.main.menu"), buttonStyle);
         returnToMenuButton.setSize(300, 80);
         returnToMenuButton.setPosition(
             (pauseStage.getViewport().getWorldWidth() - returnToMenuButton.getWidth()) / 2f,
@@ -404,7 +411,7 @@ public class SinglePlayerGameScreen extends GameScreen {
 
         deathStage = new Stage(uiStage.getViewport(), batch);
         Label.LabelStyle style = new Label.LabelStyle(new BitmapFont(), Color.RED);
-        Label diedLabel = new Label("You Died", style);
+        Label diedLabel = new Label(LanguageManager.INSTANCE.getText("menu.you.died"), style);
         diedLabel.setFontScale(3f);
         diedLabel.setPosition(
             (deathStage.getViewport().getWorldWidth() - diedLabel.getPrefWidth()) / 2f,
@@ -418,7 +425,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         btnStyle.down = btnStyle.up;
         btnStyle.font = new BitmapFont();
 
-        TextButton respawn = new TextButton("Respawn", btnStyle);
+        TextButton respawn = new TextButton(LanguageManager.INSTANCE.getText("menu.respawn"), btnStyle);
         respawn.setSize(300, 80);
         respawn.setPosition(
             (deathStage.getViewport().getWorldWidth() - respawn.getWidth()) / 2f,
@@ -433,7 +440,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         });
         deathStage.addActor(respawn);
 
-        TextButton toMenu = new TextButton("Return to Main Menu", btnStyle);
+        TextButton toMenu = new TextButton(LanguageManager.INSTANCE.getText("menu.return.to.main.menu"), btnStyle);
         toMenu.setSize(300, 80);
         toMenu.setPosition(
             (deathStage.getViewport().getWorldWidth() - toMenu.getWidth()) / 2f,
@@ -468,7 +475,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Update game state if not paused
-        if (!paused) {
+        if (!paused && !isDead) {
             mobSpawner.update(delta);
             Box2DOperationManager.processOperations();
             physicsWorld.step(delta, 6, 2);
