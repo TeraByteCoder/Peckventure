@@ -117,7 +117,8 @@ public abstract class GameScreen implements Screen
 
 
         // Physik-Listener
-        physicsWorld.setContactListener(new GameContactListener());
+        ClientGlobal.contactListener = new ExtendedGameContactListener();
+        physicsWorld.setContactListener(ClientGlobal.contactListener);
 
         player = ControlledPlayer.getInstance(physicsWorld, 0, 0);
 

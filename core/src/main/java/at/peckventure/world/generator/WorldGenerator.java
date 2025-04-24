@@ -39,7 +39,7 @@ public class WorldGenerator
             int rightHeight = getHeight(worldX + 1);
             for (int y = 0; y < Chunk.CHUNK_SIZE; y++) {
                 int worldY = chunk.getChunkY() * Chunk.CHUNK_SIZE + y;
-                if (worldY < currentHeight - 1) {
+                if (worldY < currentHeight - 1 && chunk.getBlock(x, y) == null) {
                     chunk.setBlock(x, y, new DirtBlock(world, worldX, worldY));
                 } else if (worldY == currentHeight - 1) {
                     boolean leftLower = leftHeight < currentHeight;
@@ -51,6 +51,7 @@ public class WorldGenerator
                     } else if (leftLower || rightLower) {
                         boolean leftRamp = (leftLower && !rightLower) ? false : true;
                         chunk.setBlock(x, y, new GrassRamp(world, worldX, worldY, leftRamp));
+                        chunk.setBlock(x, y-1, new GrassPatch(world, worldX, worldY-1, leftRamp));
                     } else {
                         chunk.setBlock(x, y, new GrassBlock(world, worldX, worldY));
                     }
