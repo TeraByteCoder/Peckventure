@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.FontManager;
+import at.peckventure.LanguageManager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -35,9 +36,9 @@ public class PauseMenu implements Screen {
         skin = fontManager.getSkin();
 
         // Buttons erstellen
-        TextButton settingsButton = new TextButton("Settings", skin);
-        TextButton mainMenuButton = new TextButton("Main Menu", skin);
-        TextButton resumeButton = new TextButton("Back to Game", skin);
+        TextButton settingsButton = new TextButton(LanguageManager.INSTANCE.getText("menu.settings.button"), skin);
+        TextButton mainMenuButton = new TextButton(LanguageManager.INSTANCE.getText("menu.main.menu"), skin);
+        TextButton resumeButton = new TextButton(LanguageManager.INSTANCE.getText("menu.back.to.game"), skin);
 
         // ClickListener für Settings: Nur Log-Ausgabe
         settingsButton.addListener(new ClickListener() {
@@ -69,7 +70,7 @@ public class PauseMenu implements Screen {
         table.center();
 
         // Überschrift "Paused" hinzufügen
-        Label pausedLabel = new Label("Paused", skin);
+        Label pausedLabel = new Label(LanguageManager.INSTANCE.getText("menu.paused"), skin);
         pausedLabel.setFontScale(2f);
         pausedLabel.setAlignment(Align.center);
 

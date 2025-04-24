@@ -46,5 +46,13 @@
   "menu.world_name_placeholder": "Neue Welt",
   "menu.world_seed_placeholder": "Seed",
   "menu.create_world_button": "Welt erstellen",
-  "menu.allow_cheats": "cheaten erlauben"
+  "menu.allow_cheats": "cheaten erlauben",
+  "menu.language": "Sprache",
+  "menu.game.paused": "Spiel pausiert",
+  "menu.back.to.game": "zurück zum Spiel",
+  "menu.return.to.main.menu": "zurück zum Hauptmenü",
+  "menu.player": "Spieler",
+  "menu.resume": "zurück zum Spiel",
+  "menu.disconnect": "Verlassen",
+  "menu.guit.game": "Spiel beenden"
 }

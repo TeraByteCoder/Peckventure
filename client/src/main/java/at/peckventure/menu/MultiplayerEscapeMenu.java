@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.FontManager;
+import at.peckventure.LanguageManager;
 import at.peckventure.NetworkClient;
 import at.peckventure.Globals;
 import com.badlogic.gdx.Game;
@@ -35,7 +36,7 @@ public class MultiplayerEscapeMenu {
     }
 
     private void createMenuWindow(Stage uiStage) {
-        menuWindow = new Window("Menu", skin);
+        menuWindow = new Window("", skin);
         menuWindow.setMovable(false);
 
         // Fenstergröße festlegen
@@ -59,14 +60,14 @@ public class MultiplayerEscapeMenu {
         contentTable.row();
 
         // Spieler-Info hinzufügen
-        Label playerInfoLabel = new Label("Player: " + Globals.username, skin);
+        Label playerInfoLabel = new Label(LanguageManager.INSTANCE.getText("menu.player")+ ": " + Globals.username, skin);
         contentTable.add(playerInfoLabel).padBottom(15);
         contentTable.row();
 
         // Buttons erstellen
-        TextButton resumeButton = new TextButton("Continue", skin);
-        TextButton disconnectButton = new TextButton("Disconnect", skin);
-        TextButton quitButton = new TextButton("Quit Game", skin);
+        TextButton resumeButton = new TextButton(LanguageManager.INSTANCE.getText("menu.resume"), skin);
+        TextButton disconnectButton = new TextButton(LanguageManager.INSTANCE.getText("menu.disconnect"), skin);
+        TextButton quitButton = new TextButton(LanguageManager.INSTANCE.getText("menu.guit.game"), skin);
 
         contentTable.add(resumeButton).height(40);
         contentTable.row();
@@ -86,7 +87,7 @@ public class MultiplayerEscapeMenu {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Bestätigungsdialog anzeigen
-                Dialog dialog = new Dialog("Confirm", skin) {
+                Dialog dialog = new Dialog(LanguageManager.INSTANCE.getText("menu.confirm"), skin) {
                     @Override
                     protected void result(Object object) {
                         if ((Boolean) object) {
@@ -96,9 +97,9 @@ public class MultiplayerEscapeMenu {
                         }
                     }
                 };
-                dialog.text("Disconnect from server?");
-                dialog.button("Yes", true);
-                dialog.button("No", false);
+                dialog.text(LanguageManager.INSTANCE.getText("menu.disconnect.from.server"));
+                dialog.button(LanguageManager.INSTANCE.getText("menu.yes"), true);
+                dialog.button(LanguageManager.INSTANCE.getText("menu.no"), false);
                 dialog.show(uiStage);
             }
         });
@@ -107,7 +108,7 @@ public class MultiplayerEscapeMenu {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Bestätigungsdialog anzeigen
-                Dialog dialog = new Dialog("Confirm", skin) {
+                Dialog dialog = new Dialog(LanguageManager.INSTANCE.getText("menu.confirm"), skin) {
                     @Override
                     protected void result(Object object) {
                         if ((Boolean) object) {
@@ -117,9 +118,9 @@ public class MultiplayerEscapeMenu {
                         }
                     }
                 };
-                dialog.text("Quit game?");
-                dialog.button("Yes", true);
-                dialog.button("No", false);
+                dialog.text(LanguageManager.INSTANCE.getText("menu.quit.game"));
+                dialog.button(LanguageManager.INSTANCE.getText("menu.yes"), true);
+                dialog.button(LanguageManager.INSTANCE.getText("menu.no"), false);
                 dialog.show(uiStage);
             }
         });
