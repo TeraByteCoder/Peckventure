@@ -54,5 +54,13 @@
   "menu.player": "Spieler",
   "menu.resume": "zurück zum Spiel",
   "menu.disconnect": "Verlassen",
-  "menu.guit.game": "Spiel beenden"
+  "menu.guit.game": "Spiel beenden",
+  "menu.connecting.to.Server": "Verbinden zum Server",
+  "menu.connecting": "verbinden...",
+  "menu.retry": "erneut versuchen",
+  "menu.back": "zurück",
+  "menu.server.is.offline": "Server ist offline.",
+  "menu.disconnected.from.server": "Server verlassen.",
+  "menu.connection.failed": "Verbindung fehlgeschlagen.",
+  "menu.error": "Fehler"
 }

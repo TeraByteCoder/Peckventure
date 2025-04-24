@@ -1,6 +1,7 @@
 package at.peckventure.menu;
 
 import at.peckventure.FontManager;
+import at.peckventure.LanguageManager;
 import at.peckventure.multiplayer.Network;
 import at.peckventure.multiplayer.NetworkPackets;
 import com.badlogic.gdx.Game;
@@ -82,18 +83,18 @@ public class LoadingScreen implements Screen {
         stage.addActor(backgroundImage);
 
         // UI-Elemente erstellen
-        titleLabel = new Label("Connecting to Server", skin);
+        titleLabel = new Label(LanguageManager.INSTANCE.getText("menu.connecting.to.Server"), skin);
         titleLabel.setFontScale(3f);
-        statusLabel = new Label("Connecting...", skin);
+        statusLabel = new Label(LanguageManager.INSTANCE.getText("menu.connecting"), skin);
         statusLabel.setFontScale(2f);
         errorLabel = new Label("", skin);
         errorLabel.setColor(Color.RED);
         errorLabel.setFontScale(2f);
         errorLabel.setVisible(false);
 
-        retryButton = new TextButton("Retry", skin);
+        retryButton = new TextButton(LanguageManager.INSTANCE.getText("menu.retry"), skin);
         retryButton.setVisible(false);
-        backButton = new TextButton("Back", skin);
+        backButton = new TextButton(LanguageManager.INSTANCE.getText("menu.back"), skin);
         backButton.setVisible(false);
 
         // Listener für Retry
@@ -103,7 +104,7 @@ public class LoadingScreen implements Screen {
                 errorLabel.setVisible(false);
                 retryButton.setVisible(false);
                 backButton.setVisible(false);
-                statusLabel.setText("Connecting...");
+                statusLabel.setText(LanguageManager.INSTANCE.getText("menu.connecting"));
                 startConnection();
             }
         });
@@ -139,7 +140,7 @@ public class LoadingScreen implements Screen {
     private void startConnection() {
         // Prüfen, ob der Server per Socket erreichbar ist
         if (!isServerOnline(serverHost, serverPort, 2000)) {
-            showError("Server is offline!");
+            showError(LanguageManager.INSTANCE.getText("menu.server.is.offline"));
             return;
         }
 
@@ -177,7 +178,7 @@ public class LoadingScreen implements Screen {
 
             @Override
             public void disconnected(Connection connection) {
-                Gdx.app.postRunnable(() -> showError("Disconnected from server!"));
+                Gdx.app.postRunnable(() -> showError(LanguageManager.INSTANCE.getText("menu.disconnected.from.server")));
             }
         });
 
@@ -187,7 +188,7 @@ public class LoadingScreen implements Screen {
                 client.start();
                 client.connect(5000, serverHost, serverPort, serverPort + 222);
             } catch (Exception e) {
-                Gdx.app.postRunnable(() -> showError("Connection failed!"));
+                Gdx.app.postRunnable(() -> showError(LanguageManager.INSTANCE.getText("menu.connection.failed")));
             }
         }).start();
 
@@ -218,7 +219,7 @@ public class LoadingScreen implements Screen {
 
     private void showError(String message) {
         Gdx.app.postRunnable(() -> {
-            statusLabel.setText("Error");
+            statusLabel.setText(LanguageManager.INSTANCE.getText("menu.error"));
             errorLabel.setText(message);
             errorLabel.setVisible(true);
             retryButton.setVisible(true);
