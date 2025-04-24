@@ -11,6 +11,8 @@ public enum Textures {
     GRASS_BLOCK("textures/blocks/grass_block.png", false),
     GRASSRAMPLEFT("textures/blocks/grass_ramp_left.png", false),
     GRASSRAMPRIGHT("textures/blocks/grass_ramp_right.png", false),
+    GRASSPATCHLEFT("textures/blocks/grass_patch_left.png", false),
+    GRASSPATCHRIGHT("textures/blocks/grass_patch_right.png", false),
     BEETLE("textures/criters/garden_foliage_beetle_idle.png", false),
     INVENTORY_SLOT("textures/inventory_slot.png", false),
     TEST_ITEM("textures/items/test_item.png", false),
@@ -26,7 +28,6 @@ public enum Textures {
     PHYTON_MOVING("textures/mobs/cobra.png", true, 8, 5, 1, 0.2f),
     PHYTON_ATTACKING("textures/mobs/cobra.png", true, 11, 5, 2, 0.2f),
     PHYTON_DAMAGE("textures/mobs/cobra.png", true, 4, 5, 3, 0.2f),
-
     PHYTON_DYING("textures/mobs/cobra.png", true, 6, 5, 4, 0.2f),
 
 

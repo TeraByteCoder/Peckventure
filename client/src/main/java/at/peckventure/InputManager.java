@@ -10,6 +10,8 @@ public class InputManager extends InputAdapter {
     private ChatToggle chatToggle;
     private EscapeHandler escapeHandler;
 
+    private boolean landPressed = false;
+
 
     public interface ChatToggle {
         void toggleChat();
@@ -129,6 +131,9 @@ public class InputManager extends InputAdapter {
         if (keycode == Input.Keys.F) {
             peckPressed = false;
         }
+        if (keycode == Input.Keys.C) {
+            landPressed = true;
+        }
         return false;
     }
 
@@ -170,4 +175,15 @@ public class InputManager extends InputAdapter {
             (chatToggle == null || !chatToggle.isChatActive()) &&
             (escapeHandler == null || !escapeHandler.isMenuActive());
     }
+    public boolean isLandPressed() {
+        return landPressed && !inputsPaused &&
+            (chatToggle == null || !chatToggle.isChatActive()) &&
+            (escapeHandler == null || !escapeHandler.isMenuActive());
+    }
+
+    public void resetLandPressed()
+    {
+        landPressed = false;
+    }
+
 }

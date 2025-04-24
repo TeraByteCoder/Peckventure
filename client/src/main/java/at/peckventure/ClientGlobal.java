@@ -8,4 +8,6 @@ public class ClientGlobal
     public static Stage stage;
 
     public static BitmapFont font;
+
+    public static ExtendedGameContactListener contactListener;
 }
