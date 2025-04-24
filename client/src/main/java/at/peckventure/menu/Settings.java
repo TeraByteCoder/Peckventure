@@ -243,7 +243,29 @@ public class Settings implements Screen {
         Label resolutionLabel = new Label(texts.has("menu.resolution") ? texts.getString("menu.resolution") : "Resolution", skin);
         final SelectBox<String> resolutionSelect = new SelectBox<>(skin);
         // Beispielhafte Auflösungen
-        String[] resolutions = new String[] { "640x480", "800x600", "1024x768", "1280x720", "1920x1080" };
+        String[] resolutions = new String[] {
+            "640x480",       // VGA
+            "800x600",       // SVGA
+            "1024x768",      // XGA
+            "1280x720",      // HD / 720p
+            "1366x768",      // HD (häufig bei Laptops)
+            "1440x900",      // WXGA+
+            "1600x900",      // HD+
+            "1680x1050",     // WSXGA+
+            "1920x1080",     // Full HD / 1080p
+            "2560x1440",     // QHD / WQHD / 1440p
+            "3440x1440",     // Ultrawide QHD
+            "3840x2160",     // 4K UHD / 2160p
+            "5120x1440",     // Super Ultrawide
+            "5120x2880",     // 5K
+            "7680x4320",     // 8K UHD
+            "1920x1200",     // WUXGA (16:10)
+            "2560x1600",     // WQXGA (16:10)
+            "3840x1600",     // Ultrawide 1600p
+            "3840x1080",     // Dual Full HD
+            "5760x1080",     // Triple Full HD
+            "8192x4320"      // 8K Full Format
+        };
         resolutionSelect.setItems(resolutions);
         resolutionSelect.setSelected(GameSettings.getResolution());
 
