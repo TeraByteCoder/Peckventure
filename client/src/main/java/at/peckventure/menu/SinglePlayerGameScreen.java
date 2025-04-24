@@ -304,6 +304,12 @@ public class SinglePlayerGameScreen extends GameScreen {
         inputMultiplexer.addProcessor(deathStage);
         inputMultiplexer.addProcessor(pauseStage);
 
+        if (isDead) {
+            // Wenn tot, nur die Death-Stage als Input-Processor hinzufügen
+            inputMultiplexer.addProcessor(deathStage);
+            return;
+        }
+
         if (chatUI.isChatActive()) {
             // Chat ist aktiv: UI-Stages + Chat-Input haben Priorität
             inputMultiplexer.addProcessor(uiStage);
@@ -469,7 +475,7 @@ public class SinglePlayerGameScreen extends GameScreen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Update game state if not paused
-        if (!paused) {
+        if (!paused && !isDead) {
             mobSpawner.update(delta);
             Box2DOperationManager.processOperations();
             physicsWorld.step(delta, 6, 2);

@@ -1,5 +1,6 @@
 package at.peckventure.chat.commands;
 
+import at.peckventure.LanguageManager;
 import at.peckventure.entities.Player;
 import at.peckventure.multiplayer.NetworkManager;
 import at.peckventure.multiplayer.NetworkPackets;
@@ -12,7 +13,7 @@ public class DamageCommand extends Command {
 
     @Override
     public String execute(String[] args, Player executor) {
-        if(!executor.isOperator()) return "You do not have permission to perform this command!";
+        if(!executor.isOperator()) return LanguageManager.INSTANCE.getText("command.permission.denied");
         int amount;
         if (args.length < 1) {
             // Wenn kein Parameter angegeben ist, setze den Schaden auf Const.MaxHealth.
@@ -21,12 +22,12 @@ public class DamageCommand extends Command {
             try {
                 amount = Integer.parseInt(args[0]);
             } catch (NumberFormatException e) {
-                return "Invalid amount: " + args[0];
+                return LanguageManager.INSTANCE.getText("command.invalid.amount") + args[0];
             }
         }
 
         if (amount < 0) {
-            return "Negative damage is not allowed.";
+            return LanguageManager.INSTANCE.getText("command.negative.damage.is.not.allowed");
         }
 
         executor.getHealthStatus().damage(amount);
@@ -39,6 +40,6 @@ public class DamageCommand extends Command {
         } catch (IllegalStateException e) {
         }
 
-        return "Inflicted " + amount + " damage points.";
+        return LanguageManager.INSTANCE.getText("command.inflicted") + amount + LanguageManager.INSTANCE.getText("command.damage.points");
     }
 }

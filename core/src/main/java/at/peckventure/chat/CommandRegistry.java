@@ -1,5 +1,6 @@
 package at.peckventure.chat;
 
+import at.peckventure.LanguageManager;
 import at.peckventure.chat.commands.*;
 import at.peckventure.entities.Player;
 
@@ -19,7 +20,7 @@ public class CommandRegistry
     public String executeCommand(String input, Player executor)
     {
         String[] parts = input.split(" ");
-        if (parts.length == 0) return "No command entered";
+        if (parts.length == 0) return LanguageManager.INSTANCE.getText("command.no.command.entered");
         Command cmd = commands.get(parts[0].toLowerCase());
         if (cmd != null)
         {
@@ -27,7 +28,7 @@ public class CommandRegistry
              return cmd.execute(args, executor);
         } else
         {
-            return "Unknown command: " + parts[0];
+            return LanguageManager.INSTANCE.getText("command.unknown.command: ") + parts[0];
         }
     }
 

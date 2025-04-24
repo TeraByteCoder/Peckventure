@@ -1,5 +1,6 @@
 package at.peckventure.chat.commands;
 
+import at.peckventure.LanguageManager;
 import at.peckventure.entities.Player;
 import at.peckventure.status.EffectRegistry;
 import at.peckventure.status.StatusEffect;
@@ -14,10 +15,10 @@ public class EffectCommand extends Command {
 
     @Override
     public String execute(String[] args, Player executor) {
-        if(!executor.isOperator()) return "You do not have permission to perform this command!";
+        if(!executor.isOperator()) return LanguageManager.INSTANCE.getText("command.permission.denied");
         // Prüfe, ob mindestens Name und Level angegeben wurden.
         if (args.length < 2) {
-            return "Usage: effect <name> <level> [duration]";
+            return LanguageManager.INSTANCE.getText("command.usage:.effect.<name>.<level>.[duration]");
         }
 
         // Erster Parameter: Name des Effekts
@@ -28,7 +29,7 @@ public class EffectCommand extends Command {
         try {
             level = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            return "Invalid level: " + args[1];
+            return LanguageManager.INSTANCE.getText("command.Invalid level: ") + args[1];
         }
 
         // Dritter Parameter: Dauer (optional, Default z. B. 5 Sekunden)

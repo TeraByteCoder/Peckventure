@@ -62,5 +62,23 @@
   "menu.server.is.offline": "Server ist offline.",
   "menu.disconnected.from.server": "Server verlassen.",
   "menu.connection.failed": "Verbindung fehlgeschlagen.",
-  "menu.error": "Fehler"
+  "menu.error": "Fehler",
+  "command.no.command.entered": "Kein Befehl eingegeben",
+  "command.unknown.command: ": "Unbekannter Befehl: ",
+  "command.permission.denied": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
+  "command.invalid.amount": "Ungültiger Wert: ",
+  "command.negative.damage.is.not.allowed": "Negativer Schaden ist nicht erlaubt.",
+  "command.inflicted": "Verursachte ",
+  "command.damage.points": " Schadenspunkte.",
+  "command.permission.denied": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
+  "command.usage:.effect.<name>.<level>.[duration]": "Verwendung: /effect <Name> <Level> [Dauer]",
+  "command.Invalid level: ": "Ungültiges Level: ",
+  "command.invalid.duration": "Ungültige Dauer: ",
+  "command.effect.not.found": "Effekt '{effect}' existiert nicht.",
+  "command.effect.creation.failed": "Konnte Effekt '{effect}' nicht erstellen.",
+  "command.effect.applied": "Effekt '{effect}' mit Level {level} und Dauer {duration} Sekunden angewendet."
+
+
+
+
 }
