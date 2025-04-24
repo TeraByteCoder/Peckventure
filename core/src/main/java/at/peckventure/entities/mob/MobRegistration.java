@@ -9,7 +9,9 @@ public class MobRegistration {
     public static final int ITEMACTOR_ID = 2;
 
     public static final int PHYTON_ID = 3;
+    public static final int FOX_ID = 4;
     public static final String BEETLE_STRING_ID = "beetle";
+    public static final String FOX_STRING_ID = "fox";
 
     public static final String PHYTON_STRING_ID = "phyton";
     public static final String ITEMACTOR_STRING_ID = "item";
@@ -20,6 +22,9 @@ public class MobRegistration {
 
         MobRegistry.registerMob(PHYTON_ID, PHYTON_STRING_ID, Phyton.class, (world, x, y, args) -> new Phyton(world, x, y, 10));
         Gdx.app.log("MobRegistration", "Registered Phyton with int ID " + PHYTON_ID + " and string ID " + PHYTON_STRING_ID);
+
+        MobRegistry.registerMob(FOX_ID, FOX_STRING_ID, Fox.class, (world, x, y, args) -> new Fox(world, x, y));
+        Gdx.app.log("MobRegistration", "Registered Fox with int ID " + FOX_ID + " and string ID " + FOX_STRING_ID);
 
         MobRegistry.registerMob(ITEMACTOR_ID, ITEMACTOR_STRING_ID, ItemActor.class, (world, x, y, args) -> {
             if(args != null && args.length > 0 && args[0] instanceof Item) {
