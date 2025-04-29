@@ -33,7 +33,7 @@ public abstract class Player extends Actor {
     protected Sprite sprite;
     protected final float speed = 400;
     protected final float flyForce = 700;
-    protected final float maxHeight = 1000;
+    protected final float maxHeight = 10000;
     protected final float hoverDampening = 200;
     protected final float startY;
     protected boolean operator;

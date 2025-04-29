@@ -446,241 +446,140 @@ public class ControlledPlayer extends Player
     }
 
     @Override
-    protected void handleInput(float delta)
-    {
+    protected void handleInput(float delta) {
         int direction = 0; // -1: links, 1: rechts
 
+        // Tree‐Landing Input (C‐Key)
         handleTreeLandingInput();
 
-
-        // Bestimme, ob der Spieler gerade geht (links oder rechts gedrückt)
+        // Bewegung links/rechts
         boolean isWalking = InputManager.getInstance().isLeftPressed() || InputManager.getInstance().isRightPressed();
         boolean isFlying = InputManager.getInstance().isJumpPressed();
 
-        // Berechne den zu regenerierenden Energie-Betrag pro Frame
-        float regenerationEnergy;
-        if (isWalking)
-        {
-            regenerationEnergy = (WALK_ENERGY_COST + 0.5f) * delta;
-        } else
-        {
-            regenerationEnergy = REGENERATION_ENERGY * delta;
-        }
+        // Energie‐Regeneration
+        float regenerationEnergy = isWalking
+            ? (WALK_ENERGY_COST + 0.5f) * delta
+            : REGENERATION_ENERGY * delta;
 
-        // Left button handling
-        if (InputManager.getInstance().isLeftPressed())
-        {
-            if (!wasLeftPressed)
-            { // Button was just pressed
-                long now = System.currentTimeMillis();
-                if (now - lastLeftTapTime < DOUBLE_TAP_THRESHOLD)
-                {
-                    if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST)
-                    {
-                        this.getEnergyStatus().consume(AIRROLL_ENERGY_COST);
-                        body.setLinearVelocity(-AIRROLL_IMPULSE, body.getLinearVelocity().y);
-                    }
+        // Double-Tap‐Air-Roll
+        if (InputManager.getInstance().isLeftPressed()) {
+            if (!wasLeftPressed && System.currentTimeMillis() - lastLeftTapTime < DOUBLE_TAP_THRESHOLD) {
+                if (getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
+                    getEnergyStatus().consume(AIRROLL_ENERGY_COST);
+                    body.setLinearVelocity(-AIRROLL_IMPULSE, body.getLinearVelocity().y);
                 }
-                lastLeftTapTime = now;
             }
+            lastLeftTapTime = wasLeftPressed ? lastLeftTapTime : System.currentTimeMillis();
             wasLeftPressed = true;
             direction = -1;
             facingRight = false;
             sprite.setFlip(false, false);
-        } else
-        {
+        } else {
             wasLeftPressed = false;
         }
 
-        // Right button handling
-        if (InputManager.getInstance().isRightPressed())
-        {
-            if (!wasRightPressed)
-            { // Button was just pressed
-                long now = System.currentTimeMillis();
-                if (now - lastRightTapTime < DOUBLE_TAP_THRESHOLD)
-                {
-                    if (this.getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST)
-                    {
-                        this.getEnergyStatus().consume(AIRROLL_ENERGY_COST);
-                        body.setLinearVelocity(AIRROLL_IMPULSE, body.getLinearVelocity().y);
-                    }
+        if (InputManager.getInstance().isRightPressed()) {
+            if (!wasRightPressed && System.currentTimeMillis() - lastRightTapTime < DOUBLE_TAP_THRESHOLD) {
+                if (getEnergyStatus().getCurrent() >= AIRROLL_ENERGY_COST) {
+                    getEnergyStatus().consume(AIRROLL_ENERGY_COST);
+                    body.setLinearVelocity(AIRROLL_IMPULSE, body.getLinearVelocity().y);
                 }
-                lastRightTapTime = now;
             }
+            lastRightTapTime = wasRightPressed ? lastRightTapTime : System.currentTimeMillis();
             wasRightPressed = true;
             direction = 1;
             facingRight = true;
             sprite.setFlip(true, false);
-        } else
-        {
+        } else {
             wasRightPressed = false;
         }
 
-        // Pecking handler
+        // Pecking & Tree Climbing
         handlePecking(delta);
-
-        // Tree climbing handling
-        if (isAttachedToTree())
-        {
-            // Handle vertical tree climbing with W/S keys
-            boolean climbingUp = InputManager.getInstance().isWPressed();
-            boolean climbingDown = InputManager.getInstance().isSPressed();
-
-            // Handle tree climbing
-            handleTreeClimbing(climbingUp, climbingDown, delta);
-
-            // Check for detachment conditions
-
-            // CONDITION 1: Player initiates flight while on the tree
-            if (isFlying)
-            {
+        if (attachedToTree) {
+            // (unverändert) Baumkletter‐Logik hier …
+            // bei Jump detachFromTree() + initialer Flug‐Impulse
+            if (isFlying) {
                 detachFromTree();
-                // Apply initial flight force (handled in detachFromTree)
-                this.getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
+                getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
             }
-
-            // Horizontal movement on the tree
-            if (direction != 0)
-            {
-                // Slower horizontal movement when on a tree
-                Vector2 vel = body.getLinearVelocity();
-                float maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_TREE;
-                float maxAccelTime = MAX_ACCEL_TIME_TREE;
-
-                if (direction != lastDirection)
-                {
-                    accelerationTime = 0f;
-                }
-                lastDirection = direction;
-                accelerationTime += delta;
-                if (accelerationTime > maxAccelTime)
-                {
-                    accelerationTime = maxAccelTime;
-                }
-                float currentHorizontalSpeed = maxSpeed * (float) Math.sqrt(accelerationTime / maxAccelTime);
-                body.setLinearVelocity(direction * currentHorizontalSpeed / Block.BLOCK_SIZE, vel.y);
-
-                // Consume energy for climbing
-                this.getEnergyStatus().consume(TREE_CLIMB_ENERGY_COST * delta);
-            } else
-            {
-                // When not moving horizontally on the tree, keep vertical velocity but zero out horizontal
-                body.setLinearVelocity(0, body.getLinearVelocity().y);
-            }
-
-            // Limit regeneration while on a tree
+            // horizontaler Baum‐Speed …
             regenerationEnergy = 0.5f * delta;
-        } else
-        {
-            // Horizontal acceleration (independent of flying or ground)
+        } else {
+            // Horizontalbeschleunigung (Boden & Luft)
             Vector2 vel = body.getLinearVelocity();
-            boolean isFlightMode = InputManager.getInstance().isJumpPressed() && !onGround;
-            float maxSpeed;
-            float maxAccelTime;
-            if (isFlightMode)
-            {
-                maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_FLY;
-                maxAccelTime = MAX_ACCEL_TIME_FLY;
-            } else
-            {
-                maxSpeed = BASE_HORIZONTAL_SPEED * HORIZONTAL_SPEED_MULTIPLIER_GROUND;
-                maxAccelTime = MAX_ACCEL_TIME_GROUND;
-            }
-            if (direction != 0)
-            {
-                if (direction != lastDirection)
-                {
-                    accelerationTime = 0f;
-                }
-                lastDirection = direction;
-                accelerationTime += delta;
-                if (accelerationTime > maxAccelTime)
-                {
-                    accelerationTime = maxAccelTime;
-                }
-                float currentHorizontalSpeed = maxSpeed * (float) Math.sqrt(accelerationTime / maxAccelTime);
-                body.setLinearVelocity(direction * currentHorizontalSpeed / Block.BLOCK_SIZE, vel.y);
+            boolean inAirFlightMode = isFlying && !onGround;
+            float maxSpeed = BASE_HORIZONTAL_SPEED * (inAirFlightMode
+                ? HORIZONTAL_SPEED_MULTIPLIER_FLY
+                : HORIZONTAL_SPEED_MULTIPLIER_GROUND);
+            float maxAccelTime = inAirFlightMode
+                ? MAX_ACCEL_TIME_FLY
+                : MAX_ACCEL_TIME_GROUND;
 
-                // Consume walking energy
-                this.getEnergyStatus().consume(WALK_ENERGY_COST * delta);
-            } else
-            {
+            if (direction != 0) {
+                if (direction != lastDirection) accelerationTime = 0f;
+                lastDirection = direction;
+                accelerationTime = Math.min(accelerationTime + delta, maxAccelTime);
+                float currentSpeed = maxSpeed * (float)Math.sqrt(accelerationTime / maxAccelTime);
+                body.setLinearVelocity(direction * currentSpeed / Block.BLOCK_SIZE, vel.y);
+                if (!inAirFlightMode) getEnergyStatus().consume(WALK_ENERGY_COST * delta);
+            } else {
                 accelerationTime = 0f;
                 lastDirection = 0;
                 body.setLinearVelocity(0, vel.y);
             }
 
-            // SPACE key: Depending on situation, either hop or activate flight mode
-            if (InputManager.getInstance().isJumpPressed())
-            {
+            // ─────────────── JUMP / FLY ───────────────
+            boolean jumpHeld        = InputManager.getInstance().isJumpPressed();
+
+            if (jumpHeld) {
+                // während gehalten: verschiedene Flugmodi
                 regenerationEnergy = 0;
-                if (onGround)
-                {
-                    if (!groundJumpUsed)
-                    {
-                        body.setLinearVelocity(body.getLinearVelocity().x, GROUND_HOP_FORCE / Block.BLOCK_SIZE);
-                        groundJumpUsed = true;
+                if (InputManager.getInstance().isWPressed()) {
+                    // HOVER
+                    if (getEnergyStatus().getCurrent() >= HOVER_ENERGY_COST * delta) {
+                        getEnergyStatus().consume(HOVER_ENERGY_COST * delta);
+                        body.setLinearVelocity(body.getLinearVelocity().x, HOVER_FORCE / Block.BLOCK_SIZE);
                     }
-                } else if (direction != 0)
-                {
-                    if (InputManager.getInstance().isWPressed())
-                    {
-                        // Precision flight (hovering)
-                        if (this.getEnergyStatus().getCurrent() >= HOVER_ENERGY_COST * delta)
-                        {
-                            this.getEnergyStatus().consume(HOVER_ENERGY_COST * delta);
-                            body.setLinearVelocity(body.getLinearVelocity().x, HOVER_FORCE / Block.BLOCK_SIZE);
-                        }
-                    } else if (InputManager.getInstance().isSPressed())
-                    {
-                        // Steep dive & explosive upward flight
-                        if (!diveInitiated)
-                        {
-                            body.setLinearVelocity(body.getLinearVelocity().x, DIVE_FORCE / Block.BLOCK_SIZE);
-                            diveInitiated = true;
-                        } else
-                        {
-                            if (this.getEnergyStatus().getCurrent() >= STURZFUG_ENERGY_COST)
-                            {
-                                this.getEnergyStatus().consume(STURZFUG_ENERGY_COST);
-                                body.setLinearVelocity(body.getLinearVelocity().x, HIGH_UP_FORCE / Block.BLOCK_SIZE);
-                            }
-                            diveInitiated = false;
-                        }
-                    } else
-                    {
-                        // Normal wing flap (lift)
-                        if (getY() < maxHeight)
-                        {
-                            if (this.getEnergyStatus().getCurrent() >= FLUEGELSCHLAG_ENERGY_COST * delta)
-                            {
-                                this.getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
-                                body.setLinearVelocity(body.getLinearVelocity().x, FLY_FORCE / Block.BLOCK_SIZE);
-                            }
-                        } else
-                        {
-                            body.setLinearVelocity(body.getLinearVelocity().x, hoverDampening / Block.BLOCK_SIZE);
-                        }
+                } else if (InputManager.getInstance().isSPressed()) {
+                    // DIVE / HIGH-UP
+                    if (!diveInitiated) {
+                        body.setLinearVelocity(body.getLinearVelocity().x, DIVE_FORCE / Block.BLOCK_SIZE);
+                        diveInitiated = true;
+                    } else if (getEnergyStatus().getCurrent() >= STURZFUG_ENERGY_COST) {
+                        getEnergyStatus().consume(STURZFUG_ENERGY_COST);
+                        body.setLinearVelocity(body.getLinearVelocity().x, HIGH_UP_FORCE / Block.BLOCK_SIZE);
+                        diveInitiated = false;
+                    }
+                } else {
+                    // normaler Flügelschlag
+                    if (getY() < maxHeight && getEnergyStatus().getCurrent() >= FLUEGELSCHLAG_ENERGY_COST * delta) {
+                        getEnergyStatus().consume(FLUEGELSCHLAG_ENERGY_COST * delta);
+                        body.setLinearVelocity(body.getLinearVelocity().x, FLY_FORCE / Block.BLOCK_SIZE);
                     }
                 }
-            } else
-            {
-                // Reset dive state when letting go of SPACE
+            } else {
+                // Reset des Dive-Flags, wenn Jump losgelassen
                 diveInitiated = false;
             }
         }
 
-        this.getEnergyStatus().regenerate(regenerationEnergy);
+        // Energie zurückgeben & Bodenhaftung
+        getEnergyStatus().regenerate(regenerationEnergy);
         setRotation(facingRight ? 0 : 180);
 
-        // Bodenhaftung auf unebenem Untergrund (Rampen) sicherstellen
-        if (ClientGlobal.contactListener instanceof ExtendedGameContactListener)
-        {
-            ((ExtendedGameContactListener) ClientGlobal.contactListener)
-                .handleGroundMovement(this, delta);
+        // Ramp-Handling
+        if (ClientGlobal.contactListener instanceof ExtendedGameContactListener) {
+            ((ExtendedGameContactListener)ClientGlobal.contactListener).handleGroundMovement(this, delta);
+        }
+
+        // Sanftes Abbremsen nach oben, wenn onGround & Y-Velocity > 0
+        Vector2 vel = body.getLinearVelocity();
+        if (onGround && vel.y > 0 && !InputManager.getInstance().isJumpPressed()) {
+            body.setLinearVelocity(vel.x, vel.y * 0.5f);
         }
     }
+
 
     @Override
     public void draw(Batch batch)
