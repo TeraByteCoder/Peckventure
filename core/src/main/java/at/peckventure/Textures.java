@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.utils.Array;
 
 public enum Textures {
     // Static textures
@@ -21,24 +22,26 @@ public enum Textures {
     SPRUCE_LOG("textures/blocks/log_spruce.png", false),
     SPRUCE_LEAVES("textures/blocks/leaves_spruce.png", false),
     PHYTON("textures/mobs/cobra.png", false),
-    FOX("textures/mobs/cobra.png", false),
+    FOX("textures/mobs/fox.png", false),
 
     // Animated textures
     PHYTON_IDLE("textures/mobs/cobra.png", true, 8, 5, 0, 0.2f),
     PHYTON_MOVING("textures/mobs/cobra.png", true, 8, 5, 1, 0.2f),
-    PHYTON_ATTACKING("textures/mobs/cobra.png", true, 11, 5, 2, 0.2f),
-    PHYTON_DAMAGE("textures/mobs/cobra.png", true, 4, 5, 3, 0.2f),
-    PHYTON_DYING("textures/mobs/cobra.png", true, 6, 5, 4, 0.2f),
-
+    PHYTON_ATTACKING("textures/mobs/cobra.png", true, 8, 5, 2, 0.2f, 6),
+    PHYTON_DAMAGE("textures/mobs/cobra.png", true, 8, 5, 3, 0.2f, 4),
+    PHYTON_DYING("textures/mobs/cobra.png", true, 8, 5, 4, 0.2f, 6),
 
     FOX_IDLE("textures/mobs/fox.png", true, 8, 5, 0, 0.2f),
     FOX_MOVING("textures/mobs/fox.png", true, 14, 7, 2, 0.3f),
     FOX_ATTACKING("textures/mobs/fox.png", true, 6, 5, 2, 0.2f),
     FOX_DAMAGE("textures/mobs/fox.png", true, 4, 5, 3, 0.2f),
+    FOX_DYING("textures/mobs/fox.png", true, 6, 5, 4, 0.2f),
 
-    FOX_DYING("textures/mobs/cobra.png", true, 6, 5, 4, 0.2f),
+    WOODPECKER_FLYING("textures/woodpecker/woodpecker.png", true, 4, 4, 1, 0.1f),
+    WOODPECKER_IDLE("textures/woodpecker/woodpecker_idle.png", false),
 
-        ;
+
+    ;
     private Texture texture;
     private Animation<TextureRegion> animation;
     private final String texturePath;
@@ -49,6 +52,7 @@ public enum Textures {
     private final int totalRows;
     private final int rowIndex;
     private final float frameDuration;
+    private final int numberOfFrames;
 
     // Constructor for static textures
     Textures(String texturePath, boolean isAnimated) {
@@ -58,44 +62,56 @@ public enum Textures {
         this.totalRows = 1;
         this.rowIndex = 0;
         this.frameDuration = 0;
+        this.numberOfFrames = 1;
     }
 
     // Constructor for animated textures
-    Textures(String texturePath, boolean isAnimated, int totalCols, int totalRows,
-             int rowIndex, float frameDuration) {
+    Textures(
+        String texturePath,
+        boolean isAnimated,
+        int totalCols,
+        int totalRows,
+        int rowIndex,
+        float frameDuration,
+        int... numberOfFramesOpt
+    ) {
         this.texturePath = texturePath;
         this.isAnimated = isAnimated;
         this.totalCols = totalCols;
         this.totalRows = totalRows;
         this.rowIndex = rowIndex;
         this.frameDuration = frameDuration;
+        // If an explicit frame count is given, use it; otherwise use totalCols
+        this.numberOfFrames = (numberOfFramesOpt != null && numberOfFramesOpt.length > 0)
+            ? numberOfFramesOpt[0]
+            : totalCols;
     }
 
     public void loadTexture() {
-        // Only load if graphics environment exists
         if (Gdx.graphics == null) return;
 
         if (isAnimated) {
-            // Load animation
+            // Load animation with optional frame count
             animation = SpriteSheetLoader.loadRow(
-                texturePath, totalCols, totalRows, rowIndex, frameDuration);
+                texturePath,
+                totalCols,
+                totalRows,
+                rowIndex,
+                frameDuration,
+                numberOfFrames
+            );
         } else {
-            // Load static texture
             texture = new Texture(Gdx.files.internal(texturePath));
         }
     }
 
     public Texture getTexture() {
-        if (Gdx.graphics == null || isAnimated) {
-            return null;
-        }
+        if (Gdx.graphics == null || isAnimated) return null;
         return texture;
     }
 
     public Animation<TextureRegion> getAnimation() {
-        if (Gdx.graphics == null || !isAnimated) {
-            return null;
-        }
+        if (Gdx.graphics == null || !isAnimated) return null;
         return animation;
     }
 
@@ -104,15 +120,10 @@ public enum Textures {
     }
 
     public void dispose() {
-        if (texture != null) {
-            texture.dispose();
-        }
-        // Note: We don't need to explicitly dispose Animation objects
-        // as they just reference TextureRegions from a Texture
+        if (texture != null) texture.dispose();
     }
 
     static {
-        // Only load if graphics are available
         if (Gdx.gl != null) {
             for (Textures t : values()) {
                 t.loadTexture();
@@ -121,6 +132,6 @@ public enum Textures {
     }
 
     public static void init() {
-        // Can remain empty - static block handles loading when possible
+        // Static block handles loading
     }
 }

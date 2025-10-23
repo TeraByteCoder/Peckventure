@@ -1,6 +1,7 @@
 package at.peckventure.entities;
 
 import at.peckventure.Const;
+import at.peckventure.Textures;
 import at.peckventure.inventory.Inventory;
 import at.peckventure.inventory.item.Item;
 import at.peckventure.multiplayer.NetworkPackets;
@@ -13,8 +14,10 @@ import at.peckventure.world.block.Block;
 import at.peckventure.world.chunk.Chunk;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -30,7 +33,11 @@ public abstract class Player extends Actor {
     private Status energy;
 
     protected Body body;
-    protected Sprite sprite;
+
+    // Current visual representation (static or animated)
+    private Textures currentTexture;
+    private float stateTime = 0f;
+
     protected final float speed = 400;
     protected final float flyForce = 700;
     protected final float maxHeight = 10000;
@@ -47,6 +54,7 @@ public abstract class Player extends Actor {
     private static final boolean DEBUG = true;
 
     private List<StatusEffect> effects = new ArrayList<>();
+
 
     private void debugLog(String message) {
         if (DEBUG) {
@@ -81,12 +89,13 @@ public abstract class Player extends Actor {
         return inventory;
     }
 
-    public Player(World world, float x, float y) {
+    /**
+     * Constructor requires initial texture (enum).
+     */
+    public Player(World world, float x, float y, Textures initialTexture) {
         this.inventory = new Inventory();
         this.world = world;
-        if (Gdx.gl != null) {
-            this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
-        }
+        this.currentTexture = initialTexture;
         this.startY = y;
 
         health = new Status("Health", Const.MAXHEALTH);
@@ -96,33 +105,33 @@ public abstract class Player extends Actor {
         Box2DOperationManager.queueOperation(() -> {
             BodyDef bodyDef = new BodyDef();
             bodyDef.type = BodyDef.BodyType.DynamicBody;
-            bodyDef.position.set((x + getWidth() / 2f) / Block.BLOCK_SIZE, (y + getHeight() / 2f) / Block.BLOCK_SIZE);
+            bodyDef.position.set((x + getWidth()/2f)/Block.BLOCK_SIZE, (y + getHeight()/2f)/Block.BLOCK_SIZE);
             body = world.createBody(bodyDef);
-            float widthMeters = getWidth() / Block.BLOCK_SIZE;
-            float heightMeters = getHeight() / Block.BLOCK_SIZE;
-            float radius = widthMeters / 2f;
-            float rectHeight = heightMeters - 2 * radius;
-            if (rectHeight < 0) rectHeight = 0;
+            float widthMeters = getWidth()/Block.BLOCK_SIZE;
+            float heightMeters = getHeight()/Block.BLOCK_SIZE;
+            float radius = widthMeters/2f;
+            float rectHeight = heightMeters - 2*radius;
+            rectHeight = Math.max(0, rectHeight);
             FixtureDef fixtureDef = new FixtureDef();
             fixtureDef.density = 1f;
             fixtureDef.friction = 0.5f;
             fixtureDef.restitution = 0f;
             if (rectHeight > 0) {
                 PolygonShape rectShape = new PolygonShape();
-                rectShape.setAsBox(radius, rectHeight / 2f, new Vector2(0, 0), 0);
+                rectShape.setAsBox(radius, rectHeight/2f);
                 fixtureDef.shape = rectShape;
                 body.createFixture(fixtureDef);
                 rectShape.dispose();
             }
             CircleShape topCircle = new CircleShape();
             topCircle.setRadius(radius);
-            topCircle.setPosition(new Vector2(0, rectHeight / 2f));
+            topCircle.setPosition(new Vector2(0, rectHeight/2f));
             fixtureDef.shape = topCircle;
             body.createFixture(fixtureDef);
             topCircle.dispose();
             CircleShape bottomCircle = new CircleShape();
             bottomCircle.setRadius(radius);
-            bottomCircle.setPosition(new Vector2(0, -rectHeight / 2f));
+            bottomCircle.setPosition(new Vector2(0, -rectHeight/2f));
             fixtureDef.shape = bottomCircle;
             body.createFixture(fixtureDef);
             bottomCircle.dispose();
@@ -134,6 +143,7 @@ public abstract class Player extends Actor {
 
     @Override
     public void act(float delta) {
+        // Update status effects
         Iterator<StatusEffect> it = effects.iterator();
         while (it.hasNext()) {
             StatusEffect e = it.next();
@@ -145,19 +155,35 @@ public abstract class Player extends Actor {
         }
         handleInput(delta);
         Vector2 bodyPos = body.getPosition();
-        setPosition(bodyPos.x * Block.BLOCK_SIZE - getWidth() / 2, bodyPos.y * Block.BLOCK_SIZE - getHeight() / 2);
+        setPosition(bodyPos.x*Block.BLOCK_SIZE - getWidth()/2f,
+            bodyPos.y*Block.BLOCK_SIZE - getHeight()/2f);
     }
 
+
+    /**
+     * Change the current texture/animation at runtime.
+     */
+    public void setTexture(Textures texture) {
+        this.currentTexture = texture;
+        this.stateTime = 0f;
+    }
     public void draw(Batch batch) {
-        if (sprite != null)
-            batch.draw(sprite, getX(), getY(), getWidth(), getHeight());
+        if (Gdx.graphics == null || currentTexture == null) return;
+        if (currentTexture.isAnimated()) {
+            stateTime += Gdx.graphics.getDeltaTime();
+            Animation<TextureRegion> anim = currentTexture.getAnimation();
+            TextureRegion frame = anim.getKeyFrame(stateTime);
+            batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+        } else {
+            Texture tex = currentTexture.getTexture();
+            batch.draw(tex, getX(), getY(), getWidth(), getHeight());
+        }
     }
 
-    // Wird vom PlayerManager aufgerufen, wenn ein Update-Paket eintrifft.
     public void updateFromPacket(NetworkPackets.PlayerUpdatePacket packet) {
         setPosition(packet.x, packet.y);
         this.getEnergyStatus().setCurrent(packet.energy);
-        body.setTransform(packet.x / Block.BLOCK_SIZE, packet.y / Block.BLOCK_SIZE, body.getAngle());
+        body.setTransform(packet.x/Block.BLOCK_SIZE, packet.y/Block.BLOCK_SIZE, body.getAngle());
     }
 
     public Body getBody() {
@@ -294,9 +320,5 @@ public abstract class Player extends Actor {
     }
 
     public void dispose() {
-        // Ressourcen freigeben, falls vorhanden
-        if (sprite != null && sprite.getTexture() != null) {
-            sprite.getTexture().dispose();
-        }
     }
 }

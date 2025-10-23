@@ -1,6 +1,7 @@
 package at.peckventure.entities;
 
 import at.peckventure.Const;
+import at.peckventure.Textures;
 import at.peckventure.inventory.item.Item;
 import at.peckventure.multiplayer.NetworkPackets;
 import com.badlogic.gdx.graphics.Color;
@@ -39,14 +40,14 @@ public class RemotePlayer extends Player {
             this.facingRight = facingRight;
             this.time = time;
         }
+
     }
 
 
     private final Queue<PositionUpdate> positionBuffer = new Queue<>();
 
     public RemotePlayer(World world, float x, float y) {
-        super(world, x, y);
-        this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
+        super(world, x, y, Textures.WOODPECKER_IDLE);
         long now = System.currentTimeMillis();
         positionBuffer.addLast(new PositionUpdate(x, y, true, now));
 

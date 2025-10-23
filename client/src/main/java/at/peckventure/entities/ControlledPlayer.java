@@ -1,9 +1,6 @@
 package at.peckventure.entities;
 
-import at.peckventure.ClientGlobal;
-import at.peckventure.ExtendedGameContactListener;
-import at.peckventure.Globals;
-import at.peckventure.InputManager;
+import at.peckventure.*;
 import at.peckventure.entities.mob.ItemActor;
 import at.peckventure.entities.mob.Mob;
 import at.peckventure.entities.mob.MobRegistry;
@@ -102,8 +99,7 @@ public class ControlledPlayer extends Player
 
     private ControlledPlayer(World world, float x, float y)
     {
-        super(world, x, y);
-        this.sprite = new Sprite(new Texture("textures/woodpecker/woodpecker_idle.png"));
+        super(world, x, y, Textures.WOODPECKER_FLYING);
 
         // Erzeuge eine 1x1 weiße Textur für die Zunge
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -428,12 +424,6 @@ public class ControlledPlayer extends Player
                 });
             }
 
-            // Textur freigeben, falls vorhanden
-            if (instance.sprite != null && instance.sprite.getTexture() != null)
-            {
-                instance.sprite.getTexture().dispose();
-            }
-
             // Pixeltextur für die Zunge freigeben
             if (instance.pixelTexture != null)
             {
@@ -473,7 +463,7 @@ public class ControlledPlayer extends Player
             wasLeftPressed = true;
             direction = -1;
             facingRight = false;
-            sprite.setFlip(false, false);
+            //todo sprite.setFlip(false, false);
         } else {
             wasLeftPressed = false;
         }
@@ -489,7 +479,7 @@ public class ControlledPlayer extends Player
             wasRightPressed = true;
             direction = 1;
             facingRight = true;
-            sprite.setFlip(true, false);
+            //todo sprite.setFlip(true, false);
         } else {
             wasRightPressed = false;
         }
@@ -579,7 +569,6 @@ public class ControlledPlayer extends Player
             body.setLinearVelocity(vel.x, vel.y * 0.5f);
         }
     }
-
 
     @Override
     public void draw(Batch batch)
