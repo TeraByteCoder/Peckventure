@@ -141,6 +141,7 @@ distributions {
   main {
     contents {
       into('libs') {
+
         project.configurations.runtimeClasspath.files.findAll { file ->
           file.getName() != project.tasks.jar.outputs.files.singleFile.name
         }.each { file ->
